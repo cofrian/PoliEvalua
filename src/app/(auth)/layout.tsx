@@ -2,55 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SponsorBar } from "@/components/brand/sponsor-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-// Todos los logos ocupan aproximadamente la misma superficie visual:
-// altura = √(área / proporción del logo sin márgenes), con ajuste óptico
-// (Sigma más pequeño por su letra gruesa, Ajuntament más grande por la fina).
-const sponsors = [
-  {
-    src: "/brand/sponsors/sigma-light.svg",
-    alt: "Sigma Data Club",
-    ratio: 3.08,
-    height: 38,
-    className: "dark:hidden",
-  },
-  {
-    src: "/brand/sponsors/sigma-dark.svg",
-    alt: "Sigma Data Club",
-    ratio: 3.08,
-    height: 38,
-    className: "hidden dark:block",
-  },
-  {
-    src: "/brand/sponsors/etsinf.svg",
-    alt: "Escola Tècnica Superior d'Enginyeria Informàtica",
-    ratio: 4.35,
-    height: 36,
-    className: "dark:rounded-sm dark:bg-white dark:p-1",
-  },
-  {
-    src: "/brand/sponsors/ajuntament-color-crop.svg",
-    alt: "Ajuntament de València",
-    ratio: 3.22,
-    height: 48,
-    className: "dark:rounded-sm dark:bg-white dark:p-1",
-  },
-  {
-    src: "/brand/sponsors/generacion-espontanea-crop.png",
-    alt: "Generación Espontánea",
-    ratio: 2.44,
-    height: 48,
-    className: "dark:rounded-sm dark:bg-white dark:p-1",
-  },
-  {
-    src: "/brand/sponsors/upv-vee.jpg",
-    alt: "Universitat Politècnica de València · Vicerrectorado de Estudiantes y Emprendimiento",
-    ratio: 1.75,
-    height: 54,
-    className: "",
-  },
-];
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -91,19 +44,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <p className="mb-4 text-center text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
           Impulsado por Cátedra Valent-IA
         </p>
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-8 gap-y-5 sm:gap-x-12">
-          {sponsors.map((sponsor, index) => (
-            <Image
-              alt={sponsor.alt}
-              className={`w-auto object-contain ${sponsor.className}`}
-              height={sponsor.height * 2}
-              key={`${sponsor.src}-${index}`}
-              src={sponsor.src}
-              style={{ height: sponsor.height }}
-              width={Math.round(sponsor.height * sponsor.ratio * 2)}
-            />
-          ))}
-        </div>
+        <SponsorBar />
       </footer>
     </main>
   );

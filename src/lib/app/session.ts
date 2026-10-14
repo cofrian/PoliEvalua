@@ -21,7 +21,7 @@ export const getSession = cache(async () => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, disabled")
+    .select("id, full_name, role, disabled, avatar_url, organization")
     .eq("id", user.id)
     .single();
 
@@ -29,11 +29,19 @@ export const getSession = cache(async () => {
 
   const role = profile.role as Role;
 
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, status")
+    .limit(1)
+    .maybeSingle();
+
   return {
     supabase,
     user,
     profile: { ...profile, role },
     canVote: role === "admin" || role === "judge",
     isAdmin: role === "admin",
+    event,
+    eventClosed: event?.status === "closed",
   };
 });

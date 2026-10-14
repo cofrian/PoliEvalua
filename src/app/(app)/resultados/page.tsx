@@ -1,86 +1,161 @@
 import { redirect } from "next/navigation";
 
+import { PrintButton } from "@/components/app/print-button";
+import { ResultsChart } from "@/components/app/results-chart";
+import { Button } from "@/components/ui/button";
+import { loadResults } from "@/lib/app/results";
 import { getSession } from "@/lib/app/session";
 
-export default async function ResultsPage() {
-  const { supabase, isAdmin } = await getSession();
-  if (!isAdmin) redirect("/equipos");
+const cell = "px-3 py-2";
 
-  const [{ data: challenges }, { data: results }, { data: teams }] =
-    await Promise.all([
-      supabase.from("challenges").select("id, name").order("order"),
-      supabase
-        .from("team_results")
-        .select("team_id, name, challenge_id, avg_total, stddev_total, n_evaluations"),
-      supabase.from("teams").select("id, number"),
-    ]);
+export default async function ResultsPage() {
+  const { supabase, isAdmin, eventClosed, event } = await getSession();
+  if (!isAdmin && !eventClosed) redirect("/equipos");
+
+  const { challenges, criteria, scaleMax, teams } = await loadResults(
+    supabase,
+    event?.id,
+  );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl">Resultados</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Media de las evaluaciones enviadas, sobre 100.
+            Media de las evaluaciones enviadas, sobre 100, con la rúbrica actual.
+            {!eventClosed ? " Solo visible para admin hasta el cierre." : ""}
           </p>
         </div>
-        <a
-          className="rounded-md border border-line px-3 py-2 text-sm font-semibold hover:bg-navy-900/5 dark:border-[#262838] dark:hover:bg-white/10"
-          href="/resultados/csv"
-        >
-          Exportar CSV
-        </a>
+        <div className="flex gap-2 print:hidden">
+          <Button asChild variant="outline">
+            <a href="/resultados/csv?tipo=ranking">CSV ranking</a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href="/resultados/csv">CSV por juez</a>
+          </Button>
+          <PrintButton />
+        </div>
       </div>
 
-      {(challenges ?? []).map((challenge) => {
-        const ranking = (results ?? [])
-          .filter((row) => row.challenge_id === challenge.id)
-          .sort(
-            (a, b) => Number(b.avg_total ?? -1) - Number(a.avg_total ?? -1),
-          );
+      {challenges.map((challenge) => {
+        const ranking = teams.filter((t) => t.challengeId === challenge.id);
+        let position = 0;
 
         return (
-          <section key={challenge.id}>
-            <h2 className="mb-3 font-display text-2xl">{challenge.name}</h2>
+          <section className="space-y-4 break-inside-avoid-page" key={challenge.id}>
+            <h2 className="font-display text-2xl">{challenge.name}</h2>
+
+            <ResultsChart
+              data={ranking
+                .filter((t) => t.average !== null)
+                .map((t) => ({
+                  name: t.name,
+                  media: t.average ?? 0,
+                  dispersion: t.stddev ?? 0,
+                }))}
+            />
+
             <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
               <table className="w-full text-sm">
                 <thead className="border-b border-line text-left text-xs text-muted-foreground uppercase dark:border-[#262838]">
                   <tr>
-                    <th className="px-3 py-2">#</th>
-                    <th className="px-3 py-2">Equipo</th>
-                    <th className="px-3 py-2 text-right">Media</th>
-                    <th className="px-3 py-2 text-right">Dispersión</th>
-                    <th className="px-3 py-2 text-right">Evaluaciones</th>
+                    <th className={cell}>#</th>
+                    <th className={cell}>Equipo</th>
+                    <th className={`${cell} text-right`}>Media</th>
+                    {criteria.map((c) => (
+                      <th className={`${cell} text-right`} key={c.id} title={c.title}>
+                        {c.title.split(/[\s/]+/)[0]} ({c.weight}%)
+                      </th>
+                    ))}
+                    <th className={`${cell} text-right`}>Dispersión</th>
+                    <th className={`${cell} text-right`}>Mín–Máx</th>
+                    <th className={`${cell} text-right`}>Jueces</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ranking.map((row, index) => (
-                    <tr
-                      className="border-b border-line last:border-0 dark:border-[#262838]"
-                      key={row.team_id}
-                    >
-                      <td className="px-3 py-2 font-bold">
-                        {row.n_evaluations ? index + 1 : "–"}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span className="text-muted-foreground">
-                          #{teams?.find((t) => t.id === row.team_id)?.number}{" "}
-                        </span>
-                        {row.name}
-                      </td>
-                      <td className="px-3 py-2 text-right font-bold">
-                        {row.avg_total ?? "–"}
-                      </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">
-                        {row.stddev_total ?? "–"}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {row.n_evaluations}
-                      </td>
-                    </tr>
-                  ))}
+                  {ranking.map((team) => {
+                    if (team.average !== null) position++;
+                    return (
+                      <tr
+                        className="border-b border-line last:border-0 dark:border-[#262838]"
+                        key={team.teamId}
+                      >
+                        <td className={`${cell} font-bold`}>
+                          {team.average !== null ? position : "–"}
+                        </td>
+                        <td className={cell}>
+                          <span className="text-muted-foreground">#{team.number} </span>
+                          {team.name}
+                        </td>
+                        <td className={`${cell} text-right font-bold`}>
+                          {team.average ?? "–"}
+                        </td>
+                        {criteria.map((c) => (
+                          <td className={`${cell} text-right`} key={c.id}>
+                            {team.criterionAverages[c.id] ?? "–"}
+                          </td>
+                        ))}
+                        <td className={`${cell} text-right text-muted-foreground`}>
+                          {team.stddev ?? "–"}
+                        </td>
+                        <td className={`${cell} text-right text-muted-foreground`}>
+                          {team.min !== null ? `${team.min}–${team.max}` : "–"}
+                        </td>
+                        <td className={`${cell} text-right`}>{team.evaluations.length}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Columnas de criterio: media sobre {scaleMax}. Dispersión: desviación
+              típica del total entre jueces (cuanto más alta, más desacuerdo).
+            </p>
+
+            <div className="space-y-2">
+              <h3 className="font-display text-xl">Evaluaciones por juez</h3>
+              {ranking
+                .filter((t) => t.evaluations.length)
+                .map((team) => (
+                  <details
+                    className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]"
+                    key={team.teamId}
+                  >
+                    <summary className="cursor-pointer font-semibold">
+                      {team.name} · media {team.average}
+                    </summary>
+                    <div className="mt-3 space-y-4">
+                      {team.evaluations.map((evaluation) => (
+                        <div key={evaluation.judgeId}>
+                          <p className="font-semibold">
+                            {evaluation.judgeName} ·{" "}
+                            <span className="font-display text-lg">{evaluation.total}</span>
+                            /100
+                          </p>
+                          <ul className="mt-1 space-y-1 text-sm">
+                            {criteria.map((c) => {
+                              const s = evaluation.scores[c.id];
+                              return (
+                                <li key={c.id}>
+                                  <span className="text-muted-foreground">{c.title}:</span>{" "}
+                                  <strong>{s?.score ?? "–"}</strong>
+                                  {s?.comment ? ` — ${s.comment}` : ""}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          {evaluation.generalComment ? (
+                            <p className="mt-1 text-sm italic">
+                              «{evaluation.generalComment}»
+                            </p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ))}
             </div>
           </section>
         );

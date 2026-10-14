@@ -162,15 +162,14 @@ begin
     ('20000000-0000-4000-8000-000000000010', 'Vladyslav Taratunskyi'),
     ('20000000-0000-4000-8000-000000000010', 'Daniel Torres Bursik');
 
-  insert into sponsors (id, name, logo_light_url, logo_dark_url, url, "order")
+  insert into sponsors (id, name, logo_light_url, logo_dark_url, url, "order", display_height, aspect_ratio, dark_background)
   values
-    ('00000000-0000-4000-8000-000000000501', 'Cátedra Valent-IA', null, null, null, 1),
-    ('00000000-0000-4000-8000-000000000502', 'Sigma Data Club', '/brand/sponsors/sigma-light.svg', '/brand/sponsors/sigma-dark.svg', null, 2),
-    ('00000000-0000-4000-8000-000000000503', 'ETSINF', '/brand/sponsors/etsinf.svg', '/brand/sponsors/etsinf.svg', null, 3),
-    ('00000000-0000-4000-8000-000000000504', 'UPV', '/brand/sponsors/upv-vee.jpg', '/brand/sponsors/upv-vee.jpg', null, 4),
-    ('00000000-0000-4000-8000-000000000505', 'Ajuntament de València', '/brand/sponsors/ajuntament-color.svg', '/brand/sponsors/ajuntament-neg.svg', null, 5),
-    ('00000000-0000-4000-8000-000000000506', 'Generación Espontánea', '/brand/sponsors/generacion-espontanea.png', '/brand/sponsors/generacion-espontanea.png', null, 6),
-    ('00000000-0000-4000-8000-000000000507', 'VEE', null, null, null, 7)
+    ('00000000-0000-4000-8000-000000000501', 'Cátedra Valent-IA', null, null, null, 0, 40, 3, true),
+    ('00000000-0000-4000-8000-000000000502', 'Sigma Data Club', '/brand/sponsors/sigma-light.svg', '/brand/sponsors/sigma-dark.svg', null, 1, 38, 3.08, false),
+    ('00000000-0000-4000-8000-000000000503', 'ETSINF', '/brand/sponsors/etsinf.svg', '/brand/sponsors/etsinf.svg', null, 2, 36, 4.35, true),
+    ('00000000-0000-4000-8000-000000000505', 'Ajuntament de València', '/brand/sponsors/ajuntament-color-crop.svg', '/brand/sponsors/ajuntament-color-crop.svg', null, 3, 48, 3.22, true),
+    ('00000000-0000-4000-8000-000000000506', 'Generación Espontánea', '/brand/sponsors/generacion-espontanea-crop.png', '/brand/sponsors/generacion-espontanea-crop.png', null, 4, 48, 2.44, true),
+    ('00000000-0000-4000-8000-000000000504', 'UPV', '/brand/sponsors/upv-vee.jpg', '/brand/sponsors/upv-vee.jpg', null, 5, 54, 1.75, false)
   on conflict (id) do nothing;
 end
 $$;

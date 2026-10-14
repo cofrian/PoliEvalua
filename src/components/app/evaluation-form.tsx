@@ -132,11 +132,11 @@ export function EvaluationForm({
     [supabase, teamId, userId, rubricId, generalComment, scores],
   );
 
-  // Autoguardado: 1 s después del último cambio.
+  // Autoguardado: 800 ms después del último cambio.
   useEffect(() => {
     if (!dirty || locked) return;
     setSaveState("pending");
-    const timer = setTimeout(() => void save(), 1000);
+    const timer = setTimeout(() => void save(), 800);
     return () => clearTimeout(timer);
   }, [dirty, locked, save]);
 
@@ -176,6 +176,11 @@ export function EvaluationForm({
       {locked ? (
         <p className="rounded-lg border border-coral-400/50 bg-coral-400/10 px-3 py-2.5 text-sm">
           La votación está cerrada. Ya no se pueden modificar evaluaciones.
+        </p>
+      ) : status === "submitted" && !complete ? (
+        <p className="rounded-lg border border-orange-500/60 bg-orange-500/10 px-3 py-2.5 text-sm">
+          ⚠ La rúbrica ha cambiado desde que enviaste esta evaluación: puntúa los
+          criterios nuevos y vuelve a enviarla.
         </p>
       ) : status === "submitted" ? (
         <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 px-3 py-2.5 text-sm">

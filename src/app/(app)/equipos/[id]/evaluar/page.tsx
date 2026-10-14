@@ -6,7 +6,9 @@ import {
   EvaluationForm,
   type Criterion,
 } from "@/components/app/evaluation-form";
+import { NotesDrawer } from "@/components/app/notes-drawer";
 import { NotesPanel, type Note } from "@/components/app/notes-panel";
+import { RubricLiveUpdates } from "@/components/app/rubric-live-updates";
 import { getSession } from "@/lib/app/session";
 
 export default async function EvaluatePage({
@@ -140,7 +142,7 @@ export default async function EvaluatePage({
           teamId={team.id}
           userId={user.id}
         />
-        <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto">
+        <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto">
           <h2 className="mb-3 font-display text-2xl">Notas</h2>
           <NotesPanel
             initialNotes={(notes ?? []) as unknown as Note[]}
@@ -149,6 +151,12 @@ export default async function EvaluatePage({
           />
         </aside>
       </div>
+      <NotesDrawer
+        initialNotes={(notes ?? []) as unknown as Note[]}
+        teamId={team.id}
+        userId={user.id}
+      />
+      <RubricLiveUpdates rubricId={rubric.id} userId={user.id} />
     </div>
   );
 }

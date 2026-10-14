@@ -2,7 +2,12 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import {
+  AdminTeamEditor,
+  type AdminTeam,
+} from "@/components/app/admin-team-editor";
 import { NotesPanel, type Note } from "@/components/app/notes-panel";
+import { Presence } from "@/components/app/presence";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/app/session";
 
@@ -12,14 +17,14 @@ export default async function TeamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, canVote } = await getSession();
+  const { supabase, user, profile, canVote, isAdmin } = await getSession();
 
   const [{ data: team }, { data: notes }, { data: evaluation }] =
     await Promise.all([
       supabase
         .from("teams")
         .select(
-          "id, number, name, project_title, description, table_location, challenge:challenges(name), team_members(id, full_name)",
+          "id, number, name, project_title, description, table_location, challenge_id, challenge:challenges(name), team_members(id, full_name)",
         )
         .eq("id", id)
         .maybeSingle(),
@@ -39,6 +44,10 @@ export default async function TeamPage({
     ]);
 
   if (!team) notFound();
+
+  const { data: challenges } = isAdmin
+    ? await supabase.from("challenges").select("id, name").order("order")
+    : { data: [] };
 
   const challenge = team.challenge as unknown as { name: string } | null;
   const members = (team.team_members ?? []) as { id: string; full_name: string }[];
@@ -62,6 +71,12 @@ export default async function TeamPage({
           {team.project_title ? (
             <p className="mt-1 text-lg">{team.project_title}</p>
           ) : null}
+          <div className="mt-3">
+            <Presence
+              me={{ id: user.id, name: profile.full_name, avatar: profile.avatar_url }}
+              room={`team-${team.id}`}
+            />
+          </div>
         </div>
         {canVote ? (
           <Button asChild className="h-11 px-5 font-bold">
@@ -90,6 +105,20 @@ export default async function TeamPage({
               <p className="text-sm text-muted-foreground">Sin integrantes.</p>
             )}
           </div>
+          {isAdmin ? (
+            <details className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+              <summary className="cursor-pointer font-display text-lg">
+                Editar equipo (admin)
+              </summary>
+              <div className="mt-4">
+                <AdminTeamEditor
+                  allowDelete={false}
+                  challenges={challenges ?? []}
+                  team={team as unknown as AdminTeam}
+                />
+              </div>
+            </details>
+          ) : null}
           {team.description ? (
             <div className="rounded-xl border border-line bg-white p-4 text-sm leading-6 dark:border-[#262838] dark:bg-[#151621]">
               <h2 className="mb-2 font-display text-lg">Proyecto</h2>

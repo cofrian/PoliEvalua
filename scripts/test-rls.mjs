@@ -1,0 +1,163 @@
+// Pruebas de permisos (RLS) contra la base de datos real.
+// Crea un juez, otro juez, un mentor y un admin temporales, comprueba qué puede
+// hacer cada uno y lo borra todo al terminar.
+//
+// Uso: node scripts/test-rls.mjs   (lee las claves de .env.local)
+import { createClient } from "@supabase/supabase-js";
+import { randomBytes } from "node:crypto";
+import fs from "node:fs";
+
+const env = Object.fromEntries(
+  fs
+    .readFileSync(".env.local", "utf8")
+    .split(/\r?\n/)
+    .filter((l) => l.includes("=") && !l.startsWith("#"))
+    .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim().replace(/^"|"$/g, "")]),
+);
+const URL = env.NEXT_PUBLIC_SUPABASE_URL;
+const admin = createClient(URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+const stamp = Date.now();
+const created = [];
+let failures = 0;
+
+function check(name, ok, detail = "") {
+  console.log(`${ok ? "✔" : "✘"} ${name}${!ok && detail ? ` — ${detail}` : ""}`);
+  if (!ok) failures++;
+}
+
+async function makeUser(role) {
+  const email = `rls-${role}-${stamp}-${created.length}@test.local`;
+  const password = randomBytes(18).toString("base64url");
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: `Prueba ${role}` },
+  });
+  if (error) throw error;
+  created.push(data.user.id);
+  await admin.from("profiles").update({ role }).eq("id", data.user.id);
+  const client = createClient(URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  if (signInError) throw signInError;
+  return { id: data.user.id, client };
+}
+
+try {
+  const { data: team } = await admin.from("teams").select("id").limit(1).single();
+  const { data: rubric } = await admin
+    .from("rubrics")
+    .select("id, rubric_criteria(id, weight, deleted_at)")
+    .eq("is_active", true)
+    .limit(1)
+    .single();
+  const { data: event } = await admin.from("events").select("*").limit(1).single();
+  const criteria = rubric.rubric_criteria.filter((c) => !c.deleted_at);
+
+  const judgeA = await makeUser("judge");
+  const judgeB = await makeUser("judge");
+  const mentor = await makeUser("mentor");
+  const boss = await makeUser("admin");
+
+  // ---------- Notas ----------
+  const { data: privateNote } = await judgeA.client
+    .from("notes")
+    .insert({ team_id: team.id, author_id: judgeA.id, body: "privada", is_shared: false })
+    .select("id")
+    .single();
+  const { data: sharedNote } = await judgeA.client
+    .from("notes")
+    .insert({ team_id: team.id, author_id: judgeA.id, body: "compartida", is_shared: true })
+    .select("id")
+    .single();
+  check("Un juez puede crear notas", Boolean(privateNote && sharedNote));
+
+  const { data: seenByB } = await judgeB.client.from("notes").select("id").in("id", [privateNote.id, sharedNote.id]);
+  check("Otro juez NO ve la nota privada", !seenByB.some((n) => n.id === privateNote.id));
+  check("Otro juez SÍ ve la nota compartida", seenByB.some((n) => n.id === sharedNote.id));
+
+  const { data: seenByMentor } = await mentor.client.from("notes").select("id").in("id", [privateNote.id, sharedNote.id]);
+  check("El mentor NO ve la nota privada", !seenByMentor.some((n) => n.id === privateNote.id));
+  check("El mentor SÍ ve la nota compartida", seenByMentor.some((n) => n.id === sharedNote.id));
+
+  const { data: seenByAdmin } = await boss.client.from("notes").select("id").eq("id", privateNote.id);
+  check(
+    `El admin ${event.audit_mode ? "SÍ" : "NO"} ve notas privadas (modo auditoría ${event.audit_mode ? "activado" : "desactivado"})`,
+    event.audit_mode ? seenByAdmin.length === 1 : seenByAdmin.length === 0,
+    "aplica la migración 0002 (modo auditoría)",
+  );
+
+  const { data: editedByB } = await judgeB.client.from("notes").update({ body: "pirateada" }).eq("id", sharedNote.id).select("id");
+  check("Otro juez NO puede editar una nota ajena", !editedByB?.length);
+
+  const { data: mentorNote } = await mentor.client
+    .from("notes")
+    .insert({ team_id: team.id, author_id: mentor.id, body: "nota del mentor", is_shared: true })
+    .select("id")
+    .single();
+  check("El mentor puede crear notas", Boolean(mentorNote));
+
+  // ---------- Evaluaciones ----------
+  const { error: mentorEvalError } = await mentor.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: mentor.id, rubric_id: rubric.id });
+  check("El mentor NO puede evaluar", Boolean(mentorEvalError));
+
+  const { data: evalA, error: evalError } = await judgeA.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: judgeA.id, rubric_id: rubric.id, status: "submitted" })
+    .select("id")
+    .single();
+  check("Un juez puede evaluar", !evalError && Boolean(evalA), evalError?.message);
+
+  await judgeA.client.from("evaluation_scores").insert(
+    criteria.map((c) => ({ evaluation_id: evalA.id, criterion_id: c.id, score: 3 })),
+  );
+  const { data: total } = await judgeA.client.from("evaluation_totals").select("total").eq("evaluation_id", evalA.id).single();
+  check("Total calculado correctamente (todo 3 → 60/100)", Number(total?.total) === 60, `total=${total?.total}`);
+
+  const { data: seenEvalsB } = await judgeB.client.from("evaluations").select("id").eq("id", evalA.id);
+  if (event.status === "closed") {
+    check("Con el evento cerrado, otro juez SÍ ve evaluaciones ajenas", seenEvalsB.length === 1);
+  } else {
+    check("Antes del cierre, otro juez NO ve evaluaciones ajenas", seenEvalsB.length === 0);
+  }
+  const { data: seenEvalsAdmin } = await boss.client.from("evaluations").select("id").eq("id", evalA.id);
+  check("El admin SÍ ve todas las evaluaciones", seenEvalsAdmin.length === 1);
+
+  const { error: forgeError } = await judgeB.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: judgeA.id, rubric_id: rubric.id });
+  check("Un juez NO puede evaluar en nombre de otro", Boolean(forgeError));
+
+  // ---------- Rúbrica ----------
+  const criterion = criteria[0];
+  const { data: mentorRubric } = await mentor.client
+    .from("rubric_criteria")
+    .update({ weight: criterion.weight })
+    .eq("id", criterion.id)
+    .select("id");
+  check("El mentor NO puede editar la rúbrica", !mentorRubric?.length);
+
+  // ---------- Roles ----------
+  const { data: selfPromote } = await judgeA.client
+    .from("profiles")
+    .update({ role: "admin" })
+    .eq("id", judgeA.id)
+    .select("id");
+  check("Un juez NO puede hacerse admin", !selfPromote?.length);
+
+  const { data: teamEdit } = await judgeA.client.from("teams").update({ name: "pirata" }).eq("id", team.id).select("id");
+  check("Un juez NO puede renombrar equipos", !teamEdit?.length);
+} catch (error) {
+  console.error("Error durante las pruebas:", error.message ?? error);
+  failures++;
+} finally {
+  for (const id of created) {
+    await admin.from("notes").delete().eq("author_id", id);
+    await admin.auth.admin.deleteUser(id);
+  }
+  console.log(`\n${failures ? `✘ ${failures} prueba(s) fallida(s)` : "✔ Todas las pruebas pasan"}. Usuarios temporales borrados.`);
+  process.exit(failures ? 1 : 0);
+}

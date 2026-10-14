@@ -17,18 +17,20 @@ export type TeamSummary = {
   memberCount: number;
   myNotes: number;
   sharedNotes: number;
-  status: "pending" | "draft" | "submitted";
+  status: "pending" | "draft" | "submitted" | "incomplete";
 };
 
 const statusStyles = {
   submitted: "border-leaf-500/50 bg-leaf-500/15",
   draft: "border-orange-500/50 bg-orange-500/15",
+  incomplete: "border-coral-400/60 bg-coral-400/15",
   pending: "border-line bg-transparent dark:border-[#262838]",
 } as const;
 
 const statusLabels = {
   submitted: "✔ Evaluado",
   draft: "Borrador",
+  incomplete: "⚠ Incompleta",
   pending: "Pendiente",
 } as const;
 

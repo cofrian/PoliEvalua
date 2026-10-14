@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Montserrat } from "next/font/google";
 
+import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +26,12 @@ export const metadata: Metadata = {
   title: "València Hack · Panel del jurado",
   description:
     "Plataforma de notas y evaluación del jurado de València Hack.",
+  appleWebApp: { capable: true, title: "VLC Hack Jurado", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1f2557",
 };
 
 export default function RootLayout({
@@ -45,6 +52,7 @@ export default function RootLayout({
         >
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster richColors />
+          <ServiceWorkerRegister />
         </ThemeProvider>
       </body>
     </html>

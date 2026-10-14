@@ -21,6 +21,34 @@ export type Note = {
 const NOTE_SELECT =
   "id, body, is_shared, created_at, author_id, author:profiles(full_name)";
 
+type PendingNote = {
+  tempId: string;
+  team_id: string;
+  author_id: string;
+  body: string;
+  is_shared: boolean;
+  created_at: string;
+};
+
+const QUEUE_KEY = "vh-pending-notes";
+
+// Cola local para cuando no hay cobertura: se envía al reconectar.
+function readQueue(): PendingNote[] {
+  try {
+    return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? "[]") as PendingNote[];
+  } catch {
+    return [];
+  }
+}
+
+function writeQueue(queue: PendingNote[]) {
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  } catch {
+    // Sin almacenamiento local no hay cola; la nota se queda en el formulario.
+  }
+}
+
 const timeFormat = new Intl.DateTimeFormat("es-ES", {
   hour: "2-digit",
   minute: "2-digit",
@@ -43,6 +71,7 @@ export function NotesPanel({
   const [shared, setShared] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | "mine" | "shared">("all");
+  const [pending, setPending] = useState<PendingNote[]>([]);
 
   const reload = useCallback(async () => {
     const { data } = await supabase
@@ -52,6 +81,38 @@ export function NotesPanel({
       .order("created_at", { ascending: false });
     if (data) setNotes(data as unknown as Note[]);
   }, [supabase, teamId]);
+
+  const flushQueue = useCallback(async () => {
+    const queue = readQueue();
+    if (!queue.length || !navigator.onLine) {
+      setPending(queue.filter((n) => n.team_id === teamId));
+      return;
+    }
+    const remaining: PendingNote[] = [];
+    for (const note of queue) {
+      const { error } = await supabase.from("notes").insert({
+        team_id: note.team_id,
+        author_id: note.author_id,
+        body: note.body,
+        is_shared: note.is_shared,
+        created_at: note.created_at,
+      });
+      if (error) remaining.push(note);
+    }
+    writeQueue(remaining);
+    setPending(remaining.filter((n) => n.team_id === teamId));
+    if (remaining.length < queue.length) {
+      toast.success("Notas pendientes sincronizadas.");
+      void reload();
+    }
+  }, [supabase, teamId, reload]);
+
+  useEffect(() => {
+    void flushQueue();
+    const onOnline = () => void flushQueue();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [flushQueue]);
 
   useEffect(() => {
     const channel = supabase
@@ -64,19 +125,58 @@ export function NotesPanel({
           table: "notes",
           filter: `team_id=eq.${teamId}`,
         },
-        () => void reload(),
+        async (payload) => {
+          const note = payload.new as {
+            author_id?: string;
+            is_shared?: boolean;
+          };
+          const old = payload.old as { is_shared?: boolean };
+          const newlyShared =
+            note?.is_shared &&
+            note.author_id !== userId &&
+            (payload.eventType === "INSERT" || old?.is_shared !== true);
+          if (newlyShared) {
+            const { data: author } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", note.author_id!)
+              .maybeSingle();
+            toast.info(`${author?.full_name ?? "Alguien"} ha compartido una nota`);
+          }
+          void reload();
+        },
       )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [supabase, teamId, reload]);
+  }, [supabase, teamId, userId, reload]);
+
+  function queueNote(text: string) {
+    const note: PendingNote = {
+      tempId: crypto.randomUUID(),
+      team_id: teamId,
+      author_id: userId,
+      body: text,
+      is_shared: shared,
+      created_at: new Date().toISOString(),
+    };
+    writeQueue([...readQueue(), note]);
+    setPending((current) => [...current, note]);
+    setBody("");
+    toast.warning("Sin conexión: la nota se enviará al recuperar la cobertura.");
+  }
 
   async function addNote(event: React.FormEvent) {
     event.preventDefault();
     const text = body.trim();
     if (!text) return;
+
+    if (!navigator.onLine) {
+      queueNote(text);
+      return;
+    }
 
     setSaving(true);
     const { error } = await supabase.from("notes").insert({
@@ -88,7 +188,11 @@ export function NotesPanel({
     setSaving(false);
 
     if (error) {
-      toast.error("No se ha podido guardar la nota.");
+      if (!navigator.onLine || /fetch|network/i.test(error.message)) {
+        queueNote(text);
+      } else {
+        toast.error("No se ha podido guardar la nota.");
+      }
       return;
     }
     setBody("");
@@ -184,6 +288,22 @@ export function NotesPanel({
           </button>
         ))}
       </div>
+
+      {pending.length ? (
+        <ul className="space-y-2">
+          {pending.map((note) => (
+            <li
+              className="rounded-xl border border-dashed border-orange-500/60 bg-orange-500/5 p-3 text-sm"
+              key={note.tempId}
+            >
+              <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                ⏳ Pendiente de enviar (sin conexión)
+              </p>
+              <p className="whitespace-pre-wrap">{note.body}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {visible.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">

@@ -13,8 +13,8 @@ export default async function TeamsPage() {
         .order("number"),
       supabase.from("notes").select("team_id, author_id, is_shared"),
       supabase
-        .from("evaluations")
-        .select("team_id, status")
+        .from("evaluation_totals")
+        .select("team_id, status, scored_criteria, total_criteria")
         .eq("judge_id", user.id),
     ]);
 
@@ -34,11 +34,13 @@ export default async function TeamsPage() {
       sharedNotes: teamNotes.filter(
         (n) => n.is_shared && n.author_id !== user.id,
       ).length,
-      status: evaluation
-        ? evaluation.status === "submitted"
-          ? "submitted"
-          : "draft"
-        : "pending",
+      status: !evaluation
+        ? "pending"
+        : evaluation.status !== "submitted"
+          ? "draft"
+          : evaluation.scored_criteria < evaluation.total_criteria
+            ? "incomplete"
+            : "submitted",
     };
   });
 
