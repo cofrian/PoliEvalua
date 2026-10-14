@@ -30,7 +30,7 @@ export default async function AdminPage() {
     await Promise.all([
       supabase
         .from("events")
-        .select("id, name, status, signup_code, signup_open, audit_mode"),
+        .select("id, name, status, signup_code, signup_open"),
       supabase
         .from("profiles")
         .select("id, full_name, role, disabled, organization, last_seen_at, created_at")
@@ -73,10 +73,6 @@ export default async function AdminPage() {
               <input defaultChecked={event.signup_open} name="signupOpen" type="checkbox" />
               Acceso abierto
             </label>
-            <label className="flex h-9 items-center gap-2 text-sm font-semibold">
-              <input defaultChecked={event.audit_mode} name="auditMode" type="checkbox" />
-              Modo auditoría
-            </label>
             <Button className="h-9" type="submit">
               Guardar
             </Button>
@@ -91,8 +87,9 @@ export default async function AdminPage() {
               funcionar (el código de admin sigue funcionando).
             </li>
             <li>
-              <strong>Modo auditoría</strong>: permite al admin leer las notas
-              privadas de todos. Desactivado por defecto.
+              El admin ve todas las notas (también las privadas), todas las
+              evaluaciones en directo y puede editar la rúbrica aunque esté
+              bloqueada.
             </li>
           </ul>
         </section>

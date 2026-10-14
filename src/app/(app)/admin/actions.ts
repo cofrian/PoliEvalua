@@ -64,7 +64,6 @@ export async function updateEventAction(formData: FormData) {
     name: text(formData, "name") || undefined,
     status,
     signup_open: formData.get("signupOpen") === "on",
-    audit_mode: formData.get("auditMode") === "on",
     ...(signupCode ? { signup_code: signupCode } : {}),
   };
 

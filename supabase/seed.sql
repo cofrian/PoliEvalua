@@ -17,6 +17,8 @@ begin
 
   insert into events (id, name, date, status, signup_code, signup_open)
   values (event_id, 'València Hack', '2026-10-15', 'building', 'VALENT-IA', true);
+  -- El admin ve todas las notas, también las privadas.
+  update events set audit_mode = true where id = event_id;
 
   insert into challenges (id, event_id, name, description, "order")
   values

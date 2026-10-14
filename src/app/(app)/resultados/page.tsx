@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { LiveRefresh } from "@/components/app/live-refresh";
+import { LiveVotes } from "@/components/app/live-votes";
 import { PrintButton } from "@/components/app/print-button";
 import { ResultsChart } from "@/components/app/results-chart";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,11 @@ export default async function ResultsPage() {
             Media de las evaluaciones enviadas, sobre 100, con la rúbrica actual.
             {!eventClosed ? " Solo visible para admin hasta el cierre." : ""}
           </p>
+          {isAdmin ? (
+            <div className="mt-2 print:hidden">
+              <LiveRefresh />
+            </div>
+          ) : null}
         </div>
         <div className="flex gap-2 print:hidden">
           <Button asChild variant="outline">
@@ -37,6 +44,12 @@ export default async function ResultsPage() {
           <PrintButton />
         </div>
       </div>
+
+      {isAdmin ? (
+        <div className="print:hidden">
+          <LiveVotes criteria={criteria} scaleMax={scaleMax} supabase={supabase} />
+        </div>
+      ) : null}
 
       {challenges.map((challenge) => {
         const ranking = teams.filter((t) => t.challengeId === challenge.id);
