@@ -67,7 +67,7 @@ Crea `supabase/migrations/0001_init.sql` y pégalo en Supabase → SQL Editor �
 
 ```sql
 -- ========== TIPOS ==========
-create type user_role as enum ('admin','judge');
+create type user_role as enum ('admin','judge','mentor');
 create type event_status as enum ('setup','building','judging','closed');
 create type eval_status as enum ('draft','submitted');
 
@@ -207,6 +207,14 @@ language sql stable security definer set search_path = public as $$
   select exists(select 1 from profiles where id = auth.uid() and not disabled);
 $$;
 
+create or replace function can_vote() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(
+    select 1 from profiles
+    where id = auth.uid() and role in ('admin','judge') and not disabled
+  );
+$$;
+
 create or replace function event_closed() returns boolean
 language sql stable as $$ select exists(select 1 from events where status = 'closed'); $$;
 
@@ -240,7 +248,7 @@ begin
   insert into profiles (id, full_name, role)
   values (new.id,
           coalesce(new.raw_user_meta_data->>'full_name',''),
-          case when (new.raw_user_meta_data->>'make_admin')::boolean then 'admin'::user_role
+          case when (new.raw_app_meta_data->>'make_admin')::boolean then 'admin'::user_role
                else 'judge'::user_role end);
   return new;
 end $$;
@@ -293,37 +301,39 @@ create policy n_ins on notes for insert with check (author_id = auth.uid() and i
 create policy n_upd on notes for update using (author_id = auth.uid()) with check (author_id = auth.uid());
 create policy n_del on notes for delete using (author_id = auth.uid() or is_admin());
 
--- Rúbrica: todos leen; jueces y admin editan si no está bloqueada (admin siempre)
+-- Rúbrica: todos leen; solo jueces y admin editan si no está bloqueada (admin siempre)
 create policy r_sel on rubrics for select using (is_active_user());
-create policy r_upd on rubrics for update using (is_admin() or (is_active_user() and not locked));
+create policy r_upd on rubrics for update using (is_admin() or (can_vote() and not locked));
 create policy r_adm on rubrics for all using (is_admin()) with check (is_admin());
 
 create policy rc_sel on rubric_criteria for select using (is_active_user());
 create policy rc_all on rubric_criteria for all
-  using (is_admin() or (is_active_user() and not (select locked from rubrics where id = rubric_id)))
-  with check (is_admin() or (is_active_user() and not (select locked from rubrics where id = rubric_id)));
+  using (is_admin() or (can_vote() and not (select locked from rubrics where id = rubric_id)))
+  with check (is_admin() or (can_vote() and not (select locked from rubrics where id = rubric_id)));
 
 create policy rl_sel on rubric_levels for select using (is_active_user());
 create policy rl_all on rubric_levels for all
-  using (is_admin() or (is_active_user() and not (select r.locked from rubrics r join rubric_criteria c on c.rubric_id=r.id where c.id = criterion_id)))
-  with check (is_admin() or (is_active_user() and not (select r.locked from rubrics r join rubric_criteria c on c.rubric_id=r.id where c.id = criterion_id)));
+  using (is_admin() or (can_vote() and not (select r.locked from rubrics r join rubric_criteria c on c.rubric_id=r.id where c.id = criterion_id)))
+  with check (is_admin() or (can_vote() and not (select r.locked from rubrics r join rubric_criteria c on c.rubric_id=r.id where c.id = criterion_id)));
 
 create policy rch_sel on rubric_changes for select using (is_active_user());
-create policy rch_ins on rubric_changes for insert with check (user_id = auth.uid());
+create policy rch_ins on rubric_changes for insert with check (user_id = auth.uid() and can_vote());
 
--- Evaluaciones: cada juez la suya; ver las de otros solo admin o evento cerrado
-create policy e_sel on evaluations for select using (judge_id = auth.uid() or is_admin() or event_closed());
-create policy e_ins on evaluations for insert with check (judge_id = auth.uid() and is_active_user());
-create policy e_upd on evaluations for update using (judge_id = auth.uid() and not event_closed())
-  with check (judge_id = auth.uid());
+-- Evaluaciones: solo jueces/admin votan; las ajenas se ven solo por admin o con el evento cerrado
+create policy e_sel on evaluations for select using (
+  is_active_user() and (judge_id = auth.uid() or is_admin() or event_closed()));
+create policy e_ins on evaluations for insert with check (judge_id = auth.uid() and can_vote());
+create policy e_upd on evaluations for update using (
+  judge_id = auth.uid() and can_vote() and not event_closed())
+  with check (judge_id = auth.uid() and can_vote());
 
 create policy es_sel on evaluation_scores for select using (
-  exists(select 1 from evaluations e where e.id = evaluation_id
+  is_active_user() and exists(select 1 from evaluations e where e.id = evaluation_id
          and (e.judge_id = auth.uid() or is_admin() or event_closed())));
 create policy es_write on evaluation_scores for all using (
-  exists(select 1 from evaluations e where e.id = evaluation_id and e.judge_id = auth.uid() and not event_closed()))
+  can_vote() and exists(select 1 from evaluations e where e.id = evaluation_id and e.judge_id = auth.uid() and not event_closed()))
   with check (
-  exists(select 1 from evaluations e where e.id = evaluation_id and e.judge_id = auth.uid() and not event_closed()));
+  can_vote() and exists(select 1 from evaluations e where e.id = evaluation_id and e.judge_id = auth.uid() and not event_closed()));
 
 create policy al_adm on audit_log for select using (is_admin());
 create policy al_ins on audit_log for insert with check (user_id = auth.uid());
@@ -392,8 +402,10 @@ src/middleware.ts            refresca sesión; si no hay usuario y la ruta no es
 1. Campos: nombre completo, email, contraseña (mín. 8), código del evento.
 2. En el servidor: leer `events.signup_code` y `signup_open` con el cliente admin. Si no coincide → error "Código incorrecto".
 3. `make_admin = ADMIN_EMAILS.split(',').includes(email)`.
-4. `supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name, make_admin } })`.
+4. `supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name }, app_metadata: { make_admin } })`. `app_metadata` solo puede escribirlo el servidor; no confíes el rol a `user_metadata`.
 5. Iniciar sesión con `signInWithPassword` y redirigir a `/equipos`.
+
+Todas las altas se crean como `judge`, excepto los emails incluidos en `ADMIN_EMAILS`. El rol `mentor` solo puede asignarlo un admin desde el panel; nunca se acepta un rol enviado por el formulario público.
 
 **Login** (`/login`): email + contraseña → `signInWithPassword`. Si `profiles.disabled` → cerrar sesión y mostrar "Cuenta desactivada, contacta con el admin".
 
@@ -424,6 +436,7 @@ src/middleware.ts            refresca sesión; si no hay usuario y la ruta no es
 - Offline: si falla el insert por red, guardar en `localStorage` en una cola y reintentar al volver `online`.
 
 ### 7.4 Evaluar (`/equipos/[id]/evaluar`)
+- Ruta disponible solo para `judge` y `admin`. Si el usuario es `mentor`, redirigir a la ficha del equipo; la RLS también bloquea sus escrituras aunque llame a la API directamente.
 - Al entrar: `upsert` de `evaluations` (draft) para (team, yo, rúbrica activa).
 - Por cada criterio **no borrado**, ordenado: título, peso, 5 botones (o los que marque `scale_min..scale_max`), descriptor del nivel seleccionado/hover, comentario.
 - Cada cambio → `upsert` en `evaluation_scores` con debounce 800 ms; indicador "Guardado".
@@ -435,6 +448,7 @@ src/middleware.ts            refresca sesión; si no hay usuario y la ruta no es
 - Escritorio: atajos `1–5`, `↑/↓`, `N`.
 
 ### 7.5 Rúbrica (`/rubrica`) — **todo dinámico, nada fijo en código**
+- `mentor` accede en modo lectura; no puede cambiar criterios, pesos, niveles, escala ni historial.
 - Lista de criterios con drag & drop (`@dnd-kit/sortable`) → actualiza `order`.
 - Editar título, descripción, peso (input numérico + slider), escala, y los niveles (label + descriptor).
 - Añadir criterio: crea criterio + niveles por defecto según la escala.
@@ -445,13 +459,13 @@ src/middleware.ts            refresca sesión; si no hay usuario y la ruta no es
 - Cambiar la escala (p. ej. 1–10) regenera niveles; las evaluaciones existentes avisan de revisión.
 
 ### 7.6 Resultados (`/resultados`)
-- Visible para admin siempre; para jueces solo con evento `closed`.
+- Visible para admin siempre; para jueces y mentores solo con evento `closed`.
 - Ranking por reto (`team_results`), barra por criterio (media de cada criterio), tabla de jueces × puntuación, comentarios por juez y por criterio, desviación entre jueces.
 - Exportar CSV (papaparse) y PDF (imprimir con `@media print` estilizado).
 
 ### 7.7 Admin (`/admin`)
 - **Evento**: nombre, fecha, estado (building / judging / closed), código de registro, abrir/cerrar registro.
-- **Usuarios**: lista, rol (admin/judge), desactivar/reactivar, restablecer contraseña.
+- **Usuarios**: lista, rol (`admin` / `judge` / `mentor`), desactivar/reactivar, restablecer contraseña.
 - **Retos y equipos**: CRUD + **importar CSV/TXT** (formato de `equipos.txt`).
 - **Patrocinadores**: subir logos claro/oscuro a Storage, orden, URL.
 - **Rúbrica**: bloquear/desbloquear.
@@ -479,6 +493,8 @@ src/middleware.ts            refresca sesión; si no hay usuario y la ruta no es
 - [ ] Juez A crea nota privada → Juez B **no** la ve.
 - [ ] Juez A la comparte → Juez B la ve sin recargar.
 - [ ] Juez B no puede editar ni borrar la nota de A.
+- [ ] Mentor crea, edita, comparte y borra sus propias notas; puede leer las compartidas.
+- [ ] Mentor no puede crear ni modificar evaluaciones, puntuaciones o rúbrica (probar también llamando a la API directamente).
 - [ ] Cambiar peso de un criterio → totales recalculados en evaluaciones y ranking.
 - [ ] Añadir criterio → evaluaciones enviadas aparecen como "incompletas".
 - [ ] Pesos ≠ 100 → no deja guardar.
@@ -492,6 +508,6 @@ src/middleware.ts            refresca sesión; si no hay usuario y la ruta no es
 
 ## 10. Prompt para empezar con otra IA
 
-> Construye la app descrita en `PLAN.md`, `DESIGN.md` e `IMPLEMENTACION.md` (adjuntos). Stack: Next.js 15 App Router + TypeScript + Tailwind + shadcn/ui + Supabase (Auth email/contraseña, Postgres con RLS, Realtime, Storage), desplegada en Vercel. Sigue IMPLEMENTACION.md sección por sección, empezando por §1–§6. La rúbrica debe ser 100 % dinámica (leída de la BD). Respeta exactamente las políticas RLS. Entrega el código archivo a archivo con rutas completas, y al final de cada sección dime cómo comprobarla.
+> Construye la app descrita en `PLAN.md`, `DESIGN.md` e `IMPLEMENTACION.md` (adjuntos). Stack: Next.js 15 App Router + TypeScript + Tailwind + shadcn/ui + Supabase (Auth email/contraseña, Postgres con RLS, Realtime, Storage), desplegada en Vercel. Hay tres roles: admin, juez y mentor; el mentor puede gestionar notas pero no votar. Sigue IMPLEMENTACION.md sección por sección, empezando por §1–§6. La rúbrica debe ser 100 % dinámica (leída de la BD). Respeta exactamente las políticas RLS. Entrega el código archivo a archivo con rutas completas, y al final de cada sección dime cómo comprobarla.
 
 Ve pidiéndole sección a sección (§7.1, §7.2…) en vez de todo de golpe; el resultado es mucho mejor.

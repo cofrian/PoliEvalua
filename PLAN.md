@@ -12,8 +12,9 @@ Plataforma web multiusuario para que el jurado de **València Hack** (15 de octu
 4. **Rúbrica editable**: el jurado puede añadir, editar, reordenar o eliminar criterios, cambiar pesos y descriptores. Validación: los pesos suman 100 %.
 5. **Multiusuario en tiempo real**: varios jueces a la vez, cambios visibles al instante (Supabase Realtime), sin pisarse.
 6. **Rol admin**: control total (usuarios, equipos, retos, rúbricas, abrir/cerrar votación, ver y exportar resultados).
-7. **Responsive**: móvil (uso principal durante el evento, en pie), tablet y ordenador (sala de deliberación).
-8. **Marca**: identidad de la camiseta/cartel y logos de patrocinadores siempre presentes.
+7. **Rol mentor**: puede seguir a los equipos y añadir notas/comentarios propios, privados o compartidos, pero no puede votar ni editar la rúbrica.
+8. **Responsive**: móvil (uso principal durante el evento, en pie), tablet y ordenador (sala de deliberación).
+9. **Marca**: identidad de la camiseta/cartel y logos de patrocinadores siempre presentes.
 
 ## 2. Stack
 
@@ -31,26 +32,26 @@ Plataforma web multiusuario para que el jurado de **València Hack** (15 de octu
 
 ## 3. Roles y permisos
 
-| Acción | Juez | Admin |
-|---|:-:|:-:|
-| Ver equipos y retos | ✅ | ✅ |
-| Crear/editar/borrar **sus** notas | ✅ | ✅ |
-| Compartir / dejar de compartir sus notas | ✅ | ✅ |
-| Leer notas compartidas de otros | ✅ | ✅ |
-| Leer notas privadas de otros | ❌ | ✅ (solo si se activa "modo auditoría", desactivado por defecto) |
-| Evaluar equipos (su propia evaluación) | ✅ | ✅ |
-| Ver evaluaciones de otros jueces | Tras cerrar votación | ✅ siempre |
-| Editar la rúbrica | ✅ (si la votación no está bloqueada) | ✅ |
-| Gestionar usuarios, equipos, retos | ❌ | ✅ |
-| Abrir/cerrar/bloquear votación | ❌ | ✅ |
-| Ver ranking y exportar CSV/PDF | Tras cerrar | ✅ |
+| Acción | Juez | Mentor | Admin |
+|---|:-:|:-:|:-:|
+| Ver equipos y retos | ✅ | ✅ | ✅ |
+| Crear/editar/borrar **sus** notas | ✅ | ✅ | ✅ |
+| Compartir / dejar de compartir sus notas | ✅ | ✅ | ✅ |
+| Leer notas compartidas de otros | ✅ | ✅ | ✅ |
+| Leer notas privadas de otros | ❌ | ❌ | ✅ (solo si se activa "modo auditoría", desactivado por defecto) |
+| Evaluar equipos (su propia evaluación) | ✅ | ❌ | ✅ |
+| Ver evaluaciones de otros jueces | Tras cerrar votación | Tras cerrar votación | ✅ siempre |
+| Editar la rúbrica | ✅ (si la votación no está bloqueada) | ❌ | ✅ |
+| Gestionar usuarios, equipos, retos | ❌ | ❌ | ✅ |
+| Abrir/cerrar/bloquear votación | ❌ | ❌ | ✅ |
+| Ver ranking y exportar CSV/PDF | Tras cerrar | Tras cerrar | ✅ |
 
 Toda la seguridad se aplica **en la base de datos con RLS**, no solo en la UI.
 
 ## 4. Modelo de datos (Supabase / Postgres)
 
 ```sql
-profiles        (id uuid PK → auth.users, full_name, avatar_url, role enum('admin','judge'),
+profiles        (id uuid PK → auth.users, full_name, avatar_url, role enum('admin','judge','mentor'),
                  organization, created_at, last_seen_at)
 events          (id, name, date, status enum('setup','building','judging','closed'), settings jsonb)
 challenges      (id, event_id, name, description, order)            -- RETO 1, RETO 2
@@ -88,14 +89,14 @@ audit_log       (id, user_id, action, entity, entity_id, payload jsonb, created_
 **RLS (resumen)**
 - `notes` SELECT: `author_id = auth.uid() OR is_shared OR is_admin()`.
 - `notes` INSERT/UPDATE/DELETE: `author_id = auth.uid()`.
-- `evaluations` SELECT: propia, o admin, o evento `closed`.
-- `rubric_*` UPDATE: juez o admin y `locked = false`.
+- `evaluations` SELECT: propia, o admin, o evento `closed`; mentor nunca puede insertar ni modificar evaluaciones.
+- `rubric_*` UPDATE: juez o admin y `locked = false`; mentor solo lectura.
 - `teams/challenges/profiles.role`: escritura solo admin.
 
 ## 5. Pantallas
 
 1. **Login / Registro** — email + contraseña (Supabase Auth).
-   - **Registro con código del evento**: el admin da a los jueces un código (p. ej. `VLCHACK26`). Sin código no se puede crear cuenta. Al registrarse eligen nombre, email y contraseña → se crea su perfil de juez.
+   - **Registro con código del evento**: el admin da a los participantes un código (p. ej. `VLCHACK26`). Sin código no se puede crear cuenta. Al registrarse eligen nombre, email y contraseña → se crea su perfil de juez; el admin puede cambiar después su rol a mentor.
    - **Volver a entrar** desde cualquier dispositivo con su email + contraseña: recuperan notas y evaluaciones (todo vive en la base de datos, nada en el móvil).
    - **"He olvidado mi contraseña"** por email, y además el admin puede restablecerla desde el panel.
    - El admin puede cambiar el código, desactivar el registro y promover/bloquear usuarios. Nunca se borra nada al desactivar un usuario (soft-disable).
@@ -157,6 +158,7 @@ DESIGN.md · PLAN.md
 - Los jueces **no** ven puntuaciones de otros hasta el cierre.
 - **Una rúbrica común** para ambos retos. La de Sigma es solo el **ejemplo inicial**: si el jurado cambia criterios, pesos o niveles, toda la lógica (cálculo /100, pantallas de evaluación, ranking, export) se adapta automáticamente porque nada está fijo en el código; todo se lee de `rubric_criteria`/`rubric_levels`.
 - **Admin**: no hay email fijo en el código. El admin se define con la variable de entorno `ADMIN_EMAILS` (lista separada por comas) y/o promoviéndolo por SQL (ver `IMPLEMENTACION.md` §4). Un admin puede promover a otros desde el panel.
+- **Mentor**: comenta mediante `notes` con las mismas reglas de privacidad y compartición que un juez, pero RLS le impide crear o modificar `evaluations`, `evaluation_scores` y la rúbrica.
 - Jueces desconocidos de antemano → registro abierto con **código del evento** + email/contraseña.
 
 ## 11. Almacenamiento
