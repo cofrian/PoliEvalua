@@ -48,24 +48,6 @@ export default function Home() {
             <Link href="/registro">Crear cuenta</Link>
           </Button>
         </div>
-
-        <div className="mt-8 grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">
-          {[
-            ["Next.js 15", "App Router + TypeScript"],
-            ["Supabase", "Auth, Postgres y Realtime"],
-            ["shadcn/ui", "Componentes accesibles"],
-          ].map(([title, detail]) => (
-            <div
-              key={title}
-              className="rounded-card border border-line bg-white/85 p-4 shadow-warm backdrop-blur dark:border-[#262838] dark:bg-[#151621]"
-            >
-              <p className="font-bold">{title}</p>
-              <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-[#C6C4CE]">
-                {detail}
-              </p>
-            </div>
-          ))}
-        </div>
       </section>
 
       <footer className="relative mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 border-t border-line pt-5 text-center text-xs text-slate-500 dark:border-[#262838] dark:text-[#C6C4CE] sm:flex-row sm:text-left">
