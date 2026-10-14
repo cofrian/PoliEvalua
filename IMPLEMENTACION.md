@@ -207,6 +207,11 @@ language sql stable security definer set search_path = public as $$
   select exists(select 1 from profiles where id = auth.uid() and not disabled);
 $$;
 
+create or replace function current_user_role() returns user_role
+language sql stable security definer set search_path = public as $$
+  select role from profiles where id = auth.uid();
+$$;
+
 create or replace function can_vote() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists(
@@ -222,8 +227,8 @@ language sql stable as $$ select exists(select 1 from events where status = 'clo
 -- (si cambian pesos/criterios, el total se recalcula solo)
 create or replace view evaluation_totals as
 select e.id as evaluation_id, e.team_id, e.judge_id, e.status,
-  round(sum( (s.score::numeric / r.scale_max) * c.weight ), 2) as total,
-  count(s.score) as scored_criteria,
+  round(coalesce(sum((s.score::numeric / r.scale_max) * c.weight), 0), 2) as total,
+  count(s.score) filter (where c.id is not null) as scored_criteria,
   (select count(*) from rubric_criteria c2 where c2.rubric_id = e.rubric_id and c2.deleted_at is null) as total_criteria
 from evaluations e
 join rubrics r on r.id = e.rubric_id
@@ -281,8 +286,8 @@ alter table audit_log enable row level security;
 
 -- Perfiles: todos los usuarios activos ven nombres; cada uno edita el suyo (sin cambiar rol); admin todo
 create policy p_sel on profiles for select using (is_active_user());
-create policy p_upd_self on profiles for update using (id = auth.uid())
-  with check (id = auth.uid() and role = (select role from profiles where id = auth.uid()));
+create policy p_upd_self on profiles for update using (id = auth.uid() and is_active_user())
+  with check (id = auth.uid() and role = current_user_role() and not disabled);
 create policy p_admin on profiles for all using (is_admin()) with check (is_admin());
 
 -- Lectura general para usuarios activos; escritura solo admin
@@ -298,8 +303,9 @@ create policy sponsors_public on sponsors for select using (true);
 -- Notas: propias + compartidas; solo el autor escribe
 create policy n_sel on notes for select using (is_active_user() and (author_id = auth.uid() or is_shared or is_admin()));
 create policy n_ins on notes for insert with check (author_id = auth.uid() and is_active_user());
-create policy n_upd on notes for update using (author_id = auth.uid()) with check (author_id = auth.uid());
-create policy n_del on notes for delete using (author_id = auth.uid() or is_admin());
+create policy n_upd on notes for update using (author_id = auth.uid() and is_active_user())
+  with check (author_id = auth.uid() and is_active_user());
+create policy n_del on notes for delete using ((author_id = auth.uid() and is_active_user()) or is_admin());
 
 -- Rúbrica: todos leen; solo jueces y admin editan si no está bloqueada (admin siempre)
 create policy r_sel on rubrics for select using (is_active_user());
@@ -336,7 +342,7 @@ create policy es_write on evaluation_scores for all using (
   can_vote() and exists(select 1 from evaluations e where e.id = evaluation_id and e.judge_id = auth.uid() and not event_closed()));
 
 create policy al_adm on audit_log for select using (is_admin());
-create policy al_ins on audit_log for insert with check (user_id = auth.uid());
+create policy al_ins on audit_log for insert with check (user_id = auth.uid() and is_active_user());
 
 -- Vistas respetan RLS de las tablas base
 alter view evaluation_totals set (security_invoker = on);
@@ -348,6 +354,43 @@ alter publication supabase_realtime add table notes, evaluations, evaluation_sco
 -- ========== STORAGE ==========
 insert into storage.buckets (id, name, public) values ('public-assets','public-assets', true)
 on conflict do nothing;
+
+create policy public_assets_read on storage.objects for select
+  using (bucket_id = 'public-assets');
+
+create policy public_assets_avatar_insert on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'public-assets'
+    and public.is_active_user()
+    and (storage.foldername(name))[1] = 'avatars'
+    and (storage.foldername(name))[2] = auth.uid()::text
+  );
+
+create policy public_assets_avatar_update on storage.objects for update to authenticated
+  using (
+    bucket_id = 'public-assets'
+    and public.is_active_user()
+    and (storage.foldername(name))[1] = 'avatars'
+    and (storage.foldername(name))[2] = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'public-assets'
+    and public.is_active_user()
+    and (storage.foldername(name))[1] = 'avatars'
+    and (storage.foldername(name))[2] = auth.uid()::text
+  );
+
+create policy public_assets_avatar_delete on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'public-assets'
+    and public.is_active_user()
+    and (storage.foldername(name))[1] = 'avatars'
+    and (storage.foldername(name))[2] = auth.uid()::text
+  );
+
+create policy public_assets_admin on storage.objects for all to authenticated
+  using (bucket_id = 'public-assets' and public.is_admin())
+  with check (bucket_id = 'public-assets' and public.is_admin());
 ```
 
 **Hacerte admin a mano** (después de registrarte), en SQL Editor:
