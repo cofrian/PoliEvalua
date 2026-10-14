@@ -1,4 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
+
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -16,9 +20,12 @@ export default function Home() {
           priority
           className="h-14 w-auto"
         />
-        <p className="max-w-40 text-right text-xs font-bold uppercase tracking-[0.12em] text-navy-700 dark:text-[#F4F1EA] sm:max-w-none sm:text-sm">
-          Cátedra Valent-IA
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="max-w-40 text-right text-xs font-bold uppercase tracking-[0.12em] text-navy-700 dark:text-[#F4F1EA] sm:max-w-none sm:text-sm">
+            Cátedra Valent-IA
+          </p>
+          <ThemeToggle />
+        </div>
       </header>
 
       <section className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center py-16 text-center sm:py-24">
@@ -26,14 +33,23 @@ export default function Home() {
           Panel del jurado
         </span>
         <h1 className="max-w-3xl font-display text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
-          Preparando la plataforma de València Hack
+          Panel del jurado de València Hack
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-7 text-slate-500 dark:text-[#C6C4CE] sm:text-lg">
-          La base técnica y visual ya está lista. En el siguiente paso conectaremos
-          la base de datos, la autenticación y los perfiles del jurado.
+          Accede al panel para guardar notas, evaluar proyectos y consultar tu
+          trabajo desde cualquier dispositivo.
         </p>
 
-        <div className="mt-10 grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">
+        <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
+          <Button asChild className="h-11 flex-1 font-bold">
+            <Link href="/login">Iniciar sesión</Link>
+          </Button>
+          <Button asChild className="h-11 flex-1 font-bold" variant="outline">
+            <Link href="/registro">Crear cuenta</Link>
+          </Button>
+        </div>
+
+        <div className="mt-8 grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">
           {[
             ["Next.js 15", "App Router + TypeScript"],
             ["Supabase", "Auth, Postgres y Realtime"],
