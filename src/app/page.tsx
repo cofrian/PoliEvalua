@@ -40,14 +40,9 @@ export default function Home() {
           trabajo desde cualquier dispositivo.
         </p>
 
-        <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
-          <Button asChild className="h-11 flex-1 font-bold">
-            <Link href="/login">Iniciar sesión</Link>
-          </Button>
-          <Button asChild className="h-11 flex-1 font-bold" variant="outline">
-            <Link href="/registro">Crear cuenta</Link>
-          </Button>
-        </div>
+        <Button asChild className="mt-8 h-11 w-full max-w-xs font-bold">
+          <Link href="/login">Entrar</Link>
+        </Button>
       </section>
 
       <footer className="relative mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 border-t border-line pt-5 text-center text-xs text-slate-500 dark:border-[#262838] dark:text-[#C6C4CE] sm:flex-row sm:text-left">

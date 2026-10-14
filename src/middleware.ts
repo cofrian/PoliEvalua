@@ -5,12 +5,10 @@ const PUBLIC_ROUTES = new Set([
   "/",
   "/login",
   "/registro",
-  "/recuperar",
-  "/nueva-contrasena",
   "/auth/callback",
 ]);
 
-const AUTH_ENTRY_ROUTES = new Set(["/", "/login", "/registro", "/recuperar"]);
+const AUTH_ENTRY_ROUTES = new Set(["/", "/login", "/registro"]);
 
 function copyResponseCookies(source: NextResponse, target: NextResponse) {
   source.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));
