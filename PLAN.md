@@ -101,11 +101,11 @@ audit_log       (id, user_id, action, entity, entity_id, payload jsonb, created_
    - **"He olvidado mi contraseña"** por email, y además el admin puede restablecerla desde el panel.
    - El admin puede cambiar el código, desactivar el registro y promover/bloquear usuarios. Nunca se borra nada al desactivar un usuario (soft-disable).
 2. **Inicio (Equipos)** — tarjetas por reto, filtro Reto 1/Reto 2, buscador, estado por equipo: nº notas mías, nº compartidas, ✔ evaluado / borrador / pendiente.
-3. **Ficha de equipo** — miembros, proyecto, timeline de notas (mías + compartidas, con autor y hora), editor rápido de nota con toggle "🔒 Privada / 👥 Compartida".
+3. **Ficha de equipo** — miembros, proyecto, timeline de notas (mías + compartidas, con autor y hora), editor rápido de nota con toggle "🔒 Privada / 👥 Compartida". El admin puede corregir el nombre del equipo y el de cada participante.
 4. **Evaluar equipo** — criterio a criterio con los 5 niveles como botones grandes y su descriptor; comentario por criterio; nota en vivo /100. Panel lateral (escritorio/tablet) o pestaña/drawer (móvil) con *Mis notas* y *Notas del jurado*. Autoguardado como borrador, botón "Enviar evaluación".
 5. **Rúbrica** — lista de criterios editable (drag & drop orden), pesos con barra que muestra la suma = 100 %, edición de los 5 descriptores, historial de cambios.
 6. **Resultados** (admin / tras cierre) — ranking por reto, desglose por criterio, comentarios de cada juez, dispersión entre jueces, export CSV/PDF.
-7. **Admin** — usuarios (invitar, rol), equipos (importar desde `equipos.txt`/CSV), retos, patrocinadores, estado del evento, auditoría.
+7. **Admin** — usuarios (invitar, rol), equipos y participantes (importar desde `equipos.txt`/CSV, renombrar, añadir o retirar integrantes), retos, patrocinadores, estado del evento, auditoría.
 8. **Perfil** — nombre, foto, organización, tema claro/oscuro.
 
 ## 6. Multiusuario y tiempo real

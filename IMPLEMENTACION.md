@@ -403,19 +403,9 @@ where id = (select id from auth.users where email = 'TU_EMAIL');
 
 ## 5. Datos iniciales (seed)
 
-`supabase/seed.sql` — ejecutar después de la migración. **La rúbrica es un ejemplo**: el jurado la cambia desde la app.
+`supabase/seed.sql` — ejecutar después de la migración con `npx supabase db push --linked --include-seed`. **La rúbrica es un ejemplo**: el jurado la cambia desde la app.
 
-```sql
-with ev as (
-  insert into events (name, date, status, signup_code)
-  values ('València Hack', '2026-10-15', 'building', 'VLCHACK26') returning id
-),
-r1 as (insert into challenges (event_id, name, "order") select id, 'Reto 1', 1 from ev returning id),
-r2 as (insert into challenges (event_id, name, "order") select id, 'Reto 2', 2 from ev returning id),
-rub as (insert into rubrics (event_id, name) select id, 'Rúbrica Sigma Data Club' from ev returning id)
-select 1;
-```
-Después inserta equipos y miembros a partir de `equipos/equipos.txt` (más fácil: el **importador CSV del panel admin**, §7.7, o un script `scripts/seed.ts` que lea el txt con el formato `N. Nombre: miembro1, miembro2…`).
+El archivo versionado contiene el evento, los dos retos, los 20 equipos y sus 76 participantes, los 25 niveles con los descriptores literales del PDF y los siete patrocinadores iniciales. Usa identificadores estables y, si detecta que el evento ya existe, termina sin sobrescribir correcciones hechas por el admin.
 
 Criterios de ejemplo (de `rubrica/Rubrica_Evaluacion_Sigma_Data_Club.pdf`):
 
@@ -429,7 +419,7 @@ Criterios de ejemplo (de `rubrica/Rubrica_Evaluacion_Sigma_Data_Club.pdf`):
 
 Cada criterio con 5 niveles: `1 Muy insuficiente · 2 Insuficiente · 3 Adecuado · 4 Muy bueno · 5 Excelente` y el descriptor del PDF copiado literal.
 
-✅ La app lista 20 equipos (10 por reto) y la rúbrica con 5 criterios que suman 100.
+✅ La base contiene 20 equipos (10 por reto), 76 participantes y la rúbrica con 5 criterios/25 niveles que suman 100. El admin puede renombrar equipos y participantes sin que una nueva ejecución del seed sobrescriba sus cambios.
 
 ## 6. Autenticación (registro con código + contraseña)
 
@@ -472,7 +462,7 @@ Todas las altas se crean como `judge`, excepto los emails incluidos en `ADMIN_EM
 - Query: teams + team_members + conteo de notes + mi evaluation + evaluation_totals.
 
 ### 7.3 Ficha de equipo y notas (`/equipos/[id]`)
-- Cabecera: número, nombre, reto, miembros, proyecto (editable por admin).
+- Cabecera: número, nombre, reto, miembros, proyecto (el admin puede editar el nombre del equipo y el de cada participante).
 - Editor de nota: textarea, chips de etiquetas, switch **"Solo yo / Todo el jurado"**, botón Guardar (también `Ctrl+Enter`).
 - Timeline con filtro: Todas · Mías · Compartidas. Cada nota mía tiene: editar, borrar, cambiar compartir.
 - Realtime: `supabase.channel('notes-'+teamId).on('postgres_changes', {event:'*', schema:'public', table:'notes', filter:`team_id=eq.${teamId}`}, refetch)`.
@@ -509,7 +499,7 @@ Todas las altas se crean como `judge`, excepto los emails incluidos en `ADMIN_EM
 ### 7.7 Admin (`/admin`)
 - **Evento**: nombre, fecha, estado (building / judging / closed), código de registro, abrir/cerrar registro.
 - **Usuarios**: lista, rol (`admin` / `judge` / `mentor`), desactivar/reactivar, restablecer contraseña.
-- **Retos y equipos**: CRUD + **importar CSV/TXT** (formato de `equipos.txt`).
+- **Retos, equipos y participantes**: CRUD + **importar CSV/TXT** (formato de `equipos.txt`); permite corregir el nombre del equipo y añadir, renombrar o retirar participantes.
 - **Patrocinadores**: subir logos claro/oscuro a Storage, orden, URL.
 - **Rúbrica**: bloquear/desbloquear.
 - **Auditoría**: tabla `audit_log` y `rubric_changes`.
@@ -538,6 +528,7 @@ Todas las altas se crean como `judge`, excepto los emails incluidos en `ADMIN_EM
 - [ ] Juez B no puede editar ni borrar la nota de A.
 - [ ] Mentor crea, edita, comparte y borra sus propias notas; puede leer las compartidas.
 - [ ] Mentor no puede crear ni modificar evaluaciones, puntuaciones o rúbrica (probar también llamando a la API directamente).
+- [ ] Admin cambia el nombre de un equipo y de un participante → el cambio aparece en las fichas y no afecta a notas o evaluaciones.
 - [ ] Cambiar peso de un criterio → totales recalculados en evaluaciones y ranking.
 - [ ] Añadir criterio → evaluaciones enviadas aparecen como "incompletas".
 - [ ] Pesos ≠ 100 → no deja guardar.
