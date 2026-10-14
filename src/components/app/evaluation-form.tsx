@@ -1,0 +1,298 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+
+export type Criterion = {
+  id: string;
+  title: string;
+  description: string | null;
+  weight: number;
+  rubric_levels: { score: number; label: string; descriptor: string | null }[];
+};
+
+type ScoreState = Record<string, { score: number | null; comment: string }>;
+
+type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
+
+export function EvaluationForm({
+  criteria,
+  initial,
+  locked,
+  rubricId,
+  scaleMax,
+  teamId,
+  userId,
+}: {
+  criteria: Criterion[];
+  initial: {
+    id: string;
+    status: string;
+    generalComment: string;
+    scores: { criterion_id: string; score: number | null; comment: string | null }[];
+  } | null;
+  locked: boolean;
+  rubricId: string;
+  scaleMax: number;
+  teamId: string;
+  userId: string;
+}) {
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+  const evaluationId = useRef<string | null>(initial?.id ?? null);
+  const [status, setStatus] = useState(initial?.status ?? "draft");
+  const [generalComment, setGeneralComment] = useState(
+    initial?.generalComment ?? "",
+  );
+  const [scores, setScores] = useState<ScoreState>(() =>
+    Object.fromEntries(
+      criteria.map((criterion) => {
+        const existing = initial?.scores.find(
+          (s) => s.criterion_id === criterion.id,
+        );
+        return [
+          criterion.id,
+          { score: existing?.score ?? null, comment: existing?.comment ?? "" },
+        ];
+      }),
+    ),
+  );
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [dirty, setDirty] = useState(false);
+
+  const total = criteria.reduce((sum, criterion) => {
+    const score = scores[criterion.id]?.score;
+    return score ? sum + (score / scaleMax) * criterion.weight : sum;
+  }, 0);
+  const scoredCount = criteria.filter((c) => scores[c.id]?.score).length;
+  const complete = scoredCount === criteria.length;
+
+  const save = useCallback(
+    async (nextStatus?: "draft" | "submitted") => {
+      setSaveState("saving");
+
+      const payload = {
+        team_id: teamId,
+        judge_id: userId,
+        rubric_id: rubricId,
+        general_comment: generalComment.trim() || null,
+        ...(nextStatus
+          ? {
+              status: nextStatus,
+              submitted_at:
+                nextStatus === "submitted" ? new Date().toISOString() : null,
+            }
+          : {}),
+      };
+
+      const { data: evaluation, error } = await supabase
+        .from("evaluations")
+        .upsert(payload, { onConflict: "team_id,judge_id,rubric_id" })
+        .select("id, status")
+        .single();
+
+      if (error || !evaluation) {
+        setSaveState("error");
+        return false;
+      }
+
+      evaluationId.current = evaluation.id;
+
+      const rows = Object.entries(scores)
+        .filter(([, value]) => value.score || value.comment.trim())
+        .map(([criterionId, value]) => ({
+          evaluation_id: evaluation.id,
+          criterion_id: criterionId,
+          score: value.score,
+          comment: value.comment.trim() || null,
+        }));
+
+      if (rows.length) {
+        const { error: scoresError } = await supabase
+          .from("evaluation_scores")
+          .upsert(rows, { onConflict: "evaluation_id,criterion_id" });
+
+        if (scoresError) {
+          setSaveState("error");
+          return false;
+        }
+      }
+
+      setStatus(evaluation.status);
+      setSaveState("saved");
+      setDirty(false);
+      return true;
+    },
+    [supabase, teamId, userId, rubricId, generalComment, scores],
+  );
+
+  // Autoguardado: 1 s después del último cambio.
+  useEffect(() => {
+    if (!dirty || locked) return;
+    setSaveState("pending");
+    const timer = setTimeout(() => void save(), 1000);
+    return () => clearTimeout(timer);
+  }, [dirty, locked, save]);
+
+  function update(criterionId: string, patch: Partial<ScoreState[string]>) {
+    setScores((current) => ({
+      ...current,
+      [criterionId]: { ...current[criterionId], ...patch },
+    }));
+    setDirty(true);
+  }
+
+  async function submit() {
+    if (!complete) {
+      toast.error("Puntúa todos los criterios antes de enviar.");
+      return;
+    }
+    const ok = await save("submitted");
+    if (ok) {
+      toast.success("Evaluación enviada. ¡Gracias!");
+      router.push("/equipos");
+      router.refresh();
+    } else {
+      toast.error("No se ha podido enviar. Revisa tu conexión.");
+    }
+  }
+
+  const saveLabel = {
+    idle: "",
+    pending: "Cambios sin guardar…",
+    saving: "Guardando…",
+    saved: "Guardado",
+    error: "Error al guardar",
+  }[saveState];
+
+  return (
+    <div className="space-y-6">
+      {locked ? (
+        <p className="rounded-lg border border-coral-400/50 bg-coral-400/10 px-3 py-2.5 text-sm">
+          La votación está cerrada. Ya no se pueden modificar evaluaciones.
+        </p>
+      ) : status === "submitted" ? (
+        <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 px-3 py-2.5 text-sm">
+          Ya has enviado esta evaluación. Puedes corregirla hasta que se cierre la
+          votación.
+        </p>
+      ) : null}
+
+      <ol className="space-y-5">
+        {criteria.map((criterion, index) => {
+          const current = scores[criterion.id];
+          const selected = criterion.rubric_levels.find(
+            (level) => level.score === current?.score,
+          );
+          return (
+            <li
+              className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]"
+              key={criterion.id}
+            >
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 className="font-display text-lg leading-snug">
+                  {index + 1}. {criterion.title}
+                </h2>
+                <span className="shrink-0 text-sm font-bold text-muted-foreground">
+                  {criterion.weight} %
+                </span>
+              </div>
+              <div
+                aria-label={criterion.title}
+                className="grid grid-cols-5 gap-2"
+                role="radiogroup"
+              >
+                {criterion.rubric_levels.map((level) => (
+                  <button
+                    aria-checked={current?.score === level.score}
+                    className={cn(
+                      "flex min-h-14 flex-col items-center justify-center rounded-lg border px-1 py-2 text-center transition-colors disabled:opacity-60",
+                      current?.score === level.score
+                        ? "border-navy-900 bg-navy-900 text-white dark:border-orange-100 dark:bg-orange-100 dark:text-navy-900"
+                        : "border-line hover:bg-navy-900/5 dark:border-[#262838] dark:hover:bg-white/10",
+                    )}
+                    disabled={locked}
+                    key={level.score}
+                    onClick={() =>
+                      update(criterion.id, {
+                        score:
+                          current?.score === level.score ? null : level.score,
+                      })
+                    }
+                    role="radio"
+                    title={level.descriptor ?? level.label}
+                    type="button"
+                  >
+                    <span className="text-lg font-bold">{level.score}</span>
+                    <span className="hidden text-[11px] leading-tight sm:block">
+                      {level.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {selected?.descriptor ? (
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  <strong className="text-foreground">{selected.label}:</strong>{" "}
+                  {selected.descriptor}
+                </p>
+              ) : null}
+              <Textarea
+                aria-label={`Comentario sobre ${criterion.title}`}
+                className="mt-3 min-h-16"
+                disabled={locked}
+                onChange={(event) =>
+                  update(criterion.id, { comment: event.target.value })
+                }
+                placeholder="Comentario (opcional)"
+                value={current?.comment ?? ""}
+              />
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="space-y-2">
+        <label className="text-sm font-semibold" htmlFor="generalComment">
+          Comentario general
+        </label>
+        <Textarea
+          disabled={locked}
+          id="generalComment"
+          onChange={(event) => {
+            setGeneralComment(event.target.value);
+            setDirty(true);
+          }}
+          value={generalComment}
+        />
+      </div>
+
+      <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-4 border-t border-line bg-paper-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border dark:border-[#262838] dark:bg-ink-950/95">
+        <div>
+          <p className="font-display text-3xl leading-none">
+            {total.toFixed(1)}
+            <span className="text-base text-muted-foreground"> / 100</span>
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+            {scoredCount}/{criteria.length} criterios · {saveLabel}
+          </p>
+        </div>
+        {!locked ? (
+          <Button
+            className="h-11 px-5 font-bold"
+            disabled={saveState === "saving"}
+            onClick={() => void submit()}
+            type="button"
+          >
+            {status === "submitted" ? "Reenviar evaluación" : "Enviar evaluación"}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}

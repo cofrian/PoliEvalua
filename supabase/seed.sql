@@ -16,7 +16,7 @@ begin
   end if;
 
   insert into events (id, name, date, status, signup_code, signup_open)
-  values (event_id, 'València Hack', '2026-10-15', 'building', 'VLCHACK26', true);
+  values (event_id, 'València Hack', '2026-10-15', 'building', 'VALENT-IA', true);
 
   insert into challenges (id, event_id, name, description, "order")
   values
@@ -65,25 +65,24 @@ begin
   insert into teams (id, challenge_id, number, name)
   values
     ('10000000-0000-4000-8000-000000000001', challenge_1_id, 1, 'Chupi pandi'),
-    ('10000000-0000-4000-8000-000000000002', challenge_1_id, 2, 'Patos de Tarde'),
-    ('10000000-0000-4000-8000-000000000003', challenge_1_id, 3, 'Cena'),
-    ('10000000-0000-4000-8000-000000000004', challenge_1_id, 4, 'Myazo'),
-    ('10000000-0000-4000-8000-000000000005', challenge_1_id, 5, 'gatITonas'),
-    ('10000000-0000-4000-8000-000000000006', challenge_1_id, 6, 'SIGMA-DZY'),
-    ('10000000-0000-4000-8000-000000000007', challenge_1_id, 7, 'DataStorm'),
-    ('10000000-0000-4000-8000-000000000008', challenge_1_id, 8, 'Marina & Aya (sin nombre)'),
-    ('10000000-0000-4000-8000-000000000009', challenge_1_id, 9, 'Nirmin & Carla (sin nombre)'),
-    ('10000000-0000-4000-8000-000000000010', challenge_1_id, 10, 'winsortf'),
+    ('10000000-0000-4000-8000-000000000003', challenge_1_id, 2, 'Cena'),
+    ('10000000-0000-4000-8000-000000000004', challenge_1_id, 3, 'Myazo'),
+    ('10000000-0000-4000-8000-000000000005', challenge_1_id, 4, 'gatITonas'),
+    ('10000000-0000-4000-8000-000000000006', challenge_1_id, 5, 'SIGMA-DZY'),
+    ('10000000-0000-4000-8000-000000000007', challenge_1_id, 6, 'DataStorm'),
+    ('10000000-0000-4000-8000-000000000008', challenge_1_id, 7, 'Marina & Aya (sin nombre)'),
+    ('10000000-0000-4000-8000-000000000009', challenge_1_id, 8, 'Nirmin & Carla (sin nombre)'),
+    ('10000000-0000-4000-8000-000000000010', challenge_1_id, 9, 'winsortf'),
+    ('10000000-0000-4000-8000-000000000011', challenge_1_id, 10, 'Daniela & Blanca (sin nombre)'),
     ('20000000-0000-4000-8000-000000000001', challenge_2_id, 1, 'Inter de Python'),
     ('20000000-0000-4000-8000-000000000002', challenge_2_id, 2, 'Aporreadores de hardware'),
     ('20000000-0000-4000-8000-000000000003', challenge_2_id, 3, 'Liras'),
-    ('20000000-0000-4000-8000-000000000004', challenge_2_id, 4, 'ONU'),
-    ('20000000-0000-4000-8000-000000000005', challenge_2_id, 5, 'ferrero.split()'),
-    ('20000000-0000-4000-8000-000000000006', challenge_2_id, 6, 'ValenciaTec'),
-    ('20000000-0000-4000-8000-000000000007', challenge_2_id, 7, 'InvtRomán26'),
-    ('20000000-0000-4000-8000-000000000008', challenge_2_id, 8, 'Cafeter.IA'),
-    ('20000000-0000-4000-8000-000000000009', challenge_2_id, 9, 'AI Destroyers'),
-    ('20000000-0000-4000-8000-000000000010', challenge_2_id, 10, 'X');
+    ('20000000-0000-4000-8000-000000000005', challenge_2_id, 4, 'ferrero.split()'),
+    ('20000000-0000-4000-8000-000000000006', challenge_2_id, 5, 'ValenciaTec'),
+    ('20000000-0000-4000-8000-000000000007', challenge_2_id, 6, 'InvtRomán26'),
+    ('20000000-0000-4000-8000-000000000008', challenge_2_id, 7, 'Cafeter.IA'),
+    ('20000000-0000-4000-8000-000000000009', challenge_2_id, 8, 'AI Destroyers'),
+    ('20000000-0000-4000-8000-000000000010', challenge_2_id, 9, 'AI-Goritmo');
 
   insert into team_members (team_id, full_name)
   values
@@ -91,10 +90,6 @@ begin
     ('10000000-0000-4000-8000-000000000001', 'María Fátima Cebrià'),
     ('10000000-0000-4000-8000-000000000001', 'Adriana Baghdasaryan Hovantanyan'),
     ('10000000-0000-4000-8000-000000000001', 'Javier Baena Martín'),
-    ('10000000-0000-4000-8000-000000000002', 'Vicente Llácer Llorca'),
-    ('10000000-0000-4000-8000-000000000002', 'Mateo Alis Fidel'),
-    ('10000000-0000-4000-8000-000000000002', 'Pablo Huguet Chordi'),
-    ('10000000-0000-4000-8000-000000000002', 'Manuel Caballero Vicente'),
     ('10000000-0000-4000-8000-000000000003', 'Pedro Díaz-Masa Valencia'),
     ('10000000-0000-4000-8000-000000000003', 'Pablo Zarzo Montés'),
     ('10000000-0000-4000-8000-000000000003', 'Emma Torres Aranda'),
@@ -114,6 +109,7 @@ begin
     ('10000000-0000-4000-8000-000000000007', 'Diego García García'),
     ('10000000-0000-4000-8000-000000000007', 'Dídac Aliaga Codina'),
     ('10000000-0000-4000-8000-000000000007', 'Eduardo Maciá Navío'),
+    ('10000000-0000-4000-8000-000000000007', 'Sandra Saiz García'),
     ('10000000-0000-4000-8000-000000000008', 'Marina Clouet Escribano'),
     ('10000000-0000-4000-8000-000000000008', 'Aya El Bouazzaoui Haddari'),
     ('10000000-0000-4000-8000-000000000008', 'David Alexandru Toma Pricop'),
@@ -125,6 +121,10 @@ begin
     ('10000000-0000-4000-8000-000000000010', 'Cristian Ospina'),
     ('10000000-0000-4000-8000-000000000010', 'Zhenze Xue Jiang'),
     ('10000000-0000-4000-8000-000000000010', 'Maksym'),
+    ('10000000-0000-4000-8000-000000000011', 'Daniela Murray Rubio'),
+    ('10000000-0000-4000-8000-000000000011', 'Blanca Tamarit Paulino'),
+    ('10000000-0000-4000-8000-000000000011', 'Vasyl Ishutin'),
+    ('10000000-0000-4000-8000-000000000011', 'Víctor Bolinches Salvador'),
     ('20000000-0000-4000-8000-000000000001', 'David Sancho Carrascosa'),
     ('20000000-0000-4000-8000-000000000001', 'Samuel García Sesé'),
     ('20000000-0000-4000-8000-000000000001', 'Raúl Gradolí Montagud'),
@@ -137,10 +137,6 @@ begin
     ('20000000-0000-4000-8000-000000000003', 'Irene Cayuelas'),
     ('20000000-0000-4000-8000-000000000003', 'Pau Ruiz'),
     ('20000000-0000-4000-8000-000000000003', 'Manuel Montalvo'),
-    ('20000000-0000-4000-8000-000000000004', 'Nora Aitikhlef Attaoui'),
-    ('20000000-0000-4000-8000-000000000004', 'Marta Gregori Bataller'),
-    ('20000000-0000-4000-8000-000000000004', 'Anyu-Jhon Zhu'),
-    ('20000000-0000-4000-8000-000000000004', 'Jorge Jiménez'),
     ('20000000-0000-4000-8000-000000000005', 'Miriam Domenech Gracia'),
     ('20000000-0000-4000-8000-000000000005', 'Nerea Valera del Puerto'),
     ('20000000-0000-4000-8000-000000000005', 'Vega Montalbán Mengod'),
@@ -152,9 +148,11 @@ begin
     ('20000000-0000-4000-8000-000000000007', 'Christian Bernardos Vilariño'),
     ('20000000-0000-4000-8000-000000000007', 'Ignacio Noguerales Vela'),
     ('20000000-0000-4000-8000-000000000007', 'Gabriel Zamora Fernández'),
+    ('20000000-0000-4000-8000-000000000007', 'Wael Jalal Gasmi'),
     ('20000000-0000-4000-8000-000000000008', 'Elena Escriche'),
     ('20000000-0000-4000-8000-000000000008', 'Danielle Saxon'),
     ('20000000-0000-4000-8000-000000000008', 'Julia Sánchez Manrique'),
+    ('20000000-0000-4000-8000-000000000008', 'Mykhaylo Miskiv Balytskiy'),
     ('20000000-0000-4000-8000-000000000009', 'Claudiu Iosia Rus'),
     ('20000000-0000-4000-8000-000000000009', 'Jordi Sarrió Sanfélix'),
     ('20000000-0000-4000-8000-000000000009', 'Samuel Parry Rebollo'),

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, Montserrat } from "next/font/google";
 
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -31,9 +33,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={`${fraunces.variable} ${montserrat.variable} antialiased`}>
-        <TooltipProvider>{children}</TooltipProvider>
+    <html lang="es" suppressHydrationWarning>
+      <body
+        className={`${fraunces.variable} ${montserrat.variable} font-sans antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+        >
+          <TooltipProvider>{children}</TooltipProvider>
+          <Toaster richColors />
+        </ThemeProvider>
       </body>
     </html>
   );
