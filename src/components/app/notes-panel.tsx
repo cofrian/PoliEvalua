@@ -178,6 +178,8 @@ export function NotesPanel({
       return;
     }
 
+    // Se vacía al momento para poder escribir la siguiente nota sin esperar.
+    setBody("");
     setSaving(true);
     const { error } = await supabase.from("notes").insert({
       team_id: teamId,
@@ -192,10 +194,10 @@ export function NotesPanel({
         queueNote(text);
       } else {
         toast.error("No se ha podido guardar la nota.");
+        setBody((current) => current || text);
       }
       return;
     }
-    setBody("");
     void reload();
   }
 
