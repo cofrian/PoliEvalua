@@ -78,10 +78,11 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   const { data } = await db.auth.admin.listUsers({ perPage: 1000 });
-  for (const user of data.users.filter((u) => u.email?.includes(`-${stamp}@test.local`))) {
+  for (const user of data.users.filter((u) => u.email?.startsWith("e2e-") && u.email.endsWith("@test.local"))) {
     await db.from("notes").delete().eq("author_id", user.id);
     await db.from("audit_log").delete().eq("user_id", user.id);
-    await db.auth.admin.deleteUser(user.id);
+    const { error } = await db.auth.admin.deleteUser(user.id);
+    if (error) console.warn(`No se pudo borrar ${user.email}: ${error.message}`);
   }
 });
 

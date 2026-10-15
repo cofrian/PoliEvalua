@@ -82,11 +82,7 @@ try {
   check("El mentor SÍ ve la nota compartida", seenByMentor.some((n) => n.id === sharedNote.id));
 
   const { data: seenByAdmin } = await boss.client.from("notes").select("id").eq("id", privateNote.id);
-  check(
-    `El admin ${event.audit_mode ? "SÍ" : "NO"} ve notas privadas (modo auditoría ${event.audit_mode ? "activado" : "desactivado"})`,
-    event.audit_mode ? seenByAdmin.length === 1 : seenByAdmin.length === 0,
-    "aplica la migración 0002 (modo auditoría)",
-  );
+  check("El admin SÍ ve las notas privadas de todos", seenByAdmin.length === 1);
 
   const { data: editedByB } = await judgeB.client.from("notes").update({ body: "pirateada" }).eq("id", sharedNote.id).select("id");
   check("Otro juez NO puede editar una nota ajena", !editedByB?.length);
@@ -131,6 +127,29 @@ try {
     .insert({ team_id: team.id, judge_id: judgeA.id, rubric_id: rubric.id });
   check("Un juez NO puede evaluar en nombre de otro", Boolean(forgeError));
 
+  // Borrador visible en directo para el admin, no para otros jueces.
+  const { data: draftB } = await judgeB.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: judgeB.id, rubric_id: rubric.id, status: "draft" })
+    .select("id")
+    .single();
+  await judgeB.client
+    .from("evaluation_scores")
+    .insert({ evaluation_id: draftB.id, criterion_id: criteria[0].id, score: 4 });
+  const { data: adminDraft } = await boss.client
+    .from("evaluations")
+    .select("id, evaluation_scores(score)")
+    .eq("id", draftB.id)
+    .single();
+  check(
+    "El admin SÍ ve los borradores y sus puntuaciones en directo",
+    adminDraft?.evaluation_scores?.[0]?.score === 4,
+  );
+  const { data: draftSeenByA } = await judgeA.client.from("evaluations").select("id").eq("id", draftB.id);
+  if (event.status !== "closed") {
+    check("Otro juez NO ve el borrador ajeno", draftSeenByA.length === 0);
+  }
+
   // ---------- Rúbrica ----------
   const criterion = criteria[0];
   const { data: mentorRubric } = await mentor.client
@@ -139,6 +158,41 @@ try {
     .eq("id", criterion.id)
     .select("id");
   check("El mentor NO puede editar la rúbrica", !mentorRubric?.length);
+
+  const { data: wasLocked } = await admin.from("rubrics").select("locked").eq("id", rubric.id).single();
+  if (!wasLocked.locked) {
+    const { data: judgeRubric } = await judgeA.client
+      .from("rubric_criteria")
+      .update({ weight: criterion.weight })
+      .eq("id", criterion.id)
+      .select("id");
+    check("Un juez SÍ puede editar la rúbrica sin bloquear", judgeRubric?.length === 1);
+  }
+
+  const { error: lockError } = await boss.client.from("rubrics").update({ locked: true }).eq("id", rubric.id);
+  check("El admin SÍ puede bloquear la rúbrica (pesos = 100)", !lockError, lockError?.message);
+  const { data: judgeLocked } = await judgeA.client
+    .from("rubric_criteria")
+    .update({ weight: criterion.weight })
+    .eq("id", criterion.id)
+    .select("id");
+  check("Un juez NO puede editar la rúbrica bloqueada", !judgeLocked?.length);
+  const { data: adminLocked } = await boss.client
+    .from("rubric_criteria")
+    .update({ weight: criterion.weight })
+    .eq("id", criterion.id)
+    .select("id");
+  check("El admin SÍ puede editar la rúbrica aunque esté bloqueada", adminLocked?.length === 1);
+  await admin.from("rubrics").update({ locked: wasLocked.locked }).eq("id", rubric.id);
+
+  const { error: badLock } = await (async () => {
+    await admin.from("rubric_criteria").update({ weight: Number(criterion.weight) + 1 }).eq("id", criterion.id);
+    const result = await boss.client.from("rubrics").update({ locked: true }).eq("id", rubric.id);
+    await admin.from("rubric_criteria").update({ weight: criterion.weight }).eq("id", criterion.id);
+    await admin.from("rubrics").update({ locked: wasLocked.locked }).eq("id", rubric.id);
+    return result;
+  })();
+  check("No se puede bloquear si los pesos no suman 100", Boolean(badLock));
 
   // ---------- Roles ----------
   const { data: selfPromote } = await judgeA.client
