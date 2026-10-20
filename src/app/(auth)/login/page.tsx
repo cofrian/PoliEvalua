@@ -4,7 +4,7 @@ import { AuthCard } from "@/components/auth/auth-card";
 import { AccessForm } from "@/components/auth/auth-forms";
 
 export const metadata: Metadata = {
-  title: "Entrar · València Hack",
+  title: "Entrar",
 };
 
 type LoginPageProps = {
@@ -20,8 +20,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthCard
-      description="Entra con el código de la organización, tu correo y tu contraseña. En el primer acceso crearemos tu cuenta."
-      title="Acceso del jurado"
+      description="Introduce el código de tu espacio, tu correo y tu contraseña. En el primer acceso crearemos tu cuenta."
+      title="Accede a tu espacio"
     >
       <AccessForm notice={notice} />
     </AuthCard>

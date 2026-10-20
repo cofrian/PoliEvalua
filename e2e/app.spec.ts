@@ -137,14 +137,14 @@ test.afterAll(async () => {
 test("1. Portada y acceso con contraseña", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Panel del jurado/ }),
+    page.getByRole("heading", { name: /Crea el proceso de evaluación/ }),
   ).toBeVisible();
   await expect(page.getByText("Next.js")).toHaveCount(0);
   await page.getByRole("link", { name: "Entrar" }).click();
   await expect(page.getByLabel("Código de acceso")).toBeVisible();
   await expect(page.getByLabel("Contraseña")).toBeVisible();
   await expect(
-    page.getByAltText(/Ajuntament de València/).first(),
+    page.getByAltText(/Universitat Politècnica de València/).first(),
   ).toBeVisible();
 });
 

@@ -2,23 +2,16 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "València Hack · Panel del jurado",
-    short_name: "VLC Hack Jurado",
-    description: "Notas y evaluación del jurado de València Hack.",
+    name: "Evalúa · Universitat Politècnica de València",
+    short_name: "Evalúa UPV",
+    description: "Espacios configurables de evaluación para la comunidad UPV.",
     start_url: "/equipos",
     display: "standalone",
-    background_color: "#fffbf5",
-    theme_color: "#1f2557",
+    background_color: "#f8f8f7",
+    theme_color: "#3f4444",
     lang: "es",
     icons: [
-      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-      {
-        src: "/icons/maskable-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
+      { src: "/icons/upv-evalua.svg", sizes: "any", type: "image/svg+xml" },
     ],
   };
 }

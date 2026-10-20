@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { logoutAction } from "@/app/(auth)/actions";
+import { UpvBrand } from "@/components/brand/upv-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { getSession, roleLabels } from "@/lib/app/session";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { supabase, profile, isAdmin, eventClosed } = await getSession();
+  const { supabase, profile, isAdmin, event, eventClosed } = await getSession();
 
   // Última actividad (para el panel admin). No bloquea si falla.
   await supabase.rpc("touch_last_seen");
@@ -23,24 +23,20 @@ export default async function AppLayout({
   ];
 
   return (
-    <div className="min-h-svh bg-paper-50 text-navy-900 dark:bg-ink-950 dark:text-[#F4F1EA]">
-      <header className="sticky top-0 z-30 border-b border-line bg-paper-50/90 backdrop-blur print:hidden dark:border-[#262838] dark:bg-ink-950/90">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 pt-3 sm:px-6 sm:py-3">
+    <div className="min-h-svh bg-paper-50 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
+      <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur print:hidden dark:border-[#383C3D] dark:bg-[#1B1E1E]/95">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 pt-3 sm:px-6 sm:py-3 lg:px-8">
           <div className="flex min-w-0 items-center gap-4">
-            <Link className="shrink-0" href="/equipos">
-              <Image
-                alt="València Hack"
-                className="h-9 w-auto"
-                height={72}
-                priority
-                src="/brand/valencia-hack.svg"
-                width={180}
-              />
-            </Link>
+            <UpvBrand className="shrink-0" href="/equipos" />
+            {event?.name ? (
+              <span className="hidden max-w-48 truncate border-l border-line pl-4 text-xs font-semibold text-upv-500 lg:block dark:border-[#383C3D] dark:text-upv-300">
+                {event.name}
+              </span>
+            ) : null}
             <nav className="hidden gap-1 text-sm font-semibold sm:flex">
               {links.map((link) => (
                 <Link
-                  className="rounded-md px-2.5 py-1.5 hover:bg-navy-900/5 dark:hover:bg-white/10"
+                  className="rounded-md px-2.5 py-1.5 hover:bg-upv-100 dark:hover:bg-white/10"
                   href={link.href}
                   key={link.href}
                 >
@@ -51,7 +47,7 @@ export default async function AppLayout({
           </div>
           <div className="flex items-center gap-2">
             <Link
-              className="flex items-center gap-2 rounded-full py-1 pr-1 hover:bg-navy-900/5 dark:hover:bg-white/10"
+              className="flex items-center gap-2 rounded-full py-1 pr-1 hover:bg-upv-100 dark:hover:bg-white/10"
               href="/perfil"
               title="Mi perfil"
             >
@@ -66,7 +62,7 @@ export default async function AppLayout({
                   src={profile.avatar_url}
                 />
               ) : (
-                <span className="flex size-8 items-center justify-center rounded-full bg-sky-400 text-xs font-bold text-white">
+                <span className="flex size-8 items-center justify-center rounded-full bg-upv-blue text-xs font-bold text-upv-ink">
                   {profile.full_name.slice(0, 1).toUpperCase()}
                 </span>
               )}
@@ -85,7 +81,7 @@ export default async function AppLayout({
         <nav className="flex gap-1 overflow-x-auto px-4 py-2 text-sm font-semibold sm:hidden">
           {links.map((link) => (
             <Link
-              className="shrink-0 rounded-md px-2.5 py-1.5 hover:bg-navy-900/5 dark:hover:bg-white/10"
+              className="shrink-0 rounded-md px-2.5 py-1.5 hover:bg-upv-100 dark:hover:bg-white/10"
               href={link.href}
               key={link.href}
             >
@@ -94,7 +90,7 @@ export default async function AppLayout({
           ))}
         </nav>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

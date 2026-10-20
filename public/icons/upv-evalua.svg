@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Evalúa UPV</title>
+  <rect width="512" height="512" rx="104" fill="#3f4444"/>
+  <path d="M84 84h344v88H180v54h210v84H180v30h248v88H84V84Z" fill="#fff"/>
+  <path d="M354 84h74v88h-74z" fill="#ffd100"/>
+  <path d="M84 340h96v88H84z" fill="#59cbe8"/>
+</svg>

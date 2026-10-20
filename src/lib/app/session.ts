@@ -29,11 +29,16 @@ export const getSession = cache(async () => {
 
   const role = profile.role as Role;
 
-  const { data: event } = await supabase
+  const { data: eventData } = await supabase
     .from("events")
-    .select("id, status")
+    .select("id, name, status")
     .limit(1)
     .maybeSingle();
+  const event = eventData as {
+    id: string;
+    name: string;
+    status: "setup" | "building" | "judging" | "closed";
+  } | null;
 
   return {
     supabase,
