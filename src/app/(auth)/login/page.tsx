@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthCard
-      description="Entra con el código de acceso de la organización. Si ya entraste antes, usa el mismo correo y recuperarás tus notas."
+      description="Entra con el código de la organización, tu correo y tu contraseña. En el primer acceso crearemos tu cuenta."
       title="Acceso del jurado"
     >
       <AccessForm notice={notice} />

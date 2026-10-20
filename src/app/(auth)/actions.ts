@@ -25,6 +25,10 @@ const accessSchema = z.object({
     .trim()
     .toLowerCase()
     .email("Introduce un correo electrónico válido."),
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres.")
+    .max(72, "La contraseña no puede superar los 72 caracteres."),
   role: z.enum(["judge", "mentor"], {
     error: "Elige si participas como juez o como mentor.",
   }),
@@ -78,9 +82,9 @@ async function validateAccessCode(
   return null;
 }
 
-// Acceso en dos pasos. El código del evento solo prueba que puedes entrar al
-// evento; la identidad se prueba con el código de un solo uso que Supabase
-// envía al correo. Así nadie puede entrar con la cuenta de otra persona.
+// El servidor valida primero el código privado del evento. Si el correo todavía
+// no existe, crea una cuenta confirmada con la contraseña elegida. Las cuentas
+// existentes solo pueden entrar con su contraseña actual.
 export async function accessAction(
   _previousState: AuthActionState,
   formData: FormData,
@@ -88,6 +92,7 @@ export async function accessAction(
   const parsed = accessSchema.safeParse({
     fullName: value(formData, "fullName"),
     email: value(formData, "email"),
+    password: value(formData, "password"),
     role: value(formData, "role"),
     accessCode: value(formData, "accessCode"),
   });
@@ -100,7 +105,7 @@ export async function accessAction(
     };
   }
 
-  const { fullName, email, role, accessCode } = parsed.data;
+  const { fullName, email, password, role, accessCode } = parsed.data;
   const values = { fullName, email, role, accessCode };
   const admin = createAdminClient();
   const ipKey = `ip:${await clientIp()}`;
@@ -124,107 +129,64 @@ export async function accessAction(
     return codeError;
   }
 
-  const otp = value(formData, "otp").replace(/\s/g, "");
-  const supabase = await createClient();
-
-  // Paso 1: enviar el código al correo.
-  if (!otp) {
-    // Antifuerza bruta 2: pocos correos por dirección y por IP.
-    if (await isBlocked(admin, "otp_sent", [emailKey, ipKey])) return tooMany;
-    // Se registra antes de enviar: si el registro de seguridad no está
-    // disponible, no se permite continuar sin límite de intentos.
-    if (!(await recordAttempt(admin, "otp_sent", [emailKey, ipKey])))
-      return tooMany;
-
-    // La cuenta la crea el servidor, nunca la API pública (registro desactivado).
-    // Si ya existe, Supabase devuelve email_exists y seguimos con ella.
-    const { data: createdUser, error: createError } =
-      await admin.auth.admin.createUser({
-        email,
-        email_confirm: true,
-        user_metadata: { full_name: fullName },
-        app_metadata: { created_by_server: true },
-      });
-    if (createError && createError.code !== "email_exists") {
-      console.error("No se pudo crear la cuenta:", createError.message);
-      return {
-        status: "error",
-        message: "No se ha podido crear el acceso. Inténtalo de nuevo.",
-      };
-    }
-
-    // El trigger crea todos los perfiles desactivados. Solo esta ruta del
-    // servidor, después de validar el código del evento, puede activar uno
-    // recién creado. Una cuenta ya existente conserva su estado.
-    if (!createError && createdUser.user) {
-      const { error: activationError } = await admin
-        .from("profiles")
-        .update({ disabled: false, role })
-        .eq("id", createdUser.user.id);
-
-      if (activationError) {
-        console.error("No se pudo activar el perfil:", activationError.message);
-        return {
-          status: "error",
-          message:
-            "No se ha podido activar el acceso. Contacta con la organización.",
-        };
-      }
-    }
-
-    const skipEmailInLocalE2e =
-      process.env.NODE_ENV !== "production" &&
-      process.env.E2E_TEST_MODE === "true" &&
-      email.endsWith("@test.local");
-
-    if (!skipEmailInLocalE2e) {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false },
-      });
-      if (error) {
-        console.error("No se pudo enviar el código:", error.message);
-        return {
-          status: "error",
-          message:
-            "No se ha podido enviar el código. Espera un minuto y vuelve a probar.",
-        };
-      }
-    }
-    // Un código nuevo da intentos nuevos para ese correo.
-    await clearAttempts(admin, "bad_otp", [emailKey]);
-    return {
-      status: "otp_sent",
-      values,
-      message: `Te hemos enviado un código a ${email}. Escríbelo para entrar.`,
-    };
+  if (await isBlocked(admin, "bad_password", [emailKey, ipKey])) {
+    return tooMany;
   }
 
-  // Paso 2: comprobar el código del correo.
-  // Antifuerza bruta 3: 5 fallos y hay que pedir un código nuevo.
-  if (await isBlocked(admin, "bad_otp", [emailKey, ipKey])) {
+  // La cuenta la crea el servidor, nunca la API pública. Al marcar el correo
+  // como confirmado no se envía ningún mensaje y no hace falta configurar SMTP.
+  const { data: createdUser, error: createError } =
+    await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+      app_metadata: { created_by_server: true },
+    });
+  if (createError && createError.code !== "email_exists") {
+    console.error("No se pudo crear la cuenta:", createError.message);
     return {
       status: "error",
       values,
-      message: "Demasiados códigos incorrectos. Pide un código nuevo.",
+      message: "No se ha podido crear el acceso. Inténtalo de nuevo.",
     };
   }
-  const { data, error } = await supabase.auth.verifyOtp({
+
+  // El trigger crea todos los perfiles desactivados. Solo esta ruta del
+  // servidor, después de validar el código del evento, activa uno nuevo.
+  if (!createError && createdUser.user) {
+    const { error: activationError } = await admin
+      .from("profiles")
+      .update({ disabled: false, role })
+      .eq("id", createdUser.user.id);
+
+    if (activationError) {
+      console.error("No se pudo activar el perfil:", activationError.message);
+      return {
+        status: "error",
+        values,
+        message:
+          "No se ha podido activar el acceso. Contacta con la organización.",
+      };
+    }
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
-    token: otp,
-    type: "email",
+    password,
   });
   if (error || !data.user) {
-    if (!(await recordAttempt(admin, "bad_otp", [emailKey, ipKey])))
+    if (!(await recordAttempt(admin, "bad_password", [emailKey, ipKey])))
       return tooMany;
     return {
-      status: "otp_sent",
+      status: "error",
       values,
-      message: "El código del correo no es válido o ha caducado.",
-      fieldErrors: { otp: ["Código incorrecto o caducado."] },
+      message: "Correo o contraseña incorrectos.",
+      fieldErrors: { password: ["Comprueba la contraseña."] },
     };
   }
-  await clearAttempts(admin, "bad_otp", [emailKey]);
+  await clearAttempts(admin, "bad_password", [emailKey, ipKey]);
   await admin.rpc("prune_auth_attempts");
 
   const userId = data.user.id;

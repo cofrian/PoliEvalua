@@ -5,13 +5,12 @@ import { headers } from "next/headers";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
 type Admin = ReturnType<typeof createAdminClient>;
-export type AttemptKind = "bad_code" | "otp_sent" | "bad_otp";
+export type AttemptKind = "bad_code" | "bad_password";
 
 // Cuántos intentos se permiten en cada ventana antes de bloquear.
 export const LIMITS: Record<AttemptKind, { max: number; minutes: number }> = {
   bad_code: { max: 10, minutes: 15 }, // códigos de evento incorrectos por IP
-  otp_sent: { max: 5, minutes: 60 }, // correos con código por email
-  bad_otp: { max: 5, minutes: 15 }, // códigos de correo incorrectos por email o IP
+  bad_password: { max: 5, minutes: 15 }, // contraseñas incorrectas por email o IP
 };
 
 export async function clientIp() {

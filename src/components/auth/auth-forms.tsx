@@ -44,14 +44,12 @@ export function AccessForm({ notice }: { notice?: string }) {
     initialAuthActionState,
   );
 
-  const otpStep = state.status === "otp_sent";
   const values = state.values ?? {};
 
   return (
     <form
       action={formAction}
       className="space-y-5"
-      key={otpStep ? "otp" : "data"}
       noValidate
     >
       {notice ? (
@@ -72,7 +70,6 @@ export function AccessForm({ notice }: { notice?: string }) {
           aria-invalid={Boolean(state.fieldErrors?.fullName)}
           autoComplete="name"
           defaultValue={values.fullName}
-          readOnly={otpStep}
           className="h-11"
           id="fullName"
           name="fullName"
@@ -90,7 +87,6 @@ export function AccessForm({ notice }: { notice?: string }) {
           aria-invalid={Boolean(state.fieldErrors?.email)}
           autoComplete="email"
           defaultValue={values.email}
-          readOnly={otpStep}
           className="h-11"
           id="email"
           name="email"
@@ -99,9 +95,31 @@ export function AccessForm({ notice }: { notice?: string }) {
           type="email"
         />
         <p className="text-xs text-muted-foreground" id="email-hint">
-          Usa siempre el mismo para recuperar tus notas en otro dispositivo.
+          Usa siempre el mismo correo y contraseña para conservar tus notas.
         </p>
         <FieldError name="email" state={state} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Contraseña</Label>
+        <Input
+          aria-describedby={
+            state.fieldErrors?.password ? "password-error" : "password-hint"
+          }
+          aria-invalid={Boolean(state.fieldErrors?.password)}
+          autoComplete="current-password"
+          className="h-11"
+          id="password"
+          minLength={8}
+          maxLength={72}
+          name="password"
+          placeholder="Mínimo 8 caracteres"
+          required
+          type="password"
+        />
+        <p className="text-xs text-muted-foreground" id="password-hint">
+          En el primer acceso se creará tu cuenta con esta contraseña.
+        </p>
+        <FieldError name="password" state={state} />
       </div>
       <fieldset
         aria-describedby={state.fieldErrors?.role ? "role-error" : undefined}
@@ -149,7 +167,6 @@ export function AccessForm({ notice }: { notice?: string }) {
           autoComplete="off"
           className="h-11 uppercase"
           defaultValue={values.accessCode}
-          readOnly={otpStep}
           id="accessCode"
           name="accessCode"
           placeholder="Código facilitado por la organización"
@@ -160,29 +177,9 @@ export function AccessForm({ notice }: { notice?: string }) {
         </p>
         <FieldError name="accessCode" state={state} />
       </div>
-      {otpStep ? (
-        <div className="space-y-2">
-          <Label htmlFor="otp">Código recibido por correo</Label>
-          <Input
-            aria-describedby={state.fieldErrors?.otp ? "otp-error" : undefined}
-            aria-invalid={Boolean(state.fieldErrors?.otp)}
-            autoComplete="one-time-code"
-            autoFocus
-            className="h-11 tracking-widest"
-            id="otp"
-            inputMode="numeric"
-            name="otp"
-            maxLength={8}
-            minLength={8}
-            placeholder="12345678"
-            required
-          />
-          <FieldError name="otp" state={state} />
-        </div>
-      ) : null}
       <SubmitButton
-        idleLabel={otpStep ? "Entrar" : "Enviarme el código"}
-        pendingLabel={otpStep ? "Entrando…" : "Enviando…"}
+        idleLabel="Entrar"
+        pendingLabel="Entrando…"
       />
     </form>
   );

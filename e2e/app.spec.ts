@@ -45,6 +45,7 @@ const people = {
 const privateText = `Nota privada ${stamp}`;
 const sharedText = `Nota compartida ${stamp}`;
 const liveText = `Nota en directo ${stamp}`;
+const testPassword = `Prueba-${stamp}!`;
 const createdUserIds = new Set<string>();
 
 let accessCode = "";
@@ -66,22 +67,20 @@ async function login(
   await page.goto("/login");
   await page.getByLabel("Nombre completo").fill(who.name);
   await page.getByLabel("Correo electrónico").fill(who.email);
+  await page.getByLabel("Contraseña").fill(testPassword);
   await page.getByText(role, { exact: true }).click();
   await page.getByLabel("Código de acceso").fill(code);
-  await page.getByRole("button", { name: "Enviarme el código" }).click();
-  await expect(page.getByLabel("Código recibido por correo")).toBeVisible();
-  // En vez de leer el correo, pedimos a Supabase un código válido para esa cuenta.
-  const { data, error } = await db.auth.admin.generateLink({
-    type: "magiclink",
-    email: who.email,
-  });
-  if (error) throw error;
-  createdUserIds.add(data.user.id);
-  await page
-    .getByLabel("Código recibido por correo")
-    .fill(data.properties.email_otp);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL("**/equipos");
+
+  const { data, error } = await db.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  if (error) throw error;
+  const createdUser = data.users.find((user) => user.email === who.email);
+  if (!createdUser) throw new Error(`No se creó el usuario ${who.email}`);
+  createdUserIds.add(createdUser.id);
   return page;
 }
 
@@ -135,7 +134,7 @@ test.afterAll(async () => {
   }
 });
 
-test("1. Portada y acceso sin contraseña", async ({ page }) => {
+test("1. Portada y acceso con contraseña", async ({ page }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: /Panel del jurado/ }),
@@ -143,7 +142,7 @@ test("1. Portada y acceso sin contraseña", async ({ page }) => {
   await expect(page.getByText("Next.js")).toHaveCount(0);
   await page.getByRole("link", { name: "Entrar" }).click();
   await expect(page.getByLabel("Código de acceso")).toBeVisible();
-  await expect(page.getByLabel(/contraseña/i)).toHaveCount(0);
+  await expect(page.getByLabel("Contraseña")).toBeVisible();
   await expect(
     page.getByAltText(/Ajuntament de València/).first(),
   ).toBeVisible();
@@ -155,8 +154,9 @@ test("2. Un código incorrecto no deja entrar", async ({ page }) => {
   await page
     .getByLabel("Correo electrónico")
     .fill(`e2e-intruso-${stamp}@test.local`);
+  await page.getByLabel("Contraseña").fill(testPassword);
   await page.getByLabel("Código de acceso").fill("CODIGO-FALSO");
-  await page.getByRole("button", { name: "Enviarme el código" }).click();
+  await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByText("Código incorrecto.").first()).toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
