@@ -13,22 +13,39 @@ const env = Object.fromEntries(
     .filter((l) => l.includes("=") && !l.startsWith("#"))
     .map((l) => [
       l.slice(0, l.indexOf("=")).trim(),
-      l.slice(l.indexOf("=") + 1).trim().replace(/^"|"$/g, ""),
+      l
+        .slice(l.indexOf("=") + 1)
+        .trim()
+        .replace(/^"|"$/g, ""),
     ]),
 );
-const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
+const db = createClient(
+  env.NEXT_PUBLIC_SUPABASE_URL,
+  env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: { persistSession: false },
+  },
+);
 
 const stamp = Date.now();
 const people = {
-  judge: { name: `Jueza Prueba ${stamp}`, email: `e2e-juez-${stamp}@test.local` },
-  mentor: { name: `Mentor Prueba ${stamp}`, email: `e2e-mentor-${stamp}@test.local` },
-  admin: { name: `Admin Prueba ${stamp}`, email: `e2e-admin-${stamp}@test.local` },
+  judge: {
+    name: `Jueza Prueba ${stamp}`,
+    email: `e2e-juez-${stamp}@test.local`,
+  },
+  mentor: {
+    name: `Mentor Prueba ${stamp}`,
+    email: `e2e-mentor-${stamp}@test.local`,
+  },
+  admin: {
+    name: `Admin Prueba ${stamp}`,
+    email: `e2e-admin-${stamp}@test.local`,
+  },
 };
 const privateText = `Nota privada ${stamp}`;
 const sharedText = `Nota compartida ${stamp}`;
 const liveText = `Nota en directo ${stamp}`;
+const createdUserIds = new Set<string>();
 
 let accessCode = "";
 let team: { id: string; name: string };
@@ -51,6 +68,18 @@ async function login(
   await page.getByLabel("Correo electrónico").fill(who.email);
   await page.getByText(role, { exact: true }).click();
   await page.getByLabel("Código de acceso").fill(code);
+  await page.getByRole("button", { name: "Enviarme el código" }).click();
+  await expect(page.getByLabel("Código recibido por correo")).toBeVisible();
+  // En vez de leer el correo, pedimos a Supabase un código válido para esa cuenta.
+  const { data, error } = await db.auth.admin.generateLink({
+    type: "magiclink",
+    email: who.email,
+  });
+  if (error) throw error;
+  createdUserIds.add(data.user.id);
+  await page
+    .getByLabel("Código recibido por correo")
+    .fill(data.properties.email_otp);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL("**/equipos");
   return page;
@@ -59,11 +88,29 @@ async function login(
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
-  const { data: event } = await db.from("events").select("signup_code, status").single();
-  accessCode = event!.signup_code;
-  expect(event!.status, "el evento no debe estar cerrado para probar").not.toBe("closed");
+  if (process.env.E2E_BASE_URL?.startsWith("http://localhost")) {
+    // Las ejecuciones locales comparten la IP loopback. Se limpian únicamente
+    // sus contadores para que una ejecución anterior no bloquee la siguiente.
+    await db
+      .from("auth_attempts")
+      .delete()
+      .in("key", ["ip:::1", "ip:127.0.0.1", "ip:desconocida"]);
+  }
 
-  const { data: teams } = await db.from("teams").select("id, name").order("number").limit(2);
+  const { data: event } = await db
+    .from("events")
+    .select("signup_code, status")
+    .single();
+  accessCode = event!.signup_code;
+  expect(event!.status, "el evento no debe estar cerrado para probar").not.toBe(
+    "closed",
+  );
+
+  const { data: teams } = await db
+    .from("teams")
+    .select("id, name")
+    .order("number")
+    .limit(2);
   [team, secondTeam] = teams as { id: string; name: string }[];
 
   const { data: rubric } = await db
@@ -71,43 +118,59 @@ test.beforeAll(async () => {
     .select("rubric_criteria(id, deleted_at)")
     .eq("is_active", true)
     .single();
-  criteriaCount = (rubric!.rubric_criteria as { deleted_at: string | null }[]).filter(
-    (c) => !c.deleted_at,
-  ).length;
+  criteriaCount = (
+    rubric!.rubric_criteria as { deleted_at: string | null }[]
+  ).filter((c) => !c.deleted_at).length;
 });
 
 test.afterAll(async () => {
-  const { data } = await db.auth.admin.listUsers({ perPage: 1000 });
-  for (const user of data.users.filter((u) => u.email?.startsWith("e2e-") && u.email.endsWith("@test.local"))) {
-    await db.from("notes").delete().eq("author_id", user.id);
-    await db.from("audit_log").delete().eq("user_id", user.id);
-    const { error } = await db.auth.admin.deleteUser(user.id);
-    if (error) console.warn(`No se pudo borrar ${user.email}: ${error.message}`);
+  for (const userId of createdUserIds) {
+    await db.from("notes").delete().eq("author_id", userId);
+    await db.from("audit_log").delete().eq("user_id", userId);
+    const { error } = await db.auth.admin.deleteUser(userId);
+    if (error)
+      console.warn(
+        `No se pudo borrar el usuario E2E ${userId}: ${error.message}`,
+      );
   }
 });
 
 test("1. Portada y acceso sin contraseña", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Panel del jurado/ })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /Panel del jurado/ }),
+  ).toBeVisible();
   await expect(page.getByText("Next.js")).toHaveCount(0);
   await page.getByRole("link", { name: "Entrar" }).click();
   await expect(page.getByLabel("Código de acceso")).toBeVisible();
   await expect(page.getByLabel(/contraseña/i)).toHaveCount(0);
-  await expect(page.getByAltText(/Ajuntament de València/).first()).toBeVisible();
+  await expect(
+    page.getByAltText(/Ajuntament de València/).first(),
+  ).toBeVisible();
 });
 
 test("2. Un código incorrecto no deja entrar", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Nombre completo").fill("Intruso");
-  await page.getByLabel("Correo electrónico").fill(`e2e-intruso-${stamp}@test.local`);
+  await page
+    .getByLabel("Correo electrónico")
+    .fill(`e2e-intruso-${stamp}@test.local`);
   await page.getByLabel("Código de acceso").fill("CODIGO-FALSO");
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.getByRole("button", { name: "Enviarme el código" }).click();
   await expect(page.getByText("Código incorrecto.").first()).toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
 
-test("3. Sin sesión, las páginas internas llevan al acceso", async ({ page }) => {
-  for (const path of ["/equipos", "/rubrica", "/resultados", "/admin", "/perfil"]) {
+test("3. Sin sesión, las páginas internas llevan al acceso", async ({
+  page,
+}) => {
+  for (const path of [
+    "/equipos",
+    "/rubrica",
+    "/resultados",
+    "/admin",
+    "/perfil",
+  ]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login/);
   }
@@ -115,12 +178,18 @@ test("3. Sin sesión, las páginas internas llevan al acceso", async ({ page }) 
 
 test("4. El juez entra y ve los equipos", async ({ browser }) => {
   judgePage = await login(browser, people.judge, accessCode, "Juez");
-  await expect(judgePage.getByRole("heading", { name: "Equipos" })).toBeVisible();
-  await expect(judgePage.getByText("Juez", { exact: true }).first()).toBeVisible();
+  await expect(
+    judgePage.getByRole("heading", { name: "Equipos" }),
+  ).toBeVisible();
+  await expect(
+    judgePage.getByText("Juez", { exact: true }).first(),
+  ).toBeVisible();
   await expect(judgePage.getByRole("link", { name: team.name })).toBeVisible();
   // Filtro y buscador
   await judgePage.getByLabel("Buscar equipo").fill(team.name);
-  await expect(judgePage.getByRole("link", { name: secondTeam.name })).toHaveCount(0);
+  await expect(
+    judgePage.getByRole("link", { name: secondTeam.name }),
+  ).toHaveCount(0);
   await judgePage.getByLabel("Buscar equipo").fill("");
   // Sin acceso de admin
   await expect(judgePage.getByRole("link", { name: "Admin" })).toHaveCount(0);
@@ -142,19 +211,27 @@ test("6. El mentor entra: ve lo compartido, no lo privado, y no puede votar", as
   browser,
 }) => {
   mentorPage = await login(browser, people.mentor, accessCode, "Mentor");
-  await expect(mentorPage.getByText("Mentor", { exact: true }).first()).toBeVisible();
+  await expect(
+    mentorPage.getByText("Mentor", { exact: true }).first(),
+  ).toBeVisible();
 
   await mentorPage.goto(`/equipos/${team.id}`);
   await expect(mentorPage.getByText(sharedText)).toBeVisible();
   await expect(mentorPage.getByText(privateText)).toHaveCount(0);
-  await expect(mentorPage.getByRole("link", { name: /Evaluar/ })).toHaveCount(0);
+  await expect(mentorPage.getByRole("link", { name: /Evaluar/ })).toHaveCount(
+    0,
+  );
 
   await mentorPage.goto(`/equipos/${team.id}/evaluar`);
   await expect(mentorPage.getByText(/no votar/)).toBeVisible();
 
   await mentorPage.goto("/rubrica");
-  await expect(mentorPage.getByText(/Como mentor puedes consultar la rúbrica/)).toBeVisible();
-  await expect(mentorPage.getByRole("button", { name: "Añadir criterio" })).toHaveCount(0);
+  await expect(
+    mentorPage.getByText(/Como mentor puedes consultar la rúbrica/),
+  ).toBeVisible();
+  await expect(
+    mentorPage.getByRole("button", { name: "Añadir criterio" }),
+  ).toHaveCount(0);
 
   await mentorPage.goto("/admin");
   await expect(mentorPage).toHaveURL(/\/equipos/);
@@ -166,7 +243,9 @@ test("7. Las notas compartidas llegan en directo", async () => {
   await mentorPage.waitForTimeout(2_000); // suscripción en tiempo real activa
 
   await judgePage.getByLabel("Nueva nota").fill(liveText);
-  await expect(judgePage.getByRole("button", { name: /Compartida/ })).toBeVisible();
+  await expect(
+    judgePage.getByRole("button", { name: /Compartida/ }),
+  ).toBeVisible();
   await judgePage.getByRole("button", { name: "Añadir nota" }).click();
 
   // Sin recargar la página del mentor
@@ -181,7 +260,9 @@ test("8. El juez evalúa: nota en vivo, autoguardado y envío", async () => {
   // Enviar sin completar no se permite
   await groups.nth(0).getByRole("radio").nth(2).click();
   await judgePage.getByRole("button", { name: "Enviar evaluación" }).click();
-  await expect(judgePage.getByText("Puntúa todos los criterios antes de enviar.")).toBeVisible();
+  await expect(
+    judgePage.getByText("Puntúa todos los criterios antes de enviar."),
+  ).toBeVisible();
 
   for (let i = 1; i < criteriaCount; i++) {
     await groups.nth(i).getByRole("radio").nth(2).click(); // un 3 en todo
@@ -216,9 +297,13 @@ test("9. El juez puede usar la rúbrica y su perfil", async () => {
   await expect(judgePage).toHaveURL(/\/equipos/); // resultados solo tras el cierre
 });
 
-test("10. El admin entra con su código y ve lo privado", async ({ browser }) => {
+test("10. El admin entra con su código y ve lo privado", async ({
+  browser,
+}) => {
   adminPage = await login(browser, people.admin, env.ADMIN_ACCESS_CODE);
-  await expect(adminPage.getByText("Administrador", { exact: true }).first()).toBeVisible();
+  await expect(
+    adminPage.getByText("Administrador", { exact: true }).first(),
+  ).toBeVisible();
 
   await adminPage.goto(`/equipos/${team.id}`);
   await expect(adminPage.getByText(privateText)).toBeVisible();
@@ -228,26 +313,43 @@ test("10. El admin entra con su código y ve lo privado", async ({ browser }) =>
 
 test("11. El admin ve las votaciones en directo", async () => {
   await adminPage.goto("/resultados");
-  await expect(adminPage.getByRole("heading", { name: "Votaciones en directo" })).toBeVisible();
-  const live = adminPage.locator("section", { has: adminPage.getByText("Votaciones en directo") });
+  await expect(
+    adminPage.getByRole("heading", { name: "Votaciones en directo" }),
+  ).toBeVisible();
+  const live = adminPage.locator("section", {
+    has: adminPage.getByText("Votaciones en directo"),
+  });
   await expect(live.getByText(people.judge.name).first()).toBeVisible();
-  await expect(adminPage.getByText("En directo", { exact: true })).toBeVisible();
+  await expect(
+    adminPage.getByText("En directo", { exact: true }),
+  ).toBeVisible();
   await adminPage.waitForTimeout(2_000);
 
   // El juez empieza otro equipo: aparece como borrador sin recargar
   await judgePage.goto(`/equipos/${secondTeam.id}/evaluar`);
-  await judgePage.getByRole("radiogroup").nth(0).getByRole("radio").nth(4).click();
+  await judgePage
+    .getByRole("radiogroup")
+    .nth(0)
+    .getByRole("radio")
+    .nth(4)
+    .click();
   await expect(judgePage.getByText(/Guardado/)).toBeVisible();
 
-  await expect(live.getByRole("row", { name: new RegExp(secondTeam.name) })).toContainText(
-    "Borrador",
-  );
+  const judgeDraft = live
+    .getByRole("row")
+    .filter({ hasText: people.judge.name })
+    .filter({ hasText: secondTeam.name });
+  await expect(judgeDraft).toContainText("Borrador");
 });
 
 test("12. Ranking, CSV y PDF", async () => {
   await adminPage.goto("/resultados");
-  await expect(adminPage.getByRole("button", { name: "Descargar PDF" })).toBeVisible();
-  await expect(adminPage.getByRole("row", { name: new RegExp(team.name) }).first()).toBeVisible();
+  await expect(
+    adminPage.getByRole("button", { name: "Descargar PDF" }),
+  ).toBeVisible();
+  await expect(
+    adminPage.getByRole("row", { name: new RegExp(team.name) }).first(),
+  ).toBeVisible();
 
   const perJudge = await adminPage.request.get("/resultados/csv");
   expect(perJudge.status()).toBe(200);
@@ -263,30 +365,46 @@ test("12. Ranking, CSV y PDF", async () => {
 
 test("13. El admin puede editar la rúbrica y gestionar todo", async () => {
   await adminPage.goto("/rubrica");
-  await expect(adminPage.getByRole("button", { name: "Añadir criterio" })).toBeVisible();
-  await expect(adminPage.getByRole("button", { name: /loquear rúbrica/ })).toBeVisible();
-  await expect(adminPage.getByRole("button", { name: "Editar" }).first()).toBeVisible();
+  await expect(
+    adminPage.getByRole("button", { name: "Añadir criterio" }),
+  ).toBeVisible();
+  await expect(
+    adminPage.getByRole("button", { name: /loquear rúbrica/ }),
+  ).toBeVisible();
+  await expect(
+    adminPage.getByRole("button", { name: "Editar" }).first(),
+  ).toBeVisible();
 
   await adminPage.goto("/admin");
-  await expect(adminPage.getByRole("heading", { name: "Evento" })).toBeVisible();
+  await expect(
+    adminPage.getByRole("heading", { name: "Evento" }),
+  ).toBeVisible();
   await expect(adminPage.getByText(people.judge.name)).toBeVisible();
   await expect(adminPage.getByText(people.mentor.name)).toBeVisible();
 
   await adminPage.goto("/admin/equipos");
-  await expect(adminPage.getByRole("heading", { name: "Importar equipos" })).toBeVisible();
+  await expect(
+    adminPage.getByRole("heading", { name: "Importar equipos" }),
+  ).toBeVisible();
   await expect(adminPage.getByText(team.name).first()).toBeVisible();
 
   await adminPage.goto("/admin/retos");
-  await expect(adminPage.getByRole("heading", { name: "Nuevo reto" })).toBeVisible();
+  await expect(
+    adminPage.getByRole("heading", { name: "Nuevo reto" }),
+  ).toBeVisible();
 
   await adminPage.goto("/admin/patrocinadores");
-  await expect(adminPage.getByAltText("Ajuntament de València").first()).toBeVisible();
+  await expect(
+    adminPage.getByAltText("Ajuntament de València").first(),
+  ).toBeVisible();
 
   await adminPage.goto("/admin/auditoria");
   await expect(adminPage.getByRole("table")).toBeVisible();
 });
 
-test("14. Volver a entrar recupera las notas (mismo correo)", async ({ browser }) => {
+test("14. Volver a entrar recupera las notas (mismo correo)", async ({
+  browser,
+}) => {
   const again = await login(browser, people.judge, accessCode, "Mentor");
   // Conserva su rol de juez aunque marque mentor
   await expect(again.getByText("Juez", { exact: true }).first()).toBeVisible();

@@ -6,10 +6,7 @@ import { accessAction } from "@/app/(auth)/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  initialAuthActionState,
-  type AuthActionState,
-} from "@/lib/auth/types";
+import { initialAuthActionState, type AuthActionState } from "@/lib/auth/types";
 
 function FieldError({ state, name }: { state: AuthActionState; name: string }) {
   const message = state.fieldErrors?.[name]?.[0];
@@ -47,8 +44,16 @@ export function AccessForm({ notice }: { notice?: string }) {
     initialAuthActionState,
   );
 
+  const otpStep = state.status === "otp_sent";
+  const values = state.values ?? {};
+
   return (
-    <form action={formAction} className="space-y-5" noValidate>
+    <form
+      action={formAction}
+      className="space-y-5"
+      key={otpStep ? "otp" : "data"}
+      noValidate
+    >
       {notice ? (
         <div
           className="rounded-lg border border-sky-400/40 bg-sky-400/10 px-3 py-2.5 text-sm leading-5"
@@ -66,6 +71,8 @@ export function AccessForm({ notice }: { notice?: string }) {
           }
           aria-invalid={Boolean(state.fieldErrors?.fullName)}
           autoComplete="name"
+          defaultValue={values.fullName}
+          readOnly={otpStep}
           className="h-11"
           id="fullName"
           name="fullName"
@@ -77,9 +84,13 @@ export function AccessForm({ notice }: { notice?: string }) {
       <div className="space-y-2">
         <Label htmlFor="email">Correo electrónico</Label>
         <Input
-          aria-describedby={state.fieldErrors?.email ? "email-error" : "email-hint"}
+          aria-describedby={
+            state.fieldErrors?.email ? "email-error" : "email-hint"
+          }
           aria-invalid={Boolean(state.fieldErrors?.email)}
           autoComplete="email"
+          defaultValue={values.email}
+          readOnly={otpStep}
           className="h-11"
           id="email"
           name="email"
@@ -110,7 +121,7 @@ export function AccessForm({ notice }: { notice?: string }) {
             >
               <input
                 className="sr-only"
-                defaultChecked={option.value === "judge"}
+                defaultChecked={option.value === (values.role ?? "judge")}
                 name="role"
                 required
                 type="radio"
@@ -129,23 +140,50 @@ export function AccessForm({ notice }: { notice?: string }) {
         <Label htmlFor="accessCode">Código de acceso</Label>
         <Input
           aria-describedby={
-            state.fieldErrors?.accessCode ? "accessCode-error" : "accessCode-hint"
+            state.fieldErrors?.accessCode
+              ? "accessCode-error"
+              : "accessCode-hint"
           }
           aria-invalid={Boolean(state.fieldErrors?.accessCode)}
           autoCapitalize="characters"
           autoComplete="off"
           className="h-11 uppercase"
+          defaultValue={values.accessCode}
+          readOnly={otpStep}
           id="accessCode"
           name="accessCode"
           placeholder="Código facilitado por la organización"
           required
         />
         <p className="text-xs text-muted-foreground" id="accessCode-hint">
-          Lo recibirás de la organización de València Hack.
+          Te lo da la organización del evento.
         </p>
         <FieldError name="accessCode" state={state} />
       </div>
-      <SubmitButton idleLabel="Entrar" pendingLabel="Entrando…" />
+      {otpStep ? (
+        <div className="space-y-2">
+          <Label htmlFor="otp">Código recibido por correo</Label>
+          <Input
+            aria-describedby={state.fieldErrors?.otp ? "otp-error" : undefined}
+            aria-invalid={Boolean(state.fieldErrors?.otp)}
+            autoComplete="one-time-code"
+            autoFocus
+            className="h-11 tracking-widest"
+            id="otp"
+            inputMode="numeric"
+            name="otp"
+            maxLength={8}
+            minLength={8}
+            placeholder="12345678"
+            required
+          />
+          <FieldError name="otp" state={state} />
+        </div>
+      ) : null}
+      <SubmitButton
+        idleLabel={otpStep ? "Entrar" : "Enviarme el código"}
+        pendingLabel={otpStep ? "Entrando…" : "Enviando…"}
+      />
     </form>
   );
 }
