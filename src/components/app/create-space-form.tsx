@@ -195,6 +195,11 @@ export function CreateSpaceForm() {
           <Button disabled={drafting || prompt.trim().length < 3} onClick={() => void generateDraft()} type="button" variant="secondary">
             {drafting ? "Preparando…" : "Preparar con IA"}
           </Button>
+          {drafting ? (
+            <span className="text-sm text-muted-foreground" role="status">
+              Puede tardar hasta un minuto.
+            </span>
+          ) : null}
           {proposal ? (
             <span className="text-sm text-muted-foreground">
               Rúbrica «{proposal.evaluation.rubricName}» con {proposal.evaluation.criteria.length} criterios lista como borrador.

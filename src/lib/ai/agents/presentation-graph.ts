@@ -12,7 +12,7 @@ import {
   type JuryReport,
   type PresentationInsights,
 } from "@/lib/ai/presentation-insights";
-import { NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/models";
+import { NVIDIA_BASE_URL, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
 
 // Agentes que analizan la transcripción COMPLETA de una exposición. Cinco
 // especialistas trabajan en paralelo y un revisor descarta cualquier cita que
@@ -76,6 +76,7 @@ function model(modelId: string) {
     temperature: 0.15,
     maxTokens: 3000,
     maxRetries: 0,
+    modelKwargs: NVIDIA_NO_THINKING,
     configuration: { baseURL: NVIDIA_BASE_URL },
   });
 }
