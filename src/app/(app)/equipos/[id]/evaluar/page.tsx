@@ -17,12 +17,13 @@ export default async function EvaluatePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, canVote } = await getSession();
+  const { supabase, user, canVote, event } = await getSession();
 
   const { data: team } = await supabase
     .from("teams")
-    .select("id, number, name, challenge:challenges(event_id)")
+    .select("id, number, name")
     .eq("id", id)
+    .eq("event_id", event.id)
     .maybeSingle();
 
   if (!team) notFound();
@@ -47,25 +48,15 @@ export default async function EvaluatePage({
     );
   }
 
-  const eventId = (team.challenge as unknown as { event_id: string } | null)
-    ?.event_id;
-
-  const [{ data: rubric }, { data: event }] = await Promise.all([
-    supabase
-      .from("rubrics")
-      .select(
-        "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor))",
-      )
-      .eq("is_active", true)
-      .eq("event_id", eventId ?? "")
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("events")
-      .select("status")
-      .eq("id", eventId ?? "")
-      .maybeSingle(),
-  ]);
+  const { data: rubric } = await supabase
+    .from("rubrics")
+    .select(
+      "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor))",
+    )
+    .eq("is_active", true)
+    .eq("event_id", event.id)
+    .limit(1)
+    .maybeSingle();
 
   if (!rubric) {
     return (
@@ -82,6 +73,7 @@ export default async function EvaluatePage({
       .select(
         "id, status, general_comment, evaluation_scores(criterion_id, score, comment)",
       )
+      .eq("event_id", event.id)
       .eq("team_id", team.id)
       .eq("judge_id", user.id)
       .eq("rubric_id", rubric.id)
@@ -91,6 +83,7 @@ export default async function EvaluatePage({
       .select(
         "id, body, is_shared, created_at, author_id, author:profiles(full_name)",
       )
+      .eq("event_id", event.id)
       .eq("team_id", team.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -126,6 +119,7 @@ export default async function EvaluatePage({
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <EvaluationForm
           criteria={criteria}
+          eventId={event.id}
           initial={
             evaluation
               ? {
@@ -136,7 +130,7 @@ export default async function EvaluatePage({
                 }
               : null
           }
-          locked={event?.status === "closed"}
+          locked={event.status === "closed"}
           rubricId={rubric.id}
           scaleMax={rubric.scale_max}
           teamId={team.id}
@@ -145,6 +139,7 @@ export default async function EvaluatePage({
         <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto">
           <h2 className="mb-3 font-display text-2xl">Notas</h2>
           <NotesPanel
+            eventId={event.id}
             initialNotes={(notes ?? []) as unknown as Note[]}
             teamId={team.id}
             userId={user.id}
@@ -152,6 +147,7 @@ export default async function EvaluatePage({
         </aside>
       </div>
       <NotesDrawer
+        eventId={event.id}
         initialNotes={(notes ?? []) as unknown as Note[]}
         teamId={team.id}
         userId={user.id}

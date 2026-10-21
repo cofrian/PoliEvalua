@@ -1,6 +1,7 @@
 "use server";
 
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -32,7 +33,11 @@ const accessSchema = z.object({
   role: z.enum(["judge", "mentor"], {
     error: "Elige si participas como juez o como mentor.",
   }),
-  accessCode: z.string().trim().min(1, "Introduce el código de acceso."),
+  accessCode: z.string().trim(),
+  inviteToken: z.string().trim().optional(),
+}).refine((data) => data.inviteToken || data.accessCode, {
+  message: "Introduce el código de acceso.",
+  path: ["accessCode"],
 });
 
 function value(formData: FormData, key: string) {
@@ -54,8 +59,68 @@ function isAdminCode(code: string) {
 async function validateAccessCode(
   admin: ReturnType<typeof createAdminClient>,
   accessCode: string,
-): Promise<AuthActionState | null> {
-  if (isAdminCode(accessCode)) return null;
+  email: string,
+  inviteToken?: string,
+): Promise<
+  | {
+      ok: true;
+      eventId: string;
+      adminAccess: boolean;
+      invitationId?: string;
+      invitationRole?: string;
+    }
+  | { ok: false; state: AuthActionState }
+> {
+  if (inviteToken) {
+    const tokenHash = createHash("sha256").update(inviteToken).digest("hex");
+    const { data: invitation, error } = await admin
+      .from("event_invitations")
+      .select("id, event_id, email, role, expires_at, accepted_at, revoked_at")
+      .eq("token_hash", tokenHash)
+      .maybeSingle();
+    const invalid =
+      error ||
+      !invitation ||
+      invitation.accepted_at ||
+      invitation.revoked_at ||
+      new Date(invitation.expires_at) <= new Date() ||
+      (invitation.email && invitation.email.toLowerCase() !== email);
+    if (invalid) {
+      return {
+        ok: false,
+        state: {
+          status: "error",
+          message: "La invitación no es válida, ha caducado o pertenece a otro correo.",
+        },
+      };
+    }
+    return {
+      ok: true,
+      eventId: invitation.event_id,
+      adminAccess: false,
+      invitationId: invitation.id,
+      invitationRole: invitation.role,
+    };
+  }
+
+  if (isAdminCode(accessCode)) {
+    const { data: legacyEvent, error } = await admin
+      .from("events")
+      .select("id")
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    if (error || !legacyEvent) {
+      return {
+        ok: false,
+        state: {
+          status: "error",
+          message: "No se ha encontrado el espacio de administración.",
+        },
+      };
+    }
+    return { ok: true, eventId: legacyEvent.id, adminAccess: true };
+  }
 
   const { data: event, error } = await admin
     .from("events")
@@ -68,18 +133,24 @@ async function validateAccessCode(
   if (error) {
     console.error("No se pudo validar el código:", error.message);
     return {
-      status: "error",
-      message: "No se ha podido validar el código. Inténtalo de nuevo.",
+      ok: false,
+      state: {
+        status: "error",
+        message: "No se ha podido validar el código. Inténtalo de nuevo.",
+      },
     };
   }
   if (!event) {
     return {
-      status: "error",
-      message: "Código incorrecto.",
-      fieldErrors: { accessCode: ["Código incorrecto."] },
+      ok: false,
+      state: {
+        status: "error",
+        message: "Código incorrecto.",
+        fieldErrors: { accessCode: ["Código incorrecto."] },
+      },
     };
   }
-  return null;
+  return { ok: true, eventId: event.id, adminAccess: false };
 }
 
 // El servidor valida primero el código privado del evento. Si el correo todavía
@@ -95,6 +166,7 @@ export async function accessAction(
     password: value(formData, "password"),
     role: value(formData, "role"),
     accessCode: value(formData, "accessCode"),
+    inviteToken: value(formData, "inviteToken"),
   });
 
   if (!parsed.success) {
@@ -105,7 +177,7 @@ export async function accessAction(
     };
   }
 
-  const { fullName, email, password, role, accessCode } = parsed.data;
+  const { fullName, email, password, role, accessCode, inviteToken } = parsed.data;
   const values = { fullName, email, role, accessCode };
   const admin = createAdminClient();
   const ipKey = `ip:${await clientIp()}`;
@@ -118,15 +190,15 @@ export async function accessAction(
 
   // Antifuerza bruta 1: límite de códigos de evento incorrectos por IP.
   if (await isBlocked(admin, "bad_code", [ipKey])) return tooMany;
-  const codeError = await validateAccessCode(admin, accessCode);
-  if (codeError) {
+  const target = await validateAccessCode(admin, accessCode, email, inviteToken);
+  if (!target.ok) {
     if (
-      codeError.fieldErrors?.accessCode &&
+      target.state.fieldErrors?.accessCode &&
       !(await recordAttempt(admin, "bad_code", [ipKey]))
     ) {
       return tooMany;
     }
-    return codeError;
+    return target.state;
   }
 
   if (await isBlocked(admin, "bad_password", [emailKey, ipKey])) {
@@ -206,27 +278,84 @@ export async function accessAction(
     };
   }
 
-  // Con el código de admin la cuenta pasa a ser admin. Para el código normal,
-  // el rol solo se fijó al crear la cuenta; las cuentas existentes conservan
-  // el suyo aunque se marque otra opción en este acceso.
-  if (isAdminCode(accessCode)) {
+  // El rol pertenece al espacio, no al perfil global. Un código normal nunca
+  // cambia una membresía existente (y tampoco reactiva una desactivada).
+  const membershipRole = target.adminAccess ? "owner" : role;
+  const membershipWrite = target.invitationId
+    ? await admin.rpc("accept_event_invitation", {
+        p_token_hash: createHash("sha256").update(inviteToken!).digest("hex"),
+        p_user_id: userId,
+        p_email: email,
+      })
+    : target.adminAccess
+    ? await admin.from("event_members").upsert(
+        {
+          event_id: target.eventId,
+          user_id: userId,
+          role: membershipRole,
+          status: "active",
+        },
+        { onConflict: "event_id,user_id" },
+      )
+    : await admin.from("event_members").upsert(
+        {
+          event_id: target.eventId,
+          user_id: userId,
+          role: membershipRole,
+          status: "active",
+        },
+        { onConflict: "event_id,user_id", ignoreDuplicates: true },
+      );
+
+  if (membershipWrite.error) {
+    console.error(
+      "No se pudo asignar el acceso al espacio:",
+      membershipWrite.error.message,
+    );
+    await supabase.auth.signOut({ scope: "local" });
+    return {
+      status: "error",
+      message: "No se ha podido conceder el acceso al espacio.",
+    };
+  }
+
+  const { data: membership } = await admin
+    .from("event_members")
+    .select("status")
+    .eq("event_id", target.eventId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!membership || membership.status !== "active") {
+    await supabase.auth.signOut({ scope: "local" });
+    return {
+      status: "error",
+      message: "Tu acceso a este espacio está desactivado. Contacta con su gestor.",
+    };
+  }
+
+  // Se conserva el rol global únicamente como dato de compatibilidad durante
+  // la migración; las autorizaciones nuevas usan event_members.
+  if (!target.adminAccess && !createError && createdUser.user) {
     const { error: roleError } = await admin
       .from("profiles")
-      .update({ role: "admin" })
+      .update({ role })
       .eq("id", userId);
     if (roleError) {
       console.error(
-        "No se pudo asignar el rol de administrador:",
+        "No se pudo actualizar el rol de compatibilidad:",
         roleError.message,
       );
-      await supabase.auth.signOut({ scope: "local" });
-      return {
-        status: "error",
-        message: "No se ha podido conceder el acceso de admin.",
-      };
     }
   }
 
+  const cookieStore = await cookies();
+  cookieStore.set("active_event_id", target.eventId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
   redirect("/equipos");
 }
 

@@ -84,7 +84,7 @@ La marca UPV se usa sin deformarla ni dividirla. Su uso institucional público d
 - `profiles`: identidad global, sin rol operativo global.
 - `events`: espacio de evaluación, con `slug`, `kind`, `created_by`, `settings`, actividad y archivo.
 - `event_members`: relación usuario–espacio con rol y estado.
-- `event_invitations`: invitaciones con token cifrado, caducidad y rol.
+- `event_invitations`: invitaciones con hash del token, caducidad y rol; el token original nunca se guarda.
 - `event_branding`: logo y tokens visuales por espacio.
 - `forms`, `form_sections`, `form_fields`, `field_options`: definición dinámica.
 - `submissions`, `submission_answers`: respuestas y estados.
@@ -105,10 +105,10 @@ La marca UPV se usa sin deformarla ni dividirla. Su uso institucional público d
 
 ## Entregas
 
-1. Sistema visual UPV y nueva identidad de plataforma.
-2. Espacios, membresías, selector y migración de València Hack.
-3. Asistente de creación e invitaciones.
-4. Constructor dinámico de formularios y rúbricas.
-5. Adaptadores para hackathon, clase, premios y proyectos.
-6. Resultados, exportación, auditoría y retención.
-7. Documentación open source, CI, accesibilidad y pruebas de carga.
+1. ✅ Sistema visual UPV y nueva identidad de plataforma.
+2. ✅ Espacios, membresías, selector y migración de València Hack.
+3. ✅ Asistente de creación e invitaciones.
+4. ⏳ Constructor dinámico de formularios y rúbricas.
+5. ⏳ Adaptadores para hackathon, clase, premios y proyectos.
+6. ⏳ Resultados, exportación, auditoría y retención.
+7. ⏳ Documentación open source, CI, accesibilidad y pruebas de carga.

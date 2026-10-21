@@ -33,10 +33,10 @@ function ChallengeForm({ challenge }: { challenge: Challenge | null }) {
 }
 
 export default async function AdminChallengesPage() {
-  const { supabase } = await getSession();
+  const { supabase, event } = await getSession();
   const [{ data: challenges }, { data: teams }] = await Promise.all([
-    supabase.from("challenges").select("id, name, description, order").order("order"),
-    supabase.from("teams").select("challenge_id"),
+    supabase.from("challenges").select("id, name, description, order").eq("event_id", event.id).order("order"),
+    supabase.from("teams").select("challenge_id").eq("event_id", event.id),
   ]);
 
   return (

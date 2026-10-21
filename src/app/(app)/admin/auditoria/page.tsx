@@ -9,24 +9,35 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function AuditPage() {
-  const { supabase } = await getSession();
-  const [{ data: entries }, { data: profiles }, { data: rubricChanges }] =
+  const { supabase, event } = await getSession();
+  const [{ data: entries }, { data: memberships }, { data: rubricChanges }] =
     await Promise.all([
       supabase
         .from("audit_log")
         .select("id, user_id, action, entity, payload, created_at")
+        .eq("event_id", event.id)
         .order("created_at", { ascending: false })
         .limit(300),
-      supabase.from("profiles").select("id, full_name"),
+      supabase
+        .from("event_members")
+        .select("user_id, profile:profiles!event_members_user_id_fkey(id, full_name)")
+        .eq("event_id", event.id),
       supabase
         .from("rubric_changes")
         .select("id, user_id, summary, created_at")
+        .eq("event_id", event.id)
         .order("created_at", { ascending: false })
         .limit(300),
     ]);
 
-  const name = (id: string | null) =>
-    profiles?.find((p) => p.id === id)?.full_name ?? "—";
+  const name = (id: string | null) => {
+    const relation = memberships?.find((member) => member.user_id === id)?.profile as
+      | { id: string; full_name: string }
+      | { id: string; full_name: string }[]
+      | null
+      | undefined;
+    return (Array.isArray(relation) ? relation[0] : relation)?.full_name ?? "—";
+  };
 
   const rows = [
     ...(entries ?? []).map((e) => ({

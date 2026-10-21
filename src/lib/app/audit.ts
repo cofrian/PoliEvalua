@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // Registro de auditoría. Nunca bloquea la acción si falla.
 export async function logAudit(
   supabase: SupabaseClient,
+  eventId: string,
   userId: string,
   action: string,
   entity: string,
@@ -10,6 +11,7 @@ export async function logAudit(
   payload?: Record<string, unknown>,
 ) {
   const { error } = await supabase.from("audit_log").insert({
+    event_id: eventId,
     user_id: userId,
     action,
     entity,

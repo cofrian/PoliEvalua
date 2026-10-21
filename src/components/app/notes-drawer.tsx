@@ -14,10 +14,12 @@ import {
 
 // En móvil las notas se abren en un panel desde abajo; en escritorio van al lado.
 export function NotesDrawer({
+  eventId,
   teamId,
   userId,
   initialNotes,
 }: {
+  eventId: string;
   teamId: string;
   userId: string;
   initialNotes: Note[];
@@ -36,7 +38,7 @@ export function NotesDrawer({
         <SheetHeader className="px-0">
           <SheetTitle className="font-display text-2xl">Notas del equipo</SheetTitle>
         </SheetHeader>
-        <NotesPanel initialNotes={initialNotes} teamId={teamId} userId={userId} />
+        <NotesPanel eventId={eventId} initialNotes={initialNotes} teamId={teamId} userId={userId} />
       </SheetContent>
     </Sheet>
   );

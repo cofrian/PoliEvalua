@@ -2,10 +2,12 @@ import {
   setUserRoleAction,
   toggleUserDisabledAction,
   updateEventAction,
+  revokeInvitationAction,
 } from "@/app/(app)/admin/actions";
+import { InvitationForm } from "@/components/app/invitation-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getSession, roleLabels, type Role } from "@/lib/app/session";
+import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
 
 const statusLabels = {
@@ -24,36 +26,45 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function AdminPage() {
-  const { supabase, user } = await getSession();
+  const { supabase, user, event } = await getSession();
 
-  const [{ data: events }, { data: profiles }, { data: evals }] =
+  const [{ data: eventSettings }, { data: memberships }, { data: evals }, { data: invitations }] =
     await Promise.all([
       supabase
         .from("events")
-        .select("id, name, status, signup_code, signup_open"),
+        .select("id, name, status, signup_code, signup_open")
+        .eq("id", event.id)
+        .single(),
       supabase
-        .from("profiles")
-        .select("id, full_name, role, disabled, organization, last_seen_at, created_at")
-        .order("created_at"),
-      supabase.from("evaluations").select("judge_id, status"),
+        .from("event_members")
+        .select("user_id, role, status, joined_at, profile:profiles!event_members_user_id_fkey(id, full_name, organization, last_seen_at)")
+        .eq("event_id", event.id)
+        .order("joined_at"),
+      supabase.from("evaluations").select("judge_id, status").eq("event_id", event.id),
+      supabase
+        .from("event_invitations")
+        .select("id, email, role, expires_at, accepted_at, revoked_at")
+        .eq("event_id", event.id)
+        .order("created_at", { ascending: false })
+        .limit(30),
     ]);
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
   return (
     <div className="space-y-10">
-      {(events ?? []).map((event) => (
-        <section className={cardClass} key={event.id}>
+      {eventSettings ? (
+        <section className={cardClass}>
           <h2 className="mb-4 font-display text-2xl">Evento</h2>
           <form action={updateEventAction} className="flex flex-wrap items-end gap-4">
-            <input name="id" type="hidden" value={event.id} />
+            <input name="id" type="hidden" value={eventSettings.id} />
             <label className="space-y-1 text-sm font-semibold">
               <span className="block">Nombre</span>
-              <Input className="h-9 w-52" defaultValue={event.name} name="name" />
+              <Input className="h-9 w-52" defaultValue={eventSettings.name} name="name" />
             </label>
             <label className="space-y-1 text-sm font-semibold">
               <span className="block">Estado</span>
-              <select className={selectClass} defaultValue={event.status} name="status">
+              <select className={selectClass} defaultValue={eventSettings.status} name="status">
                 {Object.entries(statusLabels).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -65,12 +76,12 @@ export default async function AdminPage() {
               <span className="block">Código de acceso</span>
               <Input
                 className="h-9 w-40 uppercase"
-                defaultValue={event.signup_code}
+                defaultValue={eventSettings.signup_code}
                 name="signupCode"
               />
             </label>
             <label className="flex h-9 items-center gap-2 text-sm font-semibold">
-              <input defaultChecked={event.signup_open} name="signupOpen" type="checkbox" />
+              <input defaultChecked={eventSettings.signup_open} name="signupOpen" type="checkbox" />
               Acceso abierto
             </label>
             <Button className="h-9" type="submit">
@@ -87,19 +98,19 @@ export default async function AdminPage() {
               funcionar (el código de admin sigue funcionando).
             </li>
             <li>
-              El admin ve todas las notas (también las privadas), todas las
+              El gestor, con auditoría activada, ve las notas privadas y todas las
               evaluaciones en directo y puede editar la rúbrica aunque esté
               bloqueada.
             </li>
           </ul>
         </section>
-      ))}
+      ) : null}
 
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-2xl">Invitar al jurado</h2>
+        <h2 className="mb-2 font-display text-2xl">Acceso por código</h2>
         <p className="text-sm leading-6">
           Comparte este enlace y el código de acceso{" "}
-          <strong>{events?.[0]?.signup_code}</strong>. Cada persona entra con su
+          <strong>{eventSettings?.signup_code}</strong>. Cada persona entra con su
           nombre, su correo y su rol (juez o mentor).
         </p>
         <p className="mt-2 rounded-md bg-paper-50 px-3 py-2 font-mono text-sm dark:bg-ink-950">
@@ -107,8 +118,40 @@ export default async function AdminPage() {
         </p>
       </section>
 
+      <section className={cardClass}>
+        <h2 className="mb-2 font-display text-2xl">Invitaciones individuales</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          El enlace queda vinculado al correo y al rol elegido. No necesita correo automático: puedes copiarlo y enviarlo por el canal que prefieras.
+        </p>
+        <InvitationForm />
+        {invitations?.length ? (
+          <ul className="mt-5 divide-y divide-line text-sm dark:divide-[#383C3D]">
+            {invitations.map((invitation) => {
+              const expired = new Date(invitation.expires_at) < new Date();
+              const closed = Boolean(invitation.accepted_at || invitation.revoked_at || expired);
+              return (
+                <li className="flex flex-wrap items-center justify-between gap-3 py-3" key={invitation.id}>
+                  <div>
+                    <p className="font-semibold">{invitation.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {roleLabels[invitation.role as SpaceRole]} · {invitation.accepted_at ? "Aceptada" : invitation.revoked_at ? "Revocada" : expired ? "Caducada" : `Caduca ${dateFormat.format(new Date(invitation.expires_at))}`}
+                    </p>
+                  </div>
+                  {!closed ? (
+                    <form action={revokeInvitationAction}>
+                      <input name="id" type="hidden" value={invitation.id} />
+                      <Button className="h-8" type="submit" variant="outline">Revocar</Button>
+                    </form>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+      </section>
+
       <section>
-        <h2 className="mb-3 font-display text-2xl">Usuarios ({profiles?.length ?? 0})</h2>
+        <h2 className="mb-3 font-display text-2xl">Miembros ({memberships?.length ?? 0})</h2>
         <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
           <table className="w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-muted-foreground uppercase dark:border-[#262838]">
@@ -121,7 +164,13 @@ export default async function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {(profiles ?? []).map((profile) => {
+              {(memberships ?? []).map((membership) => {
+                const relation = membership.profile as unknown as
+                  | { id: string; full_name: string; organization: string | null; last_seen_at: string | null }
+                  | { id: string; full_name: string; organization: string | null; last_seen_at: string | null }[]
+                  | null;
+                const profile = Array.isArray(relation) ? relation[0] : relation;
+                if (!profile) return null;
                 const self = profile.id === user.id;
                 return (
                   <tr
@@ -141,12 +190,12 @@ export default async function AdminPage() {
                     </td>
                     <td className="px-3 py-2">
                       {self ? (
-                        roleLabels[profile.role as Role]
+                        roleLabels[membership.role as SpaceRole]
                       ) : (
                         <form action={setUserRoleAction} className="flex gap-2">
                           <input name="id" type="hidden" value={profile.id} />
-                          <select className={selectClass} defaultValue={profile.role} name="role">
-                            {Object.entries(roleLabels).map(([value, label]) => (
+                          <select className={selectClass} defaultValue={membership.role} name="role">
+                            {Object.entries(roleLabels).filter(([value]) => value !== "owner").map(([value, label]) => (
                               <option key={value} value={value}>
                                 {label}
                               </option>
@@ -179,14 +228,14 @@ export default async function AdminPage() {
                           <input
                             name="disabled"
                             type="hidden"
-                            value={String(!profile.disabled)}
+                            value={String(membership.status === "active")}
                           />
                           <Button
                             className="h-9"
                             type="submit"
-                            variant={profile.disabled ? "default" : "outline"}
+                            variant={membership.status === "inactive" ? "default" : "outline"}
                           >
-                            {profile.disabled ? "Reactivar" : "Desactivar"}
+                            {membership.status === "inactive" ? "Reactivar" : "Desactivar"}
                           </Button>
                         </form>
                       )}

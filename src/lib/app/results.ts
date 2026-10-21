@@ -43,8 +43,8 @@ export async function loadResults(
     { data: evaluations },
     { data: profiles },
   ] = await Promise.all([
-    supabase.from("challenges").select("id, name").order("order"),
-    supabase.from("teams").select("id, number, name, challenge_id").order("number"),
+    supabase.from("challenges").select("id, name").eq("event_id", eventId ?? "").order("order"),
+    supabase.from("teams").select("id, number, name, challenge_id").eq("event_id", eventId ?? "").order("number"),
     supabase
       .from("rubrics")
       .select("id, scale_max, rubric_criteria(id, title, weight, order, deleted_at)")
@@ -57,8 +57,13 @@ export async function loadResults(
       .select(
         "id, team_id, judge_id, general_comment, evaluation_scores(criterion_id, score, comment)",
       )
+      .eq("event_id", eventId ?? "")
       .eq("status", "submitted"),
-    supabase.from("profiles").select("id, full_name"),
+    supabase
+      .from("event_members")
+      .select("user_id, profile:profiles!event_members_user_id_fkey(id, full_name)")
+      .eq("event_id", eventId ?? "")
+      .eq("status", "active"),
   ]);
 
   const scaleMax = rubric?.scale_max ?? 5;
@@ -79,6 +84,16 @@ export async function loadResults(
     const teamEvals: JudgeEvaluation[] = (evaluations ?? [])
       .filter((e) => e.team_id === team.id)
       .map((e) => {
+        const profileRelation = (profiles ?? []).find(
+          (profile) => profile.user_id === e.judge_id,
+        )?.profile as unknown as
+          | { id: string; full_name: string }
+          | { id: string; full_name: string }[]
+          | null
+          | undefined;
+        const judgeProfile = Array.isArray(profileRelation)
+          ? profileRelation[0]
+          : profileRelation;
         const scores = Object.fromEntries(
           (
             (e.evaluation_scores ?? []) as {
@@ -94,7 +109,7 @@ export async function loadResults(
         }, 0);
         return {
           judgeId: e.judge_id,
-          judgeName: profiles?.find((p) => p.id === e.judge_id)?.full_name ?? "—",
+          judgeName: judgeProfile?.full_name ?? "—",
           total: round(total),
           generalComment: e.general_comment,
           scores,

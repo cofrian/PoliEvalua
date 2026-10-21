@@ -23,6 +23,7 @@ const NOTE_SELECT =
 
 type PendingNote = {
   tempId: string;
+  event_id: string;
   team_id: string;
   author_id: string;
   body: string;
@@ -57,10 +58,12 @@ const timeFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export function NotesPanel({
+  eventId,
   teamId,
   userId,
   initialNotes,
 }: {
+  eventId: string;
   teamId: string;
   userId: string;
   initialNotes: Note[];
@@ -77,20 +80,26 @@ export function NotesPanel({
     const { data } = await supabase
       .from("notes")
       .select(NOTE_SELECT)
+      .eq("event_id", eventId)
       .eq("team_id", teamId)
       .order("created_at", { ascending: false });
     if (data) setNotes(data as unknown as Note[]);
-  }, [supabase, teamId]);
+  }, [supabase, eventId, teamId]);
 
   const flushQueue = useCallback(async () => {
     const queue = readQueue();
     if (!queue.length || !navigator.onLine) {
-      setPending(queue.filter((n) => n.team_id === teamId));
+      setPending(queue.filter((n) => n.event_id === eventId && n.team_id === teamId));
       return;
     }
     const remaining: PendingNote[] = [];
     for (const note of queue) {
+      if (note.event_id !== eventId) {
+        remaining.push(note);
+        continue;
+      }
       const { error } = await supabase.from("notes").insert({
+        event_id: note.event_id,
         team_id: note.team_id,
         author_id: note.author_id,
         body: note.body,
@@ -100,12 +109,12 @@ export function NotesPanel({
       if (error) remaining.push(note);
     }
     writeQueue(remaining);
-    setPending(remaining.filter((n) => n.team_id === teamId));
+    setPending(remaining.filter((n) => n.event_id === eventId && n.team_id === teamId));
     if (remaining.length < queue.length) {
       toast.success("Notas pendientes sincronizadas.");
       void reload();
     }
-  }, [supabase, teamId, reload]);
+  }, [supabase, eventId, teamId, reload]);
 
   useEffect(() => {
     void flushQueue();
@@ -116,7 +125,7 @@ export function NotesPanel({
 
   useEffect(() => {
     const channel = supabase
-      .channel(`notes-${teamId}`)
+      .channel(`notes-${eventId}-${teamId}`)
       .on(
         "postgres_changes",
         {
@@ -151,11 +160,12 @@ export function NotesPanel({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [supabase, teamId, userId, reload]);
+  }, [supabase, eventId, teamId, userId, reload]);
 
   function queueNote(text: string) {
     const note: PendingNote = {
       tempId: crypto.randomUUID(),
+      event_id: eventId,
       team_id: teamId,
       author_id: userId,
       body: text,
@@ -182,6 +192,7 @@ export function NotesPanel({
     setBody("");
     setSaving(true);
     const { error } = await supabase.from("notes").insert({
+      event_id: eventId,
       team_id: teamId,
       author_id: userId,
       body: text,
@@ -205,13 +216,14 @@ export function NotesPanel({
     const { error } = await supabase
       .from("notes")
       .update({ is_shared: !note.is_shared })
+      .eq("event_id", eventId)
       .eq("id", note.id);
     if (error) toast.error("No se ha podido cambiar la visibilidad.");
     else void reload();
   }
 
   async function deleteNote(note: Note) {
-    const { error } = await supabase.from("notes").delete().eq("id", note.id);
+    const { error } = await supabase.from("notes").delete().eq("id", note.id).eq("event_id", eventId);
     if (error) toast.error("No se ha podido borrar la nota.");
     else void reload();
   }

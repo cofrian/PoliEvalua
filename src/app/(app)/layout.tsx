@@ -12,10 +12,15 @@ export default async function AppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const { supabase, profile, isAdmin, event, eventClosed } = await getSession();
 
-  // Última actividad (para el panel admin). No bloquea si falla.
-  await supabase.rpc("touch_last_seen");
+  // Presencia global y actividad del espacio, usadas para administración y
+  // archivado seguro. Ninguna de las dos llamadas bloquea la navegación si falla.
+  await Promise.all([
+    supabase.rpc("touch_last_seen"),
+    supabase.rpc("touch_event_activity", { target_event: event.id }),
+  ]);
 
   const links = [
+    { href: "/espacios", label: "Espacios" },
     { href: "/equipos", label: "Equipos" },
     { href: "/rubrica", label: "Rúbrica" },
     ...(isAdmin || eventClosed ? [{ href: "/resultados", label: "Resultados" }] : []),

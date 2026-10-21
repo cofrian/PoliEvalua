@@ -41,12 +41,17 @@ const people = {
     name: `Admin Prueba ${stamp}`,
     email: `e2e-admin-${stamp}@test.local`,
   },
+  invited: {
+    name: `Invitada Prueba ${stamp}`,
+    email: `e2e-invitada-${stamp}@test.local`,
+  },
 };
 const privateText = `Nota privada ${stamp}`;
 const sharedText = `Nota compartida ${stamp}`;
 const liveText = `Nota en directo ${stamp}`;
 const testPassword = `Prueba-${stamp}!`;
 const createdUserIds = new Set<string>();
+const createdEventIds = new Set<string>();
 
 let accessCode = "";
 let team: { id: string; name: string };
@@ -87,7 +92,10 @@ async function login(
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
-  if (process.env.E2E_BASE_URL?.startsWith("http://localhost")) {
+  if (
+    process.env.E2E_BASE_URL?.startsWith("http://localhost") ||
+    process.env.E2E_BASE_URL?.startsWith("http://127.0.0.1")
+  ) {
     // Las ejecuciones locales comparten la IP loopback. Se limpian únicamente
     // sus contadores para que una ejecución anterior no bloquee la siguiente.
     await db
@@ -123,9 +131,13 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
+  for (const eventId of createdEventIds) {
+    await db.from("events").delete().eq("id", eventId);
+  }
   for (const userId of createdUserIds) {
     await db.from("notes").delete().eq("author_id", userId);
     await db.from("audit_log").delete().eq("user_id", userId);
+    await db.from("event_invitations").delete().eq("created_by", userId);
     const { error } = await db.auth.admin.deleteUser(userId);
     if (error)
       console.warn(
@@ -302,7 +314,7 @@ test("10. El admin entra con su código y ve lo privado", async ({
 }) => {
   adminPage = await login(browser, people.admin, env.ADMIN_ACCESS_CODE);
   await expect(
-    adminPage.getByText("Administrador", { exact: true }).first(),
+    adminPage.getByText("Propietario", { exact: true }).first(),
   ).toBeVisible();
 
   await adminPage.goto(`/equipos/${team.id}`);
@@ -402,7 +414,62 @@ test("13. El admin puede editar la rúbrica y gestionar todo", async () => {
   await expect(adminPage.getByRole("table")).toBeVisible();
 });
 
-test("14. Volver a entrar recupera las notas (mismo correo)", async ({
+test("14. El propietario crea otro espacio sin mezclar sus equipos", async () => {
+  const name = `Espacio aislado ${stamp}`;
+  const slug = `espacio-aislado-${stamp}`;
+  await adminPage.goto("/espacios/nuevo");
+  await adminPage.getByLabel("Nombre del espacio").fill(name);
+  await adminPage.getByLabel("Tipo de actividad").selectOption("project");
+  await adminPage.getByLabel("Identificador web").fill(slug);
+  await adminPage.getByLabel("Código de acceso inicial").fill(`ESP-${stamp}`);
+  await adminPage.getByRole("button", { name: "Crear espacio" }).click();
+  await adminPage.waitForURL("**/admin");
+
+  const { data: created } = await db
+    .from("events")
+    .select("id")
+    .eq("slug", slug)
+    .single();
+  createdEventIds.add(created!.id);
+
+  await adminPage.goto("/equipos");
+  await expect(adminPage.getByRole("link", { name: team.name })).toHaveCount(0);
+
+  await adminPage.goto("/espacios");
+  await expect(adminPage.getByRole("heading", { name })).toBeVisible();
+  const originalCard = adminPage.locator("article", { hasText: "València Hack" });
+  await originalCard.getByRole("button", { name: "Abrir espacio" }).click();
+  await adminPage.waitForURL("**/equipos");
+  await expect(adminPage.getByRole("link", { name: team.name })).toBeVisible();
+});
+
+test("15. Una invitación personal concede solo su rol y espacio", async ({ browser }) => {
+  await adminPage.goto("/admin");
+  await adminPage.getByLabel("Correo").fill(people.invited.email);
+  await adminPage.getByLabel("Rol").selectOption("mentor");
+  await adminPage.getByRole("button", { name: "Crear enlace" }).click();
+  const inviteLink = await adminPage.getByLabel("Enlace de invitación").inputValue();
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(inviteLink);
+  await expect(page.getByLabel("Código de acceso")).toHaveCount(0);
+  await page.getByLabel("Nombre completo").fill(people.invited.name);
+  await page.getByLabel("Correo electrónico").fill(people.invited.email);
+  await page.getByLabel("Contraseña").fill(testPassword);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.waitForURL("**/equipos");
+  await expect(page.getByText("Mentor", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: team.name })).toBeVisible();
+
+  const { data } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const invited = data.users.find((user) => user.email === people.invited.email);
+  if (!invited) throw new Error("No se creó la cuenta invitada");
+  createdUserIds.add(invited.id);
+  await context.close();
+});
+
+test("16. Volver a entrar recupera las notas (mismo correo)", async ({
   browser,
 }) => {
   const again = await login(browser, people.judge, accessCode, "Mentor");
@@ -412,7 +479,7 @@ test("14. Volver a entrar recupera las notas (mismo correo)", async ({
   await expect(again.getByText(privateText)).toBeVisible();
 });
 
-test("15. Instalable como app (PWA)", async ({ request }) => {
+test("17. Instalable como app (PWA)", async ({ request }) => {
   const manifest = await request.get("/manifest.webmanifest");
   expect(manifest.status()).toBe(200);
   expect((await manifest.json()).icons.length).toBeGreaterThan(0);

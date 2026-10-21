@@ -1,7 +1,9 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 
 import { logAudit } from "@/lib/app/audit";
@@ -26,37 +28,107 @@ function refreshAll() {
   revalidatePath("/", "layout");
 }
 
-const roleSchema = z.enum(["admin", "judge", "mentor"]);
+const roleSchema = z.enum(["manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"]);
 const statusSchema = z.enum(["setup", "building", "judging", "closed"]);
+
+export type InvitationState = { error?: string; link?: string };
+
+export async function createInvitationAction(
+  _previousState: InvitationState,
+  formData: FormData,
+): Promise<InvitationState> {
+  const { supabase, user, event } = await requireAdmin();
+  const parsed = z
+    .object({
+      email: z.string().trim().toLowerCase().email(),
+      role: roleSchema,
+      days: z.coerce.number().int().min(1).max(30),
+    })
+    .safeParse({
+      email: formData.get("email"),
+      role: formData.get("role"),
+      days: formData.get("days"),
+    });
+  if (!parsed.success) return { error: "Revisa el correo, el rol y la caducidad." };
+
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(
+    Date.now() + parsed.data.days * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const { error } = await supabase.from("event_invitations").insert({
+    event_id: event.id,
+    email: parsed.data.email,
+    role: parsed.data.role,
+    token_hash: tokenHash,
+    expires_at: expiresAt,
+    created_by: user.id,
+  });
+  if (error) return { error: "No se ha podido crear la invitación." };
+
+  const requestHeaders = await headers();
+  const forwardedHost = requestHeaders.get("x-forwarded-host");
+  const host = forwardedHost ?? requestHeaders.get("host");
+  const forwardedProtocol = requestHeaders.get("x-forwarded-proto");
+  const protocol = forwardedProtocol ?? (host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https");
+  const siteUrl = host
+    ? `${protocol}://${host}`
+    : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://valencia-hack-jurado.vercel.app").replace(/\/$/, "");
+  await logAudit(supabase, event.id, user.id, "crear_invitacion", "event_invitations", null, {
+    email: parsed.data.email,
+    role: parsed.data.role,
+  });
+  return { link: `${siteUrl}/login?invite=${token}` };
+}
+
+export async function revokeInvitationAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const id = text(formData, "id");
+  await supabase
+    .from("event_invitations")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "revocar_invitacion", "event_invitations", id);
+  refreshAll();
+}
 
 // ========== USUARIOS ==========
 
 export async function setUserRoleAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const role = roleSchema.parse(formData.get("role"));
   if (id === user.id) return; // evita que el admin se quite su propio rol
 
-  await supabase.from("profiles").update({ role }).eq("id", id);
-  await logAudit(supabase, user.id, "cambiar_rol", "profiles", id, { role });
+  await supabase
+    .from("event_members")
+    .update({ role })
+    .eq("event_id", event.id)
+    .eq("user_id", id);
+  await logAudit(supabase, event.id, user.id, "cambiar_rol", "event_members", id, { role });
   refreshAll();
 }
 
 export async function toggleUserDisabledAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const disabled = formData.get("disabled") === "true";
   if (id === user.id) return;
 
-  await supabase.from("profiles").update({ disabled }).eq("id", id);
-  await logAudit(supabase, user.id, disabled ? "desactivar_usuario" : "reactivar_usuario", "profiles", id);
+  await supabase
+    .from("event_members")
+    .update({ status: disabled ? "inactive" : "active" })
+    .eq("event_id", event.id)
+    .eq("user_id", id);
+  await logAudit(supabase, event.id, user.id, disabled ? "desactivar_miembro" : "reactivar_miembro", "event_members", id);
   refreshAll();
 }
 
 // ========== EVENTO ==========
 
 export async function updateEventAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const status = statusSchema.parse(formData.get("status"));
   const signupCode = text(formData, "signupCode").toUpperCase();
@@ -67,8 +139,9 @@ export async function updateEventAction(formData: FormData) {
     ...(signupCode ? { signup_code: signupCode } : {}),
   };
 
-  await supabase.from("events").update(changes).eq("id", id);
-  await logAudit(supabase, user.id, "actualizar_evento", "events", id, changes);
+  if (id !== event.id) throw new Error("El espacio activo no coincide.");
+  await supabase.from("events").update(changes).eq("id", event.id);
+  await logAudit(supabase, event.id, user.id, "actualizar_evento", "events", id, changes);
   refreshAll();
 }
 
@@ -85,37 +158,38 @@ export async function saveChallengeAction(formData: FormData) {
   if (!values.name) return;
 
   if (id) {
-    await supabase.from("challenges").update(values).eq("id", id);
-    await logAudit(supabase, user.id, "editar_reto", "challenges", id, values);
+    await supabase.from("challenges").update(values).eq("id", id).eq("event_id", event.id);
+    await logAudit(supabase, event.id, user.id, "editar_reto", "challenges", id, values);
   } else {
     const { data } = await supabase
       .from("challenges")
-      .insert({ ...values, event_id: event?.id })
+      .insert({ ...values, event_id: event.id })
       .select("id")
       .single();
-    await logAudit(supabase, user.id, "crear_reto", "challenges", data?.id ?? null, values);
+    await logAudit(supabase, event.id, user.id, "crear_reto", "challenges", data?.id ?? null, values);
   }
   refreshAll();
 }
 
 export async function deleteChallengeAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const { count } = await supabase
     .from("teams")
     .select("id", { count: "exact", head: true })
+    .eq("event_id", event.id)
     .eq("challenge_id", id);
   if (count) throw new Error("Mueve o borra antes los equipos de este reto.");
 
-  await supabase.from("challenges").delete().eq("id", id);
-  await logAudit(supabase, user.id, "borrar_reto", "challenges", id);
+  await supabase.from("challenges").delete().eq("id", id).eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "borrar_reto", "challenges", id);
   refreshAll();
 }
 
 // ========== EQUIPOS Y PARTICIPANTES ==========
 
 export async function saveTeamAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const values = {
     name: text(formData, "name"),
@@ -128,59 +202,60 @@ export async function saveTeamAction(formData: FormData) {
   if (!values.name || !values.challenge_id) return;
 
   if (id) {
-    await supabase.from("teams").update(values).eq("id", id);
-    await logAudit(supabase, user.id, "editar_equipo", "teams", id, values);
+    await supabase.from("teams").update(values).eq("id", id).eq("event_id", event.id);
+    await logAudit(supabase, event.id, user.id, "editar_equipo", "teams", id, values);
   } else {
-    const { data } = await supabase.from("teams").insert(values).select("id").single();
-    await logAudit(supabase, user.id, "crear_equipo", "teams", data?.id ?? null, values);
+    const { data } = await supabase.from("teams").insert({ ...values, event_id: event.id }).select("id").single();
+    await logAudit(supabase, event.id, user.id, "crear_equipo", "teams", data?.id ?? null, values);
   }
   refreshAll();
 }
 
 export async function deleteTeamAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const { count } = await supabase
     .from("evaluations")
     .select("id", { count: "exact", head: true })
+    .eq("event_id", event.id)
     .eq("team_id", id);
   if (count) {
     throw new Error("Este equipo ya tiene evaluaciones; no se puede borrar.");
   }
 
-  await supabase.from("teams").delete().eq("id", id);
-  await logAudit(supabase, user.id, "borrar_equipo", "teams", id);
+  await supabase.from("teams").delete().eq("id", id).eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "borrar_equipo", "teams", id);
   refreshAll();
 }
 
 export async function addMemberAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const teamId = text(formData, "teamId");
   const fullName = text(formData, "fullName");
   if (!fullName) return;
 
-  await supabase.from("team_members").insert({ team_id: teamId, full_name: fullName });
-  await logAudit(supabase, user.id, "añadir_participante", "teams", teamId, { fullName });
+  await supabase.from("team_members").insert({ event_id: event.id, team_id: teamId, full_name: fullName });
+  await logAudit(supabase, event.id, user.id, "añadir_participante", "teams", teamId, { fullName });
   refreshAll();
 }
 
 export async function renameMemberAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const fullName = text(formData, "fullName");
   if (!fullName) return;
 
-  await supabase.from("team_members").update({ full_name: fullName }).eq("id", id);
-  await logAudit(supabase, user.id, "renombrar_participante", "team_members", id, { fullName });
+  await supabase.from("team_members").update({ full_name: fullName }).eq("id", id).eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "renombrar_participante", "team_members", id, { fullName });
   refreshAll();
 }
 
 export async function removeMemberAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
 
-  await supabase.from("team_members").delete().eq("id", id);
-  await logAudit(supabase, user.id, "retirar_participante", "team_members", id);
+  await supabase.from("team_members").delete().eq("id", id).eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "retirar_participante", "team_members", id);
   refreshAll();
 }
 
@@ -206,10 +281,11 @@ export async function importTeamsAction(
   const rows = parsed.data.filter((row) => row.length >= 3);
   if (rows[0] && !/^\d+$/.test(rows[0][1]?.trim() ?? "")) rows.shift(); // cabecera
 
-  const { data: challenges } = await supabase.from("challenges").select("id, name");
+  const { data: challenges } = await supabase.from("challenges").select("id, name").eq("event_id", event.id);
   const { data: teams } = await supabase
     .from("teams")
-    .select("id, name, team_members(full_name)");
+    .select("id, name, team_members(full_name)")
+    .eq("event_id", event.id);
   const challengeIds = new Map((challenges ?? []).map((c) => [c.name.toLowerCase(), c.id]));
 
   let created = 0;
@@ -226,7 +302,7 @@ export async function importTeamsAction(
     if (!challengeId) {
       const { data } = await supabase
         .from("challenges")
-        .insert({ event_id: event?.id, name: challengeName, order: challengeIds.size + 1 })
+        .insert({ event_id: event.id, name: challengeName, order: challengeIds.size + 1 })
         .select("id")
         .single();
       if (!data) continue;
@@ -240,12 +316,13 @@ export async function importTeamsAction(
       await supabase
         .from("teams")
         .update({ number: Number(number) || null, challenge_id: challengeId })
-        .eq("id", teamId);
+        .eq("id", teamId)
+        .eq("event_id", event.id);
       updated++;
     } else {
       const { data } = await supabase
         .from("teams")
-        .insert({ name, number: Number(number) || null, challenge_id: challengeId })
+        .insert({ event_id: event.id, name, number: Number(number) || null, challenge_id: challengeId })
         .select("id")
         .single();
       if (!data) continue;
@@ -260,12 +337,12 @@ export async function importTeamsAction(
     if (missing.length) {
       await supabase
         .from("team_members")
-        .insert(missing.map((full_name) => ({ team_id: teamId, full_name })));
+        .insert(missing.map((full_name) => ({ event_id: event.id, team_id: teamId, full_name })));
       members += missing.length;
     }
   }
 
-  await logAudit(supabase, user.id, "importar_equipos", "teams", null, {
+  await logAudit(supabase, event.id, user.id, "importar_equipos", "teams", null, {
     created,
     updated,
     members,
@@ -281,9 +358,9 @@ export async function importTeamsAction(
 
 async function uploadLogo(file: FormDataEntryValue | null, name: string) {
   if (!(file instanceof File) || !file.size) return null;
-  const { supabase } = await requireAdmin();
+  const { supabase, event } = await requireAdmin();
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "png";
-  const path = `sponsors/${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}.${extension}`;
+  const path = `events/${event.id}/sponsors/${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}.${extension}`;
   const { error } = await supabase.storage
     .from("public-assets")
     .upload(path, file, { contentType: file.type, upsert: true });
@@ -292,7 +369,7 @@ async function uploadLogo(file: FormDataEntryValue | null, name: string) {
 }
 
 export async function saveSponsorAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const name = text(formData, "name");
   if (!name) return;
@@ -300,6 +377,7 @@ export async function saveSponsorAction(formData: FormData) {
   const light = await uploadLogo(formData.get("logoLight"), `${name}-claro`);
   const dark = await uploadLogo(formData.get("logoDark"), `${name}-oscuro`);
   const values = {
+    event_id: event.id,
     name,
     url: optional(formData, "url"),
     order: Number(text(formData, "order")) || 0,
@@ -311,19 +389,19 @@ export async function saveSponsorAction(formData: FormData) {
   };
 
   if (id) {
-    await supabase.from("sponsors").update(values).eq("id", id);
-    await logAudit(supabase, user.id, "editar_patrocinador", "sponsors", id, { name });
+    await supabase.from("sponsors").update(values).eq("id", id).eq("event_id", event.id);
+    await logAudit(supabase, event.id, user.id, "editar_patrocinador", "sponsors", id, { name });
   } else {
     const { data } = await supabase.from("sponsors").insert(values).select("id").single();
-    await logAudit(supabase, user.id, "crear_patrocinador", "sponsors", data?.id ?? null, { name });
+    await logAudit(supabase, event.id, user.id, "crear_patrocinador", "sponsors", data?.id ?? null, { name });
   }
   refreshAll();
 }
 
 export async function deleteSponsorAction(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
-  await supabase.from("sponsors").delete().eq("id", id);
-  await logAudit(supabase, user.id, "borrar_patrocinador", "sponsors", id);
+  await supabase.from("sponsors").delete().eq("id", id).eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "borrar_patrocinador", "sponsors", id);
   refreshAll();
 }

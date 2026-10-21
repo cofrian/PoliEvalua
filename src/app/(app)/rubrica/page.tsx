@@ -22,7 +22,7 @@ export default async function RubricPage() {
       "id, name, locked, version, scale_min, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, updated_at, rubric_levels(id, score, label, descriptor))",
     )
     .eq("is_active", true)
-    .eq("event_id", event?.id ?? "")
+    .eq("event_id", event.id)
     .limit(1)
     .maybeSingle();
 
@@ -33,6 +33,7 @@ export default async function RubricPage() {
   const { data: changes } = await supabase
     .from("rubric_changes")
     .select("id, summary, created_at, author:profiles(full_name)")
+    .eq("event_id", event.id)
     .eq("rubric_id", rubric.id)
     .order("created_at", { ascending: false })
     .limit(50);

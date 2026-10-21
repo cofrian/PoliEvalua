@@ -12,19 +12,25 @@ const cell = "px-3 py-2";
 export async function LiveVotes({
   supabase,
   criteria,
+  eventId,
   scaleMax,
 }: {
   supabase: SupabaseClient;
   criteria: { id: string; title: string; weight: number }[];
+  eventId: string;
   scaleMax: number;
 }) {
   const [{ data: evaluations }, { data: teams }, { data: profiles }] = await Promise.all([
     supabase
       .from("evaluations")
       .select("id, team_id, judge_id, status, updated_at, evaluation_scores(criterion_id, score)")
+      .eq("event_id", eventId)
       .order("updated_at", { ascending: false }),
-    supabase.from("teams").select("id, number, name"),
-    supabase.from("profiles").select("id, full_name"),
+    supabase.from("teams").select("id, number, name").eq("event_id", eventId),
+    supabase
+      .from("event_members")
+      .select("user_id, profile:profiles!event_members_user_id_fkey(id, full_name)")
+      .eq("event_id", eventId),
   ]);
 
   const rows = (evaluations ?? []).map((evaluation) => {
@@ -41,7 +47,14 @@ export async function LiveVotes({
     return {
       id: evaluation.id,
       team: team ? `#${team.number} ${team.name}` : "—",
-      judge: profiles?.find((p) => p.id === evaluation.judge_id)?.full_name ?? "—",
+      judge: (() => {
+        const relation = profiles?.find((p) => p.user_id === evaluation.judge_id)?.profile as
+          | { id: string; full_name: string }
+          | { id: string; full_name: string }[]
+          | null
+          | undefined;
+        return (Array.isArray(relation) ? relation[0] : relation)?.full_name ?? "—";
+      })(),
       status: evaluation.status as string,
       updatedAt: evaluation.updated_at as string,
       scores,

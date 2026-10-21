@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 type LoginPageProps = {
-  searchParams: Promise<{ reason?: string }>;
+  searchParams: Promise<{ reason?: string; invite?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -23,7 +23,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       description="Introduce el código de tu espacio, tu correo y tu contraseña. En el primer acceso crearemos tu cuenta."
       title="Accede a tu espacio"
     >
-      <AccessForm notice={notice} />
+      <AccessForm inviteToken={params.invite} notice={notice} />
     </AuthCard>
   );
 }

@@ -4,15 +4,16 @@ import { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
 
 export default async function AdminTeamsPage() {
-  const { supabase } = await getSession();
+  const { supabase, event } = await getSession();
 
   const [{ data: challenges }, { data: teams }] = await Promise.all([
-    supabase.from("challenges").select("id, name").order("order"),
+    supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order"),
     supabase
       .from("teams")
       .select(
         "id, number, name, challenge_id, project_title, description, table_location, team_members(id, full_name)",
       )
+      .eq("event_id", event.id)
       .order("number"),
   ]);
 

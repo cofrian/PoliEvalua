@@ -23,6 +23,7 @@ type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
 
 export function EvaluationForm({
   criteria,
+  eventId,
   initial,
   locked,
   rubricId,
@@ -31,6 +32,7 @@ export function EvaluationForm({
   userId,
 }: {
   criteria: Criterion[];
+  eventId: string;
   initial: {
     id: string;
     status: string;
@@ -78,6 +80,7 @@ export function EvaluationForm({
       setSaveState("saving");
 
       const payload = {
+        event_id: eventId,
         team_id: teamId,
         judge_id: userId,
         rubric_id: rubricId,
@@ -107,6 +110,7 @@ export function EvaluationForm({
       const rows = Object.entries(scores)
         .filter(([, value]) => value.score || value.comment.trim())
         .map(([criterionId, value]) => ({
+          event_id: eventId,
           evaluation_id: evaluation.id,
           criterion_id: criterionId,
           score: value.score,
@@ -129,7 +133,7 @@ export function EvaluationForm({
       setDirty(false);
       return true;
     },
-    [supabase, teamId, userId, rubricId, generalComment, scores],
+    [supabase, eventId, teamId, userId, rubricId, generalComment, scores],
   );
 
   // Autoguardado: 800 ms después del último cambio.

@@ -70,10 +70,10 @@ export async function middleware(request: NextRequest) {
     }
 
     if (AUTH_ENTRY_ROUTES.has(pathname)) {
-      const teamsUrl = request.nextUrl.clone();
-      teamsUrl.pathname = "/equipos";
-      teamsUrl.search = "";
-      return copyResponseCookies(response, NextResponse.redirect(teamsUrl));
+      const spacesUrl = request.nextUrl.clone();
+      spacesUrl.pathname = "/espacios";
+      spacesUrl.search = "";
+      return copyResponseCookies(response, NextResponse.redirect(spacesUrl));
     }
   }
 

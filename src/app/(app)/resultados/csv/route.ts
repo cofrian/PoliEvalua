@@ -2,24 +2,13 @@ import Papa from "papaparse";
 import { NextResponse } from "next/server";
 
 import { loadResults } from "@/lib/app/results";
-import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/app/session";
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return new NextResponse("No autorizado", { status: 401 });
+  const { supabase, isAdmin, eventClosed, event } = await getSession();
+  if (!isAdmin && !eventClosed) return new NextResponse("No autorizado", { status: 403 });
 
-  const [{ data: profile }, { data: event }] = await Promise.all([
-    supabase.from("profiles").select("role, disabled").eq("id", user.id).single(),
-    supabase.from("events").select("id, status").limit(1).maybeSingle(),
-  ]);
-  const allowed =
-    profile && !profile.disabled && (profile.role === "admin" || event?.status === "closed");
-  if (!allowed) return new NextResponse("No autorizado", { status: 403 });
-
-  const { challenges, criteria, teams } = await loadResults(supabase, event?.id);
+  const { challenges, criteria, teams } = await loadResults(supabase, event.id);
   const challengeName = (id: string | null) =>
     challenges.find((c) => c.id === id)?.name ?? "";
 
@@ -58,7 +47,7 @@ export async function GET(request: Request) {
   return new NextResponse("﻿" + Papa.unparse(rows), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="valencia-hack-${ranking ? "ranking" : "evaluaciones"}.csv"`,
+      "Content-Disposition": `attachment; filename="${event.slug}-${ranking ? "ranking" : "evaluaciones"}.csv"`,
     },
   });
 }

@@ -36,7 +36,7 @@ function check(name, ok, detail = "") {
   if (!ok) failures++;
 }
 
-async function makeUser(role) {
+async function makeUser(role, eventId) {
   const email = `rls-${role}-${stamp}-${created.length}@test.local`;
   const password = randomBytes(18).toString("base64url");
   const { data, error } = await admin.auth.admin.createUser({
@@ -52,6 +52,12 @@ async function makeUser(role) {
     .from("profiles")
     .update({ role, disabled: false })
     .eq("id", data.user.id);
+  await admin.from("event_members").insert({
+    event_id: eventId,
+    user_id: data.user.id,
+    role: role === "admin" ? "owner" : role,
+    status: "active",
+  });
   const client = createClient(URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     auth: { persistSession: false },
   });
@@ -82,10 +88,10 @@ try {
     .single();
   const criteria = rubric.rubric_criteria.filter((c) => !c.deleted_at);
 
-  const judgeA = await makeUser("judge");
-  const judgeB = await makeUser("judge");
-  const mentor = await makeUser("mentor");
-  const boss = await makeUser("admin");
+  const judgeA = await makeUser("judge", event.id);
+  const judgeB = await makeUser("judge", event.id);
+  const mentor = await makeUser("mentor", event.id);
+  const boss = await makeUser("admin", event.id);
 
   // ---------- Notas ----------
   const { data: privateNote } = await judgeA.client

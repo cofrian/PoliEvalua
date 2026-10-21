@@ -38,7 +38,13 @@ function StatusMessage({ state }: { state: AuthActionState }) {
   );
 }
 
-export function AccessForm({ notice }: { notice?: string }) {
+export function AccessForm({
+  inviteToken,
+  notice,
+}: {
+  inviteToken?: string;
+  notice?: string;
+}) {
   const [state, formAction] = useActionState(
     accessAction,
     initialAuthActionState,
@@ -61,6 +67,12 @@ export function AccessForm({ notice }: { notice?: string }) {
         </div>
       ) : null}
       <StatusMessage state={state} />
+      {inviteToken ? (
+        <div className="rounded-lg border border-upv-blue/50 bg-upv-blue/10 px-3 py-2.5 text-sm" role="status">
+          Estás entrando mediante una invitación personal. Usa el mismo correo al que fue dirigida.
+        </div>
+      ) : null}
+      <input name="inviteToken" type="hidden" value={inviteToken ?? ""} />
       <div className="space-y-2">
         <Label htmlFor="fullName">Nombre completo</Label>
         <Input
@@ -121,7 +133,7 @@ export function AccessForm({ notice }: { notice?: string }) {
         </p>
         <FieldError name="password" state={state} />
       </div>
-      <fieldset
+      {!inviteToken ? <fieldset
         aria-describedby={state.fieldErrors?.role ? "role-error" : undefined}
         className="space-y-2"
       >
@@ -153,8 +165,8 @@ export function AccessForm({ notice }: { notice?: string }) {
           ))}
         </div>
         <FieldError name="role" state={state} />
-      </fieldset>
-      <div className="space-y-2">
+      </fieldset> : <input name="role" type="hidden" value="judge" />}
+      {!inviteToken ? <div className="space-y-2">
         <Label htmlFor="accessCode">Código de acceso</Label>
         <Input
           aria-describedby={
@@ -176,7 +188,7 @@ export function AccessForm({ notice }: { notice?: string }) {
           Te lo da la organización del evento.
         </p>
         <FieldError name="accessCode" state={state} />
-      </div>
+      </div> : <input name="accessCode" type="hidden" value="" />}
       <SubmitButton
         idleLabel="Entrar"
         pendingLabel="Entrando…"

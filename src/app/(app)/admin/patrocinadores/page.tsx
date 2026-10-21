@@ -72,12 +72,13 @@ function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
 }
 
 export default async function AdminSponsorsPage() {
-  const { supabase } = await getSession();
+  const { supabase, event } = await getSession();
   const { data: sponsors } = await supabase
     .from("sponsors")
     .select(
       "id, name, url, order, logo_light_url, logo_dark_url, display_height, aspect_ratio, dark_background",
     )
+    .eq("event_id", event.id)
     .order("order");
 
   return (

@@ -17,7 +17,7 @@ export default async function TeamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, profile, canVote, isAdmin } = await getSession();
+  const { supabase, user, profile, canVote, isAdmin, event } = await getSession();
 
   const [{ data: team }, { data: notes }, { data: evaluation }] =
     await Promise.all([
@@ -27,17 +27,20 @@ export default async function TeamPage({
           "id, number, name, project_title, description, table_location, challenge_id, challenge:challenges(name), team_members(id, full_name)",
         )
         .eq("id", id)
+        .eq("event_id", event.id)
         .maybeSingle(),
       supabase
         .from("notes")
         .select(
           "id, body, is_shared, created_at, author_id, author:profiles(full_name)",
         )
+        .eq("event_id", event.id)
         .eq("team_id", id)
         .order("created_at", { ascending: false }),
       supabase
         .from("evaluations")
         .select("status")
+        .eq("event_id", event.id)
         .eq("team_id", id)
         .eq("judge_id", user.id)
         .maybeSingle(),
@@ -46,7 +49,7 @@ export default async function TeamPage({
   if (!team) notFound();
 
   const { data: challenges } = isAdmin
-    ? await supabase.from("challenges").select("id, name").order("order")
+    ? await supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order")
     : { data: [] };
 
   const challenge = team.challenge as unknown as { name: string } | null;
@@ -130,6 +133,7 @@ export default async function TeamPage({
         <div>
           <h2 className="mb-3 font-display text-2xl">Notas</h2>
           <NotesPanel
+            eventId={event.id}
             initialNotes={(notes ?? []) as unknown as Note[]}
             teamId={team.id}
             userId={user.id}

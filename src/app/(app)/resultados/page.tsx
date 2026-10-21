@@ -16,7 +16,7 @@ export default async function ResultsPage() {
 
   const { challenges, criteria, scaleMax, teams } = await loadResults(
     supabase,
-    event?.id,
+    event.id,
   );
 
   return (
@@ -30,7 +30,7 @@ export default async function ResultsPage() {
           </p>
           {isAdmin ? (
             <div className="mt-2 print:hidden">
-              <LiveRefresh />
+              <LiveRefresh eventId={event.id} />
             </div>
           ) : null}
         </div>
@@ -47,7 +47,7 @@ export default async function ResultsPage() {
 
       {isAdmin ? (
         <div className="print:hidden">
-          <LiveVotes criteria={criteria} scaleMax={scaleMax} supabase={supabase} />
+          <LiveVotes criteria={criteria} eventId={event.id} scaleMax={scaleMax} supabase={supabase} />
         </div>
       ) : null}
 
