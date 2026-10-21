@@ -1,0 +1,34 @@
+import { AgendaBoard } from "@/components/app/agenda-board";
+import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
+import { loadAgenda } from "@/lib/app/agenda-data";
+import { getSession } from "@/lib/app/session";
+
+export default async function AgendaPage() {
+  const { supabase, user, event, canVote, role, words } = await getSession();
+  const [slots, { data: myTeam }] = await Promise.all([
+    loadAgenda(supabase, event.id),
+    role === "student"
+      ? supabase
+          .from("team_members")
+          .select("team_id")
+          .eq("event_id", event.id)
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return (
+    <div className="space-y-6">
+      <AgendaLiveRefresh eventId={event.id} />
+      <div>
+        <h1 className="font-display text-3xl sm:text-4xl">Agenda</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Horas previstas con los retrasos actualizados en directo.
+          {myTeam ? ` Tu ${words.unitLower} aparece resaltado.` : ""}
+        </p>
+      </div>
+      <AgendaBoard canRunRoom={canVote} highlightTeamId={myTeam?.team_id ?? null} slots={slots} />
+    </div>
+  );
+}

@@ -220,6 +220,127 @@ export async function updateMaterialsSettingsAction(formData: FormData) {
   refreshAll();
 }
 
+// ========== AGENDA ==========
+
+/** Convierte «2026-11-05T09:30» (hora de Valencia) a un instante UTC. */
+function madridLocalToUtc(value: string) {
+  const asUtc = new Date(`${value}:00Z`);
+  if (Number.isNaN(asUtc.getTime())) return null;
+  const madrid = new Date(asUtc.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
+  const utc = new Date(asUtc.toLocaleString("en-US", { timeZone: "UTC" }));
+  return new Date(asUtc.getTime() - (madrid.getTime() - utc.getTime()));
+}
+
+export type AgendaState = { ok: boolean; message: string } | null;
+
+/**
+ * Genera la agenda completa: reparte los grupos entre las salas (por número o
+ * al azar) y calcula la hora de cada turno. Sustituye la agenda anterior.
+ */
+export async function generateAgendaAction(
+  _previous: AgendaState,
+  formData: FormData,
+): Promise<AgendaState> {
+  const { supabase, user, event, words } = await requireAdmin();
+  const parsed = z
+    .object({
+      rooms: z.string().trim().min(1).max(400),
+      start: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+      duration: z.coerce.number().int().min(1).max(240),
+      gap: z.coerce.number().int().min(0).max(120),
+      order: z.enum(["number", "random"]),
+    })
+    .safeParse({
+      rooms: formData.get("rooms"),
+      start: formData.get("start"),
+      duration: formData.get("duration"),
+      gap: formData.get("gap"),
+      order: formData.get("order"),
+    });
+  if (!parsed.success) return { ok: false, message: "Revisa las salas, la hora de inicio y la duración." };
+
+  const start = madridLocalToUtc(parsed.data.start);
+  if (!start) return { ok: false, message: "La hora de inicio no es válida." };
+  const rooms = [...new Set(parsed.data.rooms.split(",").map((room) => room.trim()).filter(Boolean))].slice(0, 20);
+
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("id, number")
+    .eq("event_id", event.id)
+    .order("number");
+  if (!teams?.length) return { ok: false, message: `Primero crea los ${words.unitsLower}.` };
+
+  const ordered =
+    parsed.data.order === "random"
+      ? [...teams].sort(() => Math.random() - 0.5)
+      : teams;
+  const step = (parsed.data.duration + parsed.data.gap) * 60_000;
+  const rows = ordered.map((team, index) => {
+    const position = Math.floor(index / rooms.length);
+    return {
+      event_id: event.id,
+      team_id: team.id,
+      room: rooms[index % rooms.length],
+      position,
+      starts_at: new Date(start.getTime() + position * step).toISOString(),
+      duration_minutes: parsed.data.duration,
+    };
+  });
+
+  const { error: deleteError } = await supabase.from("presentation_slots").delete().eq("event_id", event.id);
+  if (deleteError) return { ok: false, message: "No se ha podido sustituir la agenda anterior." };
+  const { error } = await supabase.from("presentation_slots").insert(rows);
+  if (error) return { ok: false, message: "No se ha podido guardar la agenda." };
+
+  await logAudit(supabase, event.id, user.id, "generar_agenda", "presentation_slots", null, {
+    rooms,
+    slots: rows.length,
+  });
+  refreshAll();
+  return { ok: true, message: `Agenda creada: ${rows.length} turnos en ${rooms.length} sala(s).` };
+}
+
+/** Mueve un turno una posición arriba o abajo dentro de su sala y recalcula horas. */
+export async function moveSlotAction(formData: FormData) {
+  const { supabase, event } = await requireAdmin();
+  const id = text(formData, "id");
+  const direction = text(formData, "direction") === "up" ? -1 : 1;
+
+  const { data: slot } = await supabase
+    .from("presentation_slots")
+    .select("room")
+    .eq("id", id)
+    .eq("event_id", event.id)
+    .single();
+  if (!slot) return;
+  const { data: roomSlots } = await supabase
+    .from("presentation_slots")
+    .select("id, position, starts_at, duration_minutes")
+    .eq("event_id", event.id)
+    .eq("room", slot.room)
+    .order("position");
+  const list = roomSlots ?? [];
+  const index = list.findIndex((item) => item.id === id);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= list.length) return;
+
+  // Se intercambian las posiciones y las horas planificadas: cada hora sigue en su hueco.
+  const a = list[index];
+  const b = list[target];
+  await Promise.all([
+    supabase.from("presentation_slots").update({ position: b.position, starts_at: b.starts_at }).eq("id", a.id),
+    supabase.from("presentation_slots").update({ position: a.position, starts_at: a.starts_at }).eq("id", b.id),
+  ]);
+  refreshAll();
+}
+
+export async function clearAgendaAction() {
+  const { supabase, user, event } = await requireAdmin();
+  await supabase.from("presentation_slots").delete().eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "borrar_agenda", "presentation_slots", null);
+  refreshAll();
+}
+
 // ========== RETOS ==========
 
 export async function saveChallengeAction(formData: FormData) {

@@ -1,7 +1,10 @@
-import { ClipboardList, Mic2, Users } from "lucide-react";
+import { CalendarClock, ClipboardList, Mic2, Users } from "lucide-react";
 import Link from "next/link";
 
+import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
 import { TeamLinks, type TeamLink } from "@/components/app/team-links";
+import { scheduleRoom, slotStatusLabels, timeFormat } from "@/lib/app/agenda";
+import { loadAgenda } from "@/lib/app/agenda-data";
 import { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
 
@@ -43,9 +46,15 @@ export default async function MyGroupPage() {
   }
 
   const links = [...team.team_links].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const agenda = await loadAgenda(supabase, event.id);
+  const mySlot = agenda.find((slot) => slot.team_id === team.id);
+  const myScheduled = mySlot
+    ? scheduleRoom(agenda.filter((slot) => slot.room === mySlot.room)).find((slot) => slot.id === mySlot.id)
+    : null;
 
   return (
     <div className="space-y-6">
+      {mySlot ? <AgendaLiveRefresh eventId={event.id} /> : null}
       <header>
         <p className="text-sm font-bold text-muted-foreground">
           Mi {words.unitLower} · #{team.number}
@@ -53,6 +62,32 @@ export default async function MyGroupPage() {
         <h1 className="font-display text-3xl sm:text-4xl">{team.name}</h1>
         {team.project_title ? <p className="mt-1 text-lg">{team.project_title}</p> : null}
       </header>
+
+      {myScheduled ? (
+        <Link
+          className={`${cardClass} flex flex-wrap items-center gap-x-6 gap-y-1 hover:bg-muted ${
+            myScheduled.status === "live" ? "border-destructive" : ""
+          }`}
+          href="/agenda"
+        >
+          <span className="flex items-center gap-2 font-semibold">
+            <CalendarClock aria-hidden="true" className="size-5 text-primary" /> Tu turno
+          </span>
+          <span className="font-mono text-2xl font-bold">
+            {myScheduled.status === "live"
+              ? "¡Ahora!"
+              : myScheduled.expectedStart
+                ? timeFormat.format(myScheduled.expectedStart)
+                : "Por confirmar"}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {myScheduled.room} · {myScheduled.duration_minutes} min · {slotStatusLabels[myScheduled.status]}
+            {myScheduled.delayMinutes && myScheduled.status === "pending"
+              ? ` · ${myScheduled.delayMinutes} min de retraso`
+              : ""}
+          </span>
+        </Link>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <section className={cardClass}>

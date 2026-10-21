@@ -6,6 +6,7 @@ import {
   updateStudentVisibilityAction,
   revokeInvitationAction,
 } from "@/app/(app)/admin/actions";
+import { AdminOverview } from "@/components/app/admin-overview";
 import { InvitationForm } from "@/components/app/invitation-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,8 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function AdminPage() {
-  const { supabase, user, event, words } = await getSession();
+  const session = await getSession();
+  const { supabase, user, event, words } = session;
   const statusLabels = words.stageLabels;
   const settings = (event.settings ?? {}) as { join_roles?: string[]; enabled_roles?: string[] };
   const enabledRoles = settings.enabled_roles ?? [];
@@ -55,6 +57,7 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-10">
+      <AdminOverview session={session} />
       {eventSettings ? (
         <section className={cardClass}>
           <h2 className="mb-4 font-display text-2xl">Evento</h2>

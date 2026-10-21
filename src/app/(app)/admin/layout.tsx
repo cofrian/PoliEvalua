@@ -15,6 +15,7 @@ export default async function AdminLayout({
     { href: "/admin/asistente", label: "Asistente" },
     ...(words.hasModule("rubric") ? [{ href: "/admin/evaluacion", label: "Evaluación" }] : []),
     { href: "/admin/paneles", label: `Paneles de ${words.evaluator}` },
+    { href: "/admin/agenda", label: "Agenda" },
     { href: "/admin/grabaciones", label: "Grabaciones" },
     ...(academic ? [{ href: "/admin/academico", label: "Datos académicos" }] : []),
     ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: words.units }] : []),

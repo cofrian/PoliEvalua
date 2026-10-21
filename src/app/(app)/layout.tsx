@@ -13,7 +13,7 @@ import { getSession, roleLabels } from "@/lib/app/session";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { supabase, profile, isAdmin, event, eventClosed, memberships, membership, recording, words, role } =
+  const { supabase, profile, isAdmin, event, eventClosed, memberships, membership, recording, words, role, canVote } =
     await getSession();
   const showRecordingNotice = needsRecordingNotice(
     recording,
@@ -36,6 +36,8 @@ export default async function AppLayout({
     { href: "/espacios", label: "Espacios" },
     ...(role === "student" ? [{ href: "/mi-grupo", label: `Mi ${words.unitLower}` }] : []),
     { href: "/equipos", label: words.units },
+    { href: "/agenda", label: "Agenda" },
+    ...(canVote ? [{ href: "/sala", label: "Sala" }] : []),
     ...(words.hasModule("rubric") && (role !== "student" || words.studentsSeeRubric)
       ? [{ href: "/rubrica", label: "Rúbrica" }]
       : []),

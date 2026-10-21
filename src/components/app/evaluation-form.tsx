@@ -177,6 +177,49 @@ export function EvaluationForm({
     [supabase, eventId, teamId, userId, rubricId, generalComment, formAnswers, scores],
   );
 
+  // Copia local del borrador: si se va la red o se cierra la pestaña antes de
+  // guardar, se recupera al volver. Se borra en cuanto el servidor confirma.
+  const draftKey = `evaluation-draft:${userId}:${teamId}:${rubricId}`;
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current || locked) return;
+    restoredRef.current = true;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as {
+        scores: ScoreState;
+        generalComment: string;
+        formAnswers: Record<string, string | boolean>;
+      };
+      setScores((current) => ({ ...current, ...draft.scores }));
+      setGeneralComment(draft.generalComment);
+      setFormAnswers(draft.formAnswers);
+      setDirty(true);
+      toast.info("Hemos recuperado cambios que no se llegaron a guardar.");
+    } catch {
+      // Sin almacenamiento local (modo privado): solo autoguardado en servidor.
+    }
+  }, [draftKey, locked]);
+
+  useEffect(() => {
+    if (!dirty || locked) return;
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify({ scores, generalComment, formAnswers }));
+    } catch {
+      // Ignorado: el autoguardado en servidor sigue funcionando.
+    }
+  }, [dirty, locked, draftKey, scores, generalComment, formAnswers]);
+
+  useEffect(() => {
+    if (saveState !== "saved" || dirty) return;
+    try {
+      window.localStorage.removeItem(draftKey);
+    } catch {
+      // Ignorado.
+    }
+  }, [saveState, dirty, draftKey]);
+
   // Autoguardado: 800 ms después del último cambio.
   useEffect(() => {
     if (!dirty || locked) return;
@@ -184,6 +227,18 @@ export function EvaluationForm({
     const timer = setTimeout(() => void save(), 800);
     return () => clearTimeout(timer);
   }, [dirty, locked, save]);
+
+  // Sin conexión el guardado falla: se reintenta al volver la red.
+  useEffect(() => {
+    if (saveState !== "error" || locked) return;
+    const retry = () => void save();
+    window.addEventListener("online", retry);
+    const timer = setInterval(retry, 15_000);
+    return () => {
+      window.removeEventListener("online", retry);
+      clearInterval(timer);
+    };
+  }, [saveState, locked, save]);
 
   function update(criterionId: string, patch: Partial<ScoreState[string]>) {
     setScores((current) => ({
@@ -218,7 +273,7 @@ export function EvaluationForm({
     pending: "Cambios sin guardar…",
     saving: "Guardando…",
     saved: "Guardado",
-    error: "Error al guardar",
+    error: "Sin conexión: guardado en este dispositivo, se reintentará",
   }[saveState];
 
   return (
