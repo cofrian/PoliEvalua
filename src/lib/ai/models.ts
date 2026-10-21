@@ -1,5 +1,7 @@
 import "server-only";
 
+import { z } from "zod";
+
 // Modelos de NVIDIA por tarea, con cadena de respaldo. Si un modelo ha sido
 // retirado, está saturado o devuelve una salida inválida, se prueba el
 // siguiente. Las cadenas se pueden sobrescribir desde Vercel sin desplegar
@@ -47,6 +49,15 @@ let catalogCache: { at: number; ids: Set<string> } | null = null;
 export const NVIDIA_NO_THINKING = {
   chat_template_kwargs: { thinking: false, enable_thinking: false },
 };
+
+/**
+ * Instrucción con el esquema JSON esperado. Se pide JSON normal (no la salida
+ * estructurada estricta de NVIDIA, que con esquemas grandes tarda minutos) y
+ * la respuesta se valida después con el mismo esquema de zod.
+ */
+export function jsonInstruction(schema: z.ZodType) {
+  return `Responde únicamente con un objeto JSON válido, sin texto antes ni después y sin bloques de código, que cumpla este JSON Schema:\n${JSON.stringify(z.toJSONSchema(schema))}`;
+}
 
 export function aiConfigured() {
   return Boolean(process.env.NVIDIA_API_KEY);

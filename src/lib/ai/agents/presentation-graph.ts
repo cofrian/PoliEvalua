@@ -12,7 +12,12 @@ import {
   type JuryReport,
   type PresentationInsights,
 } from "@/lib/ai/presentation-insights";
-import { NVIDIA_BASE_URL, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
+import {
+  jsonInstruction,
+  NVIDIA_BASE_URL,
+  NVIDIA_NO_THINKING,
+  withModelFallback,
+} from "@/lib/ai/models";
 
 // Agentes que analizan la transcripción COMPLETA de una exposición. Cinco
 // especialistas trabajan en paralelo y un revisor descarta cualquier cita que
@@ -149,10 +154,10 @@ export async function runPresentationGraph({
         async (modelId, signal) => {
           await deps.acquireSlot();
           const output = await model(modelId)
-            .withStructuredOutput(schema, { name: node, method: "jsonSchema" })
+            .withStructuredOutput(schema, { name: node, method: "jsonMode" })
             .invoke(
               [
-                { role: "system", content: BASE_RULES },
+                { role: "system", content: `${BASE_RULES}\n\n${jsonInstruction(schema)}` },
                 { role: "user", content: `${instructions(state)}\n\n${context(state)}` },
               ],
               { signal },

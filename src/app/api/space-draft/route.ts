@@ -8,7 +8,7 @@ import {
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
 import { aiErrorResponse } from "@/lib/ai/error-response";
-import { aiConfigured, NVIDIA_BASE_URL, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
+import { aiConfigured, NVIDIA_BASE_URL, jsonInstruction, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
 import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     name: "nvidia",
     baseURL: NVIDIA_BASE_URL,
     apiKey: process.env.NVIDIA_API_KEY,
-    supportsStructuredOutputs: true,
+    supportsStructuredOutputs: false,
   });
 
   try {
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         generateText({
           model: provider.chatModel(id),
           output: Output.object({ schema: spaceDraftSchema }),
-          system: SYSTEM_PROMPT,
+          system: `${SYSTEM_PROMPT}\n\n${jsonInstruction(spaceDraftSchema)}`,
           prompt: `Descripción del espacio que quiere crear el usuario:\n${parsed.data.message}`,
           maxOutputTokens: 5000,
           temperature: 0.2,

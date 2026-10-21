@@ -9,7 +9,7 @@ import {
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
 import { aiErrorResponse } from "@/lib/ai/error-response";
-import { aiConfigured, NVIDIA_BASE_URL, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
+import { aiConfigured, NVIDIA_BASE_URL, jsonInstruction, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
 import {
   clientIp,
   isBlocked,
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
     name: "nvidia",
     baseURL: NVIDIA_BASE_URL,
     apiKey: process.env.NVIDIA_API_KEY,
-    supportsStructuredOutputs: true,
+    supportsStructuredOutputs: false,
   });
 
   try {
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
         generateText({
           model: provider.chatModel(id),
           output: Output.object({ schema: assistantResponseSchema }),
-          system: SYSTEM_PROMPT,
+          system: `${SYSTEM_PROMPT}\n\n${jsonInstruction(assistantResponseSchema)}`,
           prompt: `Contexto actual del espacio (sin datos personales):\n${JSON.stringify({
             event,
             academic,
