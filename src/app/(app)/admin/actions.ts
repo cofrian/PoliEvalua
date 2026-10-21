@@ -9,6 +9,7 @@ import { z } from "zod";
 import { logAudit } from "@/lib/app/audit";
 import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
 import { getSession } from "@/lib/app/session";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 async function requireAdmin() {
   const session = await getSession();
@@ -410,6 +411,31 @@ export async function generatePeerAssignmentsAction(): Promise<PeerAssignState> 
     ok: true,
     message: `Reparto hecho: ${students.length} estudiantes, ${assignments.length} revisiones asignadas.`,
   };
+}
+
+// ========== PÚBLICO ==========
+
+export async function updatePublicVoteAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const publicVote = {
+    open: formData.get("open") === "on",
+    show_results: formData.get("showResults") === "on",
+    title: text(formData, "title").slice(0, 120) || null,
+  };
+  const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
+  const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), public_vote: publicVote };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error("No se ha podido guardar la votación del público.");
+  await logAudit(supabase, event.id, user.id, "configurar_voto_publico", "events", event.id, publicVote);
+  refreshAll();
+}
+
+export async function resetPublicVotesAction() {
+  const { user, event, supabase } = await requireAdmin();
+  // Los votos no tienen política de borrado para nadie: se borran con la clave de servicio.
+  await createAdminClient().from("public_votes").delete().eq("event_id", event.id);
+  await logAudit(supabase, event.id, user.id, "reiniciar_voto_publico", "public_votes", null);
+  refreshAll();
 }
 
 // ========== RETOS ==========

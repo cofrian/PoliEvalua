@@ -19,6 +19,7 @@ export default async function AdminLayout({
     { href: "/admin/agenda", label: "Agenda" },
     ...(hasStudents ? [{ href: "/admin/coevaluacion", label: "Coevaluación" }] : []),
     { href: "/admin/grabaciones", label: "Grabaciones" },
+    { href: "/admin/publico", label: "Público" },
     ...(academic ? [{ href: "/admin/academico", label: "Datos académicos" }] : []),
     ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: words.units }] : []),
     ...(words.showChallenges ? [{ href: "/admin/retos", label: "Retos" }] : []),

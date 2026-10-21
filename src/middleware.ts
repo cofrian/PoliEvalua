@@ -55,7 +55,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
-  const isPublicRoute = PUBLIC_ROUTES.has(pathname);
+  // La votación del público (QR) no necesita cuenta.
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith("/votar/");
 
   if (!user && !isPublicRoute) {
     const loginUrl = request.nextUrl.clone();

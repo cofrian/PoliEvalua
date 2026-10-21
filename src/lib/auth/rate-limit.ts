@@ -9,7 +9,8 @@ export type AttemptKind =
   | "assistant"
   | "transcription"
   | "bad_code"
-  | "bad_password";
+  | "bad_password"
+  | "public_vote";
 
 // Cuántos intentos se permiten en cada ventana antes de bloquear.
 export const LIMITS: Record<AttemptKind, { max: number; minutes: number }> = {
@@ -17,6 +18,8 @@ export const LIMITS: Record<AttemptKind, { max: number; minutes: number }> = {
   transcription: { max: 10, minutes: 60 }, // audios procesados por usuario e IP
   bad_code: { max: 10, minutes: 15 }, // códigos de evento incorrectos por IP
   bad_password: { max: 5, minutes: 15 }, // contraseñas incorrectas por email o IP
+  // Generoso: en un aula o auditorio muchos móviles comparten la misma IP.
+  public_vote: { max: 400, minutes: 10 },
 };
 
 export async function clientIp() {
