@@ -62,7 +62,7 @@ export async function loadEvaluationContext(
     supabase
       .from("rubrics")
       .select(
-        "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor))",
+        "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor, example))",
       )
       .eq("is_active", true)
       .eq("event_id", event.id)

@@ -23,7 +23,7 @@ export default async function RubricPage() {
   const { data: rubric } = await supabase
     .from("rubrics")
     .select(
-      "id, name, locked, version, scale_min, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, updated_at, rubric_levels(id, score, label, descriptor))",
+      "id, name, locked, version, scale_min, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, updated_at, rubric_levels(id, score, label, descriptor, example))",
     )
     .eq("is_active", true)
     .eq("event_id", event.id)

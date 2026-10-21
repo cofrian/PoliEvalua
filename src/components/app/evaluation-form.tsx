@@ -16,7 +16,7 @@ export type Criterion = {
   title: string;
   description: string | null;
   weight: number;
-  rubric_levels: { score: number; label: string; descriptor: string | null }[];
+  rubric_levels: { score: number; label: string; descriptor: string | null; example?: string | null }[];
 };
 
 type ScoreState = Record<string, { score: number | null; comment: string }>;
@@ -456,6 +456,9 @@ export function EvaluationForm({
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   <strong className="text-foreground">{selected.label}:</strong>{" "}
                   {selected.descriptor}
+                  {selected.example ? (
+                    <span className="mt-1 block text-xs italic">Ejemplo: {selected.example}</span>
+                  ) : null}
                 </p>
               ) : null}
               <Textarea
