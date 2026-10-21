@@ -27,9 +27,6 @@ export const EXTERNAL_LEASE_SECONDS = Number(process.env.TRANSCRIPTION_LEASE_SEC
 const SLOT_WAIT_MS = 25_000;
 /** Minutos que se espera a un trabajador externo antes de dar el trozo por fallido. */
 const EXTERNAL_WAIT_MINUTES = Number(process.env.TRANSCRIPTION_EXTERNAL_WAIT_MINUTES) || 30;
-/** Horas que se conserva el audio de una grabación fallida para reintentarla. */
-const FAILED_AUDIO_HOURS = 24;
-
 type JobKind = "transcribe_segment" | "assemble" | "analyze";
 
 type Job = {
@@ -252,7 +249,7 @@ export async function handleJobFailure(
       .from("presentation_recordings")
       .update({
         status: "transcribed",
-        error_message: `La transcripción está lista, pero no se pudo generar el análisis: ${friendlyError(message)}`,
+        error_message: `La transcripción está lista, pero no se pudo generar el análisis: ${friendlyError(message)} Pulsa «Reintentar».`,
       })
       .eq("id", job.recording_id);
     return;
@@ -261,13 +258,13 @@ export async function handleJobFailure(
   if (job.segment_id) {
     await admin.from("presentation_segments").update({ status: "failed" }).eq("id", job.segment_id);
   }
-  // El audio se conserva hasta FAILED_AUDIO_HOURS para poder pulsar «Reintentar»;
-  // sweepQueue lo borra después.
+  // Nunca se conserva audio: tras un fallo definitivo solo queda pegar el texto a mano.
   await markRecordingFailed(
     admin,
     job.recording_id,
-    `No se pudo transcribir el audio: ${friendlyError(message)}`,
+    `No se pudo transcribir el audio: ${friendlyError(message)} El audio se ha borrado; pega la transcripción para generar los materiales.`,
   );
+  await deleteRecordingAudio(admin, job.recording_id);
 }
 
 /** Mensaje para la persona usuaria; el detalle técnico queda en last_error. */
@@ -279,7 +276,7 @@ export function friendlyError(message: string) {
   if (/ejecutor no respondió|timeout|tiempo|abort/i.test(message)) return "el servicio tardó demasiado en responder.";
   if (/formato|ffmpeg|unsupported/i.test(message)) return "el formato del audio no es compatible.";
   if (/audio temporal|ya no existe/i.test(message)) return "el audio temporal ya no está disponible.";
-  return "el servicio de IA ha fallado. Pulsa «Reintentar» en unos minutos.";
+  return "el servicio de IA ha fallado.";
 }
 
 /** Espera turno en el limitador global de NVIDIA o aplaza el trabajo. */
@@ -505,24 +502,10 @@ export async function sweepQueue(admin: SupabaseClient) {
     await handleJobFailure(
       admin,
       { ...job, attempts: job.max_attempts },
-      "NVIDIA no pudo transcribir y no hay ningún transcriptor de respaldo conectado. Pulsa «Reintentar» o pega el texto a mano.",
+      "NVIDIA no pudo transcribir y no hay ningún transcriptor de respaldo conectado.",
       false,
     );
   }
-
-  // Audio de grabaciones fallidas: se guarda un tiempo para reintentar y luego se borra.
-  const failedBefore = new Date(now.getTime() - FAILED_AUDIO_HOURS * 60 * 60 * 1000).toISOString();
-  const { data: failedRecordings } = await admin
-    .from("presentation_recordings")
-    .select("id")
-    .eq("status", "failed")
-    .is("audio_deleted_at", null)
-    .lt("created_at", failedBefore)
-    .limit(20);
-  for (const recording of failedRecordings ?? []) {
-    await deleteRecordingAudio(admin, recording.id);
-  }
-
   const staleBefore = new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString();
   const { data: abandoned } = await admin
     .from("presentation_recordings")
