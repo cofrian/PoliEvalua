@@ -1,14 +1,16 @@
 import Papa from "papaparse";
 import { NextResponse } from "next/server";
 
-import { loadResults } from "@/lib/app/results";
+import { combinedGrade, peerReviewSettings } from "@/lib/app/peer-review";
+import { loadPeerTotals, loadResults } from "@/lib/app/results";
 import { getSession } from "@/lib/app/session";
 
 export async function GET(request: Request) {
   const { supabase, isAdmin, eventClosed, event } = await getSession();
   if (!isAdmin && !eventClosed) return new NextResponse("No autorizado", { status: 403 });
 
-  const { challenges, criteria, teams } = await loadResults(supabase, event.id);
+  const results = await loadResults(supabase, event.id);
+  const { challenges, criteria, teams } = results;
   const challengeName = (id: string | null) =>
     challenges.find((c) => c.id === id)?.name ?? "";
 
@@ -18,19 +20,40 @@ export async function GET(request: Request) {
   // lista para pasar a la hoja de calificaciones (p. ej. PoliformaT).
   if (tipo === "acta") {
     if (!isAdmin) return new NextResponse("No autorizado", { status: 403 });
-    const { data: members } = await supabase
-      .from("team_members")
-      .select("team_id, full_name, email")
-      .eq("event_id", event.id)
-      .order("full_name");
+    const peerSettings = peerReviewSettings(event.settings);
+    const [{ data: members }, peer] = await Promise.all([
+      supabase
+        .from("team_members")
+        .select("id, team_id, full_name, email")
+        .eq("event_id", event.id)
+        .order("full_name"),
+      peerSettings.enabled ? loadPeerTotals(supabase, event.id, results) : Promise.resolve(null),
+    ]);
     const byTeam = new Map(teams.map((team) => [team.teamId, team]));
+    const tenth = (value: number | null | undefined) =>
+      value === null || value === undefined ? "" : (value / 10).toFixed(2);
     const rows = (members ?? []).map((member) => {
       const team = byTeam.get(member.team_id);
+      const peerTeam = peer?.teams.get(member.team_id);
+      const final = peer
+        ? combinedGrade(
+            { teacher: team?.average ?? null, peer: peerTeam?.peer ?? null, self: peerTeam?.self ?? null },
+            peerSettings.weights,
+          )
+        : (team?.average ?? null);
       return {
         correo: member.email ?? "",
         nombre: member.full_name,
         grupo: team?.name ?? "",
-        nota_sobre_10: team?.average !== null && team?.average !== undefined ? (team.average / 10).toFixed(2) : "",
+        nota_sobre_10: tenth(final),
+        ...(peer
+          ? {
+              nota_profesorado: tenth(team?.average),
+              nota_companeros: tenth(peerTeam?.peer),
+              nota_autoevaluacion: tenth(peerTeam?.self),
+              aportacion_1_a_5: peer.contribution.get(member.id) ?? "",
+            }
+          : {}),
         evaluaciones: team?.evaluations.length ?? 0,
       };
     });

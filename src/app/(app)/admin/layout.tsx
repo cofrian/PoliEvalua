@@ -10,12 +10,14 @@ export default async function AdminLayout({
   if (!isAdmin) redirect("/equipos");
 
   const academic = event.kind === "class" || event.kind === "project";
+  const hasStudents = (((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? []).includes("student");
   const sections = [
     { href: "/admin", label: "Espacio y personas" },
     { href: "/admin/asistente", label: "Asistente" },
     ...(words.hasModule("rubric") ? [{ href: "/admin/evaluacion", label: "Evaluación" }] : []),
     { href: "/admin/paneles", label: `Paneles de ${words.evaluator}` },
     { href: "/admin/agenda", label: "Agenda" },
+    ...(hasStudents ? [{ href: "/admin/coevaluacion", label: "Coevaluación" }] : []),
     { href: "/admin/grabaciones", label: "Grabaciones" },
     ...(academic ? [{ href: "/admin/academico", label: "Datos académicos" }] : []),
     ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: words.units }] : []),

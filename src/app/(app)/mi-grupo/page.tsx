@@ -2,7 +2,13 @@ import { CalendarClock, ClipboardList, Mic2, Users } from "lucide-react";
 import Link from "next/link";
 
 import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
-import { TeamFeedbackView, type TeamFeedback } from "@/components/app/team-feedback-view";
+import {
+  PeerSummaryView,
+  TeamFeedbackView,
+  type PeerSummary,
+  type TeamFeedback,
+} from "@/components/app/team-feedback-view";
+import { peerReviewSettings } from "@/lib/app/peer-review";
 import { TeamLinks, type TeamLink } from "@/components/app/team-links";
 import { scheduleRoom, slotStatusLabels, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
@@ -47,13 +53,27 @@ export default async function MyGroupPage() {
   }
 
   const links = [...team.team_links].sort((a, b) => a.created_at.localeCompare(b.created_at));
-  const [agenda, feedbackResult] = await Promise.all([
+  const peerSettings = peerReviewSettings(event.settings);
+  const [agenda, feedbackResult, peerResult, { data: rubric }] = await Promise.all([
     loadAgenda(supabase, event.id),
     words.resultsPublished
       ? supabase.rpc("team_feedback", { target_team: team.id })
       : Promise.resolve({ data: null }),
+    words.resultsPublished && peerSettings.enabled
+      ? supabase.rpc("team_peer_summary", { target_team: team.id })
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("rubrics")
+      .select("scale_max, rubric_criteria(id, title, order, deleted_at)")
+      .eq("event_id", event.id)
+      .eq("is_active", true)
+      .maybeSingle(),
   ]);
   const feedback = (feedbackResult.data ?? null) as TeamFeedback | null;
+  const peerSummary = (peerResult.data ?? null) as PeerSummary | null;
+  const rubricCriteria = ((rubric?.rubric_criteria ?? []) as { id: string; title: string; order: number; deleted_at: string | null }[])
+    .filter((criterion) => !criterion.deleted_at)
+    .sort((a, b) => a.order - b.order);
   const mySlot = agenda.find((slot) => slot.team_id === team.id);
   const myScheduled = mySlot
     ? scheduleRoom(agenda.filter((slot) => slot.room === mySlot.room)).find((slot) => slot.id === mySlot.id)
@@ -129,6 +149,19 @@ export default async function MyGroupPage() {
           <h2 className="mb-4 font-display text-2xl">Resultados y feedback</h2>
           <TeamFeedbackView feedback={feedback} />
         </section>
+      ) : null}
+
+      {peerSummary ? (
+        <section className={cardClass}>
+          <h2 className="mb-4 font-display text-2xl">Coevaluación</h2>
+          <PeerSummaryView criteria={rubricCriteria} scaleMax={rubric?.scale_max ?? 10} summary={peerSummary} />
+        </section>
+      ) : null}
+
+      {peerSettings.enabled && !eventClosed ? (
+        <Link className={`${cardClass} block font-semibold hover:bg-muted`} href="/coevaluacion">
+          Ir a la coevaluación →
+        </Link>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">

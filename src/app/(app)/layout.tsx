@@ -7,6 +7,7 @@ import { UpvBrand } from "@/components/brand/upv-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { peerReviewSettings } from "@/lib/app/peer-review";
 import { NO_AUDIO_GUARANTEE, needsRecordingNotice } from "@/lib/app/recording-notice";
 import { getSession, roleLabels } from "@/lib/app/session";
 
@@ -35,6 +36,9 @@ export default async function AppLayout({
   const links = [
     { href: "/espacios", label: "Espacios" },
     ...(role === "student" ? [{ href: "/mi-grupo", label: `Mi ${words.unitLower}` }] : []),
+    ...(role === "student" && peerReviewSettings(event.settings).enabled
+      ? [{ href: "/coevaluacion", label: "Coevaluación" }]
+      : []),
     { href: "/equipos", label: words.units },
     { href: "/agenda", label: "Agenda" },
     ...(canVote ? [{ href: "/sala", label: "Sala" }] : []),

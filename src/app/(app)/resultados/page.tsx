@@ -7,7 +7,8 @@ import { PrintButton } from "@/components/app/print-button";
 import { ResultsChart } from "@/components/app/results-chart";
 import { Button } from "@/components/ui/button";
 import { DiscrepanciesPanel } from "@/components/app/discrepancies-panel";
-import { findDiscrepancies, loadResults, resultSections } from "@/lib/app/results";
+import { combinedGrade, peerReviewSettings } from "@/lib/app/peer-review";
+import { findDiscrepancies, loadPeerTotals, loadResults, resultSections } from "@/lib/app/results";
 import { getSession } from "@/lib/app/session";
 
 const cell = "px-3 py-2";
@@ -24,6 +25,12 @@ export default async function ResultsPage() {
   const minEvaluations = evaluationPage?.min_evaluations ?? 1;
   const settings = (event.settings ?? {}) as { enabled_roles?: string[] };
   const hasStudents = (settings.enabled_roles ?? []).includes("student");
+  const peerSettings = peerReviewSettings(event.settings);
+  const peer = isAdmin && peerSettings.enabled ? await loadPeerTotals(supabase, event.id, results) : null;
+  const finalGrade = (teamId: string, teacher: number | null) => {
+    const totals = peer?.teams.get(teamId);
+    return combinedGrade({ teacher, peer: totals?.peer ?? null, self: totals?.self ?? null }, peerSettings.weights);
+  };
 
   return (
     <div className="space-y-10">
@@ -100,6 +107,18 @@ export default async function ResultsPage() {
                     <th className={cell}>#</th>
                     <th className={cell}>{words.unit}</th>
                     <th className={`${cell} text-right`}>Media</th>
+                    {peer ? (
+                      <>
+                        <th className={`${cell} text-right`} title="Media de la coevaluación sobre 100">Compañeros</th>
+                        <th className={`${cell} text-right`} title="Autoevaluación sobre 100">Auto</th>
+                        <th
+                          className={`${cell} text-right`}
+                          title={`Ponderada: ${words.evaluator} ${peerSettings.weights.teacher} %, compañeros ${peerSettings.weights.peer} %, auto ${peerSettings.weights.self} %`}
+                        >
+                          Final
+                        </th>
+                      </>
+                    ) : null}
                     {criteria.map((c) => (
                       <th className={`${cell} text-right`} key={c.id} title={c.title}>
                         {c.title.split(/[\s/]+/)[0]} ({c.weight}%)
@@ -136,6 +155,18 @@ export default async function ResultsPage() {
                         <td className={`${cell} text-right font-bold`}>
                           {team.average ?? "–"}
                         </td>
+                        {peer ? (
+                          <>
+                            <td className={`${cell} text-right`}>
+                              {peer.teams.get(team.teamId)?.peer ?? "–"}
+                              <span className="block text-xs text-muted-foreground">
+                                {peer.teams.get(team.teamId)?.peerCount ?? 0} rev.
+                              </span>
+                            </td>
+                            <td className={`${cell} text-right`}>{peer.teams.get(team.teamId)?.self ?? "–"}</td>
+                            <td className={`${cell} text-right font-bold`}>{finalGrade(team.teamId, team.average) ?? "–"}</td>
+                          </>
+                        ) : null}
                         {criteria.map((c) => (
                           <td className={`${cell} text-right`} key={c.id}>
                             {team.criterionAverages[c.id] ?? "–"}

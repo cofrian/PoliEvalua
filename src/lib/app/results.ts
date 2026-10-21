@@ -50,6 +50,63 @@ export function resultSections(data: ResultsData, fallbackTitle: string) {
   ].filter((section) => section.teams.length);
 }
 
+export type PeerTotals = {
+  /** Por grupo: total sobre 100 de compañeros y de la autoevaluación. */
+  teams: Map<string, { peer: number | null; self: number | null; peerCount: number }>;
+  /** Por integrante (team_members.id): aportación media de 1 a 5. */
+  contribution: Map<string, number>;
+};
+
+/** Coevaluación agregada (solo la gestión puede leer las respuestas). */
+export async function loadPeerTotals(
+  supabase: SupabaseClient,
+  eventId: string,
+  data: ResultsData,
+): Promise<PeerTotals> {
+  const [{ data: reviews }, { data: contributions }] = await Promise.all([
+    supabase.from("peer_reviews").select("team_id, kind, scores").eq("event_id", eventId).eq("status", "submitted"),
+    supabase.from("contribution_reviews").select("member_id, score").eq("event_id", eventId),
+  ]);
+
+  const totalOf = (rows: { scores: unknown }[]) => {
+    if (!rows.length) return null;
+    const averages = Object.fromEntries(
+      data.criteria.map((criterion) => {
+        const values = rows
+          .map((row) => (row.scores as Record<string, number>)[criterion.id])
+          .filter((value): value is number => typeof value === "number");
+        return [criterion.id, values.length ? values.reduce((a, b) => a + b, 0) / values.length : null];
+      }),
+    );
+    let any = false;
+    const total = data.criteria.reduce((sum, criterion) => {
+      const value = averages[criterion.id];
+      if (typeof value !== "number") return sum;
+      any = true;
+      return sum + (Math.min(value, data.scaleMax) / data.scaleMax) * criterion.weight;
+    }, 0);
+    return any ? round(total) : null;
+  };
+
+  const teams = new Map(
+    data.teams.map((team) => {
+      const peer = (reviews ?? []).filter((row) => row.team_id === team.teamId && row.kind === "peer");
+      const self = (reviews ?? []).filter((row) => row.team_id === team.teamId && row.kind === "self");
+      return [team.teamId, { peer: totalOf(peer), self: totalOf(self), peerCount: peer.length }];
+    }),
+  );
+
+  const byMember = new Map<string, number[]>();
+  for (const row of contributions ?? []) {
+    byMember.set(row.member_id, [...(byMember.get(row.member_id) ?? []), row.score]);
+  }
+  const contribution = new Map(
+    [...byMember.entries()].map(([id, values]) => [id, round(values.reduce((a, b) => a + b, 0) / values.length)]),
+  );
+
+  return { teams, contribution };
+}
+
 export type Discrepancies = {
   /** Evaluadores que puntúan sistemáticamente por encima o por debajo de los demás. */
   judges: { judgeId: string; judgeName: string; bias: number; evaluated: number }[];

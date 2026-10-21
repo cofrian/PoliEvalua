@@ -197,6 +197,49 @@ try {
     ownFeedbackError?.message ?? JSON.stringify(ownFeedback),
   );
   check("Otro grupo no puede ver ese feedback", Boolean(otherFeedbackError));
+
+  // Coevaluación (migración 0022).
+  const { data: settingsRow } = await admin.from("events").select("settings").eq("id", eventId).single();
+  await admin
+    .from("events")
+    .update({
+      settings: {
+        ...(settingsRow?.settings ?? {}),
+        peer_review: { enabled: true, peer: true, self: true, contribution: true },
+      },
+    })
+    .eq("id", eventId);
+  await admin.from("peer_assignments").insert({ event_id: eventId, reviewer_id: studentA.id, team_id: groupB });
+
+  const peerRow = (teamId, kind) => ({
+    event_id: eventId,
+    reviewer_id: studentA.id,
+    team_id: teamId,
+    kind,
+    scores: {},
+    status: "submitted",
+  });
+  const [{ error: assignedError }, { error: unassignedSelfAsPeer }, { error: selfError }] = await Promise.all([
+    studentA.client.from("peer_reviews").insert(peerRow(groupB, "peer")),
+    studentA.client.from("peer_reviews").insert(peerRow(groupA, "peer")),
+    studentA.client.from("peer_reviews").insert(peerRow(groupA, "self")),
+  ]);
+  check("Se puede coevaluar un grupo asignado", !assignedError, assignedError?.message);
+  check("No se puede coevaluar como «compañero» al propio grupo", Boolean(unassignedSelfAsPeer));
+  check("Se puede autoevaluar al propio grupo", !selfError, selfError?.message);
+
+  const { data: othersReviews } = await studentB.client.from("peer_reviews").select("id").eq("event_id", eventId);
+  check("Nadie ve las revisiones de otros estudiantes", (othersReviews ?? []).length === 0);
+
+  const { data: memberRows } = await admin.from("team_members").select("id, user_id").eq("event_id", eventId);
+  const selfMember = memberRows.find((row) => row.user_id === studentA.id);
+  const otherMember = memberRows.find((row) => row.user_id === studentB.id);
+  const [{ error: rateSelfError }, { error: rateOtherTeamError }] = await Promise.all([
+    studentA.client.from("contribution_reviews").insert({ event_id: eventId, reviewer_id: studentA.id, member_id: selfMember.id, score: 5 }),
+    studentA.client.from("contribution_reviews").insert({ event_id: eventId, reviewer_id: studentA.id, member_id: otherMember.id, score: 1 }),
+  ]);
+  check("Nadie puede valorar su propia aportación", Boolean(rateSelfError));
+  check("No se valora la aportación de alguien de otro grupo", Boolean(rateOtherTeamError));
 } catch (error) {
   failures += 1;
   console.error("✘ Error inesperado:", error instanceof Error ? error.message : error);

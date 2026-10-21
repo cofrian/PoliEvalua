@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { logAudit } from "@/lib/app/audit";
+import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
 import { getSession } from "@/lib/app/session";
 
 async function requireAdmin() {
@@ -341,6 +342,74 @@ export async function clearAgendaAction() {
   await supabase.from("presentation_slots").delete().eq("event_id", event.id);
   await logAudit(supabase, event.id, user.id, "borrar_agenda", "presentation_slots", null);
   refreshAll();
+}
+
+// ========== COEVALUACIÓN ==========
+
+export async function updatePeerReviewSettingsAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const number = (key: string, min: number, max: number, fallback: number) => {
+    const value = Number(text(formData, key));
+    return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
+  };
+  const peerReview = {
+    enabled: formData.get("enabled") === "on",
+    peer: formData.get("peer") === "on",
+    self: formData.get("self") === "on",
+    contribution: formData.get("contribution") === "on",
+    reviews_per_student: number("reviewsPerStudent", 1, 10, 2),
+    anonymous: formData.get("anonymous") === "on",
+    weights: {
+      teacher: number("weightTeacher", 0, 100, 80),
+      peer: number("weightPeer", 0, 100, 20),
+      self: number("weightSelf", 0, 100, 0),
+    },
+  };
+  const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
+  const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), peer_review: peerReview };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error("No se ha podido guardar la coevaluación.");
+  await logAudit(supabase, event.id, user.id, "configurar_coevaluacion", "events", event.id, peerReview);
+  refreshAll();
+}
+
+export type PeerAssignState = { ok: boolean; message: string } | null;
+
+/** Reparte de nuevo los grupos a evaluar. Las revisiones ya hechas se conservan. */
+export async function generatePeerAssignmentsAction(): Promise<PeerAssignState> {
+  const { supabase, user, event, words } = await requireAdmin();
+  const settings = peerReviewSettings(event.settings);
+  const [{ data: members }, { data: teams }] = await Promise.all([
+    supabase.from("team_members").select("user_id, team_id").eq("event_id", event.id).not("user_id", "is", null),
+    supabase.from("teams").select("id").eq("event_id", event.id),
+  ]);
+  const students = (members ?? []).map((member) => ({ userId: member.user_id as string, teamId: member.team_id }));
+  if (!students.length) {
+    return { ok: false, message: "Ningún estudiante ha entrado todavía con su correo: no hay a quién asignar." };
+  }
+  if ((teams ?? []).length < 2) return { ok: false, message: `Hacen falta al menos dos ${words.unitsLower}.` };
+
+  const assignments = assignPeerReviews(
+    students,
+    (teams ?? []).map((team) => team.id),
+    Math.min(settings.reviewsPerStudent, (teams ?? []).length - 1),
+  );
+  const { error: deleteError } = await supabase.from("peer_assignments").delete().eq("event_id", event.id);
+  if (deleteError) return { ok: false, message: "No se ha podido sustituir el reparto anterior." };
+  const { error } = await supabase.from("peer_assignments").insert(
+    assignments.map((item) => ({ event_id: event.id, reviewer_id: item.reviewerId, team_id: item.teamId })),
+  );
+  if (error) return { ok: false, message: "No se ha podido guardar el reparto." };
+
+  await logAudit(supabase, event.id, user.id, "repartir_coevaluacion", "peer_assignments", null, {
+    students: students.length,
+    assignments: assignments.length,
+  });
+  refreshAll();
+  return {
+    ok: true,
+    message: `Reparto hecho: ${students.length} estudiantes, ${assignments.length} revisiones asignadas.`,
+  };
 }
 
 // ========== RETOS ==========

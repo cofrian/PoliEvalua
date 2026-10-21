@@ -17,6 +17,67 @@ export type TeamFeedback = {
   } | null;
 };
 
+export type PeerSummary = {
+  peer: { count: number; criteria: Record<string, number> };
+  self: { count: number; criteria: Record<string, number> };
+  contribution: { memberId: string; name: string; average: number | null; count: number }[];
+  peerComments: string[];
+};
+
+/** Lo que opinan otros grupos (medias y comentarios anónimos) y tu aportación. */
+export function PeerSummaryView({
+  summary,
+  criteria,
+  scaleMax,
+}: {
+  summary: PeerSummary;
+  criteria: { id: string; title: string }[];
+  scaleMax: number;
+}) {
+  const own = summary.contribution[0];
+  return (
+    <div className="space-y-4 text-sm">
+      {summary.peer.count ? (
+        <div>
+          <p className="mb-2 font-semibold">
+            Media de {summary.peer.count} {summary.peer.count === 1 ? "revisión" : "revisiones"} de compañeros
+            {summary.self.count ? " y vuestra autoevaluación" : ""}
+          </p>
+          <ul className="space-y-1">
+            {criteria.map((criterion) => (
+              <li className="flex justify-between gap-3" key={criterion.id}>
+                <span>{criterion.title}</span>
+                <span className="font-mono">
+                  {summary.peer.criteria[criterion.id] ?? "–"}
+                  {summary.self.count ? ` · auto ${summary.self.criteria[criterion.id] ?? "–"}` : ""} / {scaleMax}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-muted-foreground">Todavía no hay coevaluaciones de otros grupos.</p>
+      )}
+      {summary.peerComments.length ? (
+        <div>
+          <p className="mb-1 font-semibold">Comentarios de compañeros</p>
+          <ul className="space-y-1">
+            {summary.peerComments.map((comment, index) => (
+              <li className="rounded-lg bg-muted p-2 italic" key={index}>«{comment}»</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {own?.count ? (
+        <p>
+          Tus compañeros valoran tu aportación con un <strong>{own.average}</strong> sobre 5 ({own.count}{" "}
+          {own.count === 1 ? "valoración" : "valoraciones"}).
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /** Nota final sobre 10 a partir de las medias por criterio y sus pesos. */
 export function feedbackGrade(feedback: TeamFeedback) {
   if (!feedback.evaluations) return null;
