@@ -38,6 +38,16 @@ const CATALOG_TTL_MS = 10 * 60 * 1000;
 const unavailableUntil = new Map<string, number>();
 let catalogCache: { at: number; ids: Set<string> } | null = null;
 
+/**
+ * Parámetros extra para NVIDIA: los modelos de razonamiento (DeepSeek, GLM,
+ * Kimi, Nemotron) piensan antes de responder y con salidas JSON largas se
+ * pasan del tiempo del servidor. Para rellenar formularios no hace falta, así
+ * que se desactiva. Cada plantilla lee su clave e ignora las demás.
+ */
+export const NVIDIA_NO_THINKING = {
+  chat_template_kwargs: { thinking: false, enable_thinking: false },
+};
+
 export function aiConfigured() {
   return Boolean(process.env.NVIDIA_API_KEY);
 }

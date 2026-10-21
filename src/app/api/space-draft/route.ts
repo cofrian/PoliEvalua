@@ -8,13 +8,13 @@ import {
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
 import { aiErrorResponse } from "@/lib/ai/error-response";
-import { aiConfigured, NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/models";
+import { aiConfigured, NVIDIA_BASE_URL, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
 import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const requestSchema = z.object({
   message: z.string().trim().min(3).max(4000),
@@ -117,8 +117,9 @@ export async function POST(request: Request) {
           temperature: 0.2,
           maxRetries: 0,
           abortSignal,
+          providerOptions: { nvidia: NVIDIA_NO_THINKING },
         }),
-      { deadlineMs: startedAt + 55_000, attemptTimeoutMs: 35_000 },
+      { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 60_000 },
     );
 
     const space = {
