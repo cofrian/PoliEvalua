@@ -5,11 +5,16 @@ import { headers } from "next/headers";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
 type Admin = ReturnType<typeof createAdminClient>;
-export type AttemptKind = "assistant" | "bad_code" | "bad_password";
+export type AttemptKind =
+  | "assistant"
+  | "transcription"
+  | "bad_code"
+  | "bad_password";
 
 // Cuántos intentos se permiten en cada ventana antes de bloquear.
 export const LIMITS: Record<AttemptKind, { max: number; minutes: number }> = {
   assistant: { max: 20, minutes: 10 }, // protege la cuota del proveedor de IA
+  transcription: { max: 10, minutes: 60 }, // audios procesados por usuario e IP
   bad_code: { max: 10, minutes: 15 }, // códigos de evento incorrectos por IP
   bad_password: { max: 5, minutes: 15 }, // contraseñas incorrectas por email o IP
 };

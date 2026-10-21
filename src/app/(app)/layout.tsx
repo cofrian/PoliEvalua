@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { logoutAction } from "@/app/(auth)/actions";
+import { SpaceSwitcher } from "@/components/app/space-switcher";
 import { UpvBrand } from "@/components/brand/upv-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,13 @@ import { getSession, roleLabels } from "@/lib/app/session";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { supabase, profile, isAdmin, event, eventClosed } = await getSession();
+  const { supabase, profile, isAdmin, event, eventClosed, memberships } =
+    await getSession();
+  const spaces = memberships.flatMap((membership) => {
+    const relation = membership.events;
+    const space = Array.isArray(relation) ? relation[0] : relation;
+    return space ? [{ id: space.id, name: space.name }] : [];
+  });
 
   // Presencia global y actividad del espacio, usadas para administración y
   // archivado seguro. Ninguna de las dos llamadas bloquea la navegación si falla.
@@ -33,11 +40,10 @@ export default async function AppLayout({
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 pt-3 sm:px-6 sm:py-3 lg:px-8">
           <div className="flex min-w-0 items-center gap-4">
             <UpvBrand className="shrink-0" href="/equipos" />
-            {event?.name ? (
-              <span className="hidden max-w-48 truncate border-l border-line pl-4 text-xs font-semibold text-upv-500 lg:block dark:border-[#383C3D] dark:text-upv-300">
-                {event.name}
-              </span>
-            ) : null}
+            <SpaceSwitcher
+              current={{ id: event.id, name: event.name }}
+              spaces={spaces}
+            />
             <nav className="hidden gap-1 text-sm font-semibold sm:flex">
               {links.map((link) => (
                 <Link
