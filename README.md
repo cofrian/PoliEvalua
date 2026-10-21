@@ -29,7 +29,7 @@ configuración actual apunta a NVIDIA NIM sin acoplar el dominio al proveedor.
 
 ## Desarrollo local
 
-Requisitos: Node.js 20 o posterior, npm y un proyecto Supabase.
+Requisitos: Node.js 22 o posterior, npm 10 y un proyecto Supabase.
 
 ```bash
 npm ci
