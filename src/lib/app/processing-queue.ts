@@ -9,6 +9,7 @@ import {
   type AnalysisState,
   type Criterion,
 } from "@/lib/ai/agents/presentation-graph";
+import { AiConfigError, AllModelsFailedError, aiConfigured } from "@/lib/ai/models";
 import { TranscriptionError, transcribeWithNvidia } from "@/lib/ai/nvidia-transcription";
 import { mergeTranscripts } from "@/lib/app/merge-transcripts";
 
@@ -24,6 +25,10 @@ const MAX_INTERNAL_CONCURRENCY = Number(process.env.MAX_INTERNAL_CONCURRENCY) ||
 const INTERNAL_LEASE_SECONDS = 290;
 export const EXTERNAL_LEASE_SECONDS = Number(process.env.TRANSCRIPTION_LEASE_SECONDS) || 15 * 60;
 const SLOT_WAIT_MS = 25_000;
+/** Minutos que se espera a un trabajador externo antes de dar el trozo por fallido. */
+const EXTERNAL_WAIT_MINUTES = Number(process.env.TRANSCRIPTION_EXTERNAL_WAIT_MINUTES) || 30;
+/** Horas que se conserva el audio de una grabación fallida para reintentarla. */
+const FAILED_AUDIO_HOURS = 24;
 
 type JobKind = "transcribe_segment" | "assemble" | "analyze";
 
@@ -45,6 +50,9 @@ type TeamRelation =
 
 /** El trabajo debe esperar sin gastar un intento (p. ej. cupo de NVIDIA lleno). */
 class DeferJob extends Error {
+  /** withModelFallback no debe tratarlo como fallo del modelo. */
+  readonly passthrough = true;
+
   constructor(public readonly seconds: number) {
     super("Aplazado");
   }
@@ -222,6 +230,13 @@ export async function handleJobFailure(
         .update({ status: "queued" })
         .eq("id", job.segment_id);
     }
+    await admin
+      .from("presentation_recordings")
+      .update({
+        error_message:
+          "NVIDIA no ha podido transcribir una parte. Esperando al transcriptor de respaldo.",
+      })
+      .eq("id", job.recording_id);
     await wakeWorkers();
     return;
   }
@@ -237,7 +252,7 @@ export async function handleJobFailure(
       .from("presentation_recordings")
       .update({
         status: "transcribed",
-        error_message: "La transcripción está lista, pero no se pudo generar el análisis.",
+        error_message: `La transcripción está lista, pero no se pudo generar el análisis: ${friendlyError(message)}`,
       })
       .eq("id", job.recording_id);
     return;
@@ -246,8 +261,25 @@ export async function handleJobFailure(
   if (job.segment_id) {
     await admin.from("presentation_segments").update({ status: "failed" }).eq("id", job.segment_id);
   }
-  await markRecordingFailed(admin, job.recording_id, `No se pudo transcribir el audio: ${lastError}`);
-  await deleteRecordingAudio(admin, job.recording_id);
+  // El audio se conserva hasta FAILED_AUDIO_HOURS para poder pulsar «Reintentar»;
+  // sweepQueue lo borra después.
+  await markRecordingFailed(
+    admin,
+    job.recording_id,
+    `No se pudo transcribir el audio: ${friendlyError(message)}`,
+  );
+}
+
+/** Mensaje para la persona usuaria; el detalle técnico queda en last_error. */
+export function friendlyError(message: string) {
+  if (/NVIDIA_API_KEY|clave/i.test(message)) return "la IA no está configurada en el servidor.";
+  if (/ninguno de los modelos/i.test(message)) return "los modelos de IA no están disponibles ahora mismo.";
+  if (/no se detectó voz/i.test(message)) return "no se detectó voz en la grabación.";
+  if (/trabajador de respaldo|transcriptor de respaldo/i.test(message)) return message;
+  if (/ejecutor no respondió|timeout|tiempo|abort/i.test(message)) return "el servicio tardó demasiado en responder.";
+  if (/formato|ffmpeg|unsupported/i.test(message)) return "el formato del audio no es compatible.";
+  if (/audio temporal|ya no existe/i.test(message)) return "el audio temporal ya no está disponible.";
+  return "el servicio de IA ha fallado. Pulsa «Reintentar» en unos minutos.";
 }
 
 /** Espera turno en el limitador global de NVIDIA o aplaza el trabajo. */
@@ -382,9 +414,10 @@ async function rubricCriteria(
 }
 
 async function runAnalyze(admin: SupabaseClient, job: Job) {
-  if (!process.env.NVIDIA_API_KEY || !process.env.NVIDIA_MODEL) {
-    throw new TranscriptionError("Falta configurar NVIDIA_MODEL para generar el análisis.", false);
+  if (!aiConfigured()) {
+    throw new TranscriptionError("Falta configurar NVIDIA_API_KEY para generar el análisis.", false);
   }
+  const deadlineMs = Date.now() + (INTERNAL_LEASE_SECONDS - 20) * 1000;
   const { data: recording } = await admin
     .from("presentation_recordings")
     .update({ status: "analyzing", error_message: null })
@@ -405,6 +438,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     previous: state,
     deps: {
       acquireSlot: () => acquireNvidiaSlot(admin),
+      deadlineMs,
       saveNode: async (node, value) => {
         state[node] = value as never;
         await admin
@@ -456,6 +490,39 @@ export async function sweepQueue(admin: SupabaseClient) {
     }
   }
 
+  // Respaldo externo que nunca llegó: sin trabajador conectado el trabajo
+  // esperaría para siempre.
+  const orphanBefore = new Date(now.getTime() - EXTERNAL_WAIT_MINUTES * 60 * 1000).toISOString();
+  const { data: orphaned } = await admin
+    .from("processing_jobs")
+    .select("id, kind, runner, recording_id, segment_id, event_id, attempts, max_attempts")
+    .eq("status", "queued")
+    .eq("runner", "external")
+    .eq("attempts", 0)
+    .lt("run_after", orphanBefore)
+    .limit(50);
+  for (const job of (orphaned ?? []) as Job[]) {
+    await handleJobFailure(
+      admin,
+      { ...job, attempts: job.max_attempts },
+      "NVIDIA no pudo transcribir y no hay ningún transcriptor de respaldo conectado. Pulsa «Reintentar» o pega el texto a mano.",
+      false,
+    );
+  }
+
+  // Audio de grabaciones fallidas: se guarda un tiempo para reintentar y luego se borra.
+  const failedBefore = new Date(now.getTime() - FAILED_AUDIO_HOURS * 60 * 60 * 1000).toISOString();
+  const { data: failedRecordings } = await admin
+    .from("presentation_recordings")
+    .select("id")
+    .eq("status", "failed")
+    .is("audio_deleted_at", null)
+    .lt("created_at", failedBefore)
+    .limit(20);
+  for (const recording of failedRecordings ?? []) {
+    await deleteRecordingAudio(admin, recording.id);
+  }
+
   const staleBefore = new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString();
   const { data: abandoned } = await admin
     .from("presentation_recordings")
@@ -486,7 +553,12 @@ async function executeJob(admin: SupabaseClient, job: Job) {
       return;
     }
     const message = error instanceof Error ? error.message : "Error desconocido";
-    const retryable = error instanceof TranscriptionError ? error.retryable : true;
+    const retryable =
+      error instanceof TranscriptionError
+        ? error.retryable
+        : error instanceof AllModelsFailedError
+          ? error.retryable
+          : !(error instanceof AiConfigError);
     console.error(`Trabajo ${job.kind} ${job.id} falló:`, message);
     await handleJobFailure(admin, job, message, retryable);
   }

@@ -121,6 +121,23 @@ const coverageLabels: Record<CriterionEvidence["coverage"], string> = {
   absent: "No se menciona",
 };
 
+/** Los errores de getUserMedia llegan en inglés y con nombres técnicos. */
+function microphoneErrorMessage(error: unknown) {
+  const name = error instanceof DOMException ? error.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return "El navegador no tiene permiso para usar el micrófono. Actívalo en el candado de la barra de direcciones y vuelve a intentarlo.";
+  }
+  if (name === "NotFoundError" || name === "OverconstrainedError") {
+    return "No se ha encontrado ningún micrófono. Conecta uno y vuelve a intentarlo.";
+  }
+  if (name === "NotReadableError" || name === "AbortError") {
+    return "El micrófono está ocupado por otra aplicación (Teams, Zoom…). Ciérrala y vuelve a intentarlo.";
+  }
+  return error instanceof Error && error.message
+    ? error.message
+    : "No se ha podido empezar a grabar. Revisa el micrófono y vuelve a intentarlo.";
+}
+
 function formatDuration(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remaining = seconds % 60;
@@ -371,7 +388,36 @@ export function PresentationStudio({
     [supabase],
   );
 
-  const recorder = useSegmentedRecorder({ maxSeconds: MAX_SECONDS, onSegment: handleSegment });
+  // stopRecording se declara más abajo; el hook la invoca a través de esta referencia.
+  const stopRef = useRef<() => Promise<void>>(async () => undefined);
+  const handleFinishRequired = useCallback((reason: "limit" | "interrupted") => {
+    if (reason === "limit") {
+      toast.info("Se ha alcanzado la duración máxima. Guardando la grabación…");
+    } else {
+      toast.warning(
+        "El micrófono se ha desconectado o lo ha usado otra aplicación. Guardamos lo grabado hasta ahora.",
+      );
+    }
+    void stopRef.current();
+  }, []);
+
+  const recorder = useSegmentedRecorder({
+    maxSeconds: MAX_SECONDS,
+    onSegment: handleSegment,
+    onFinishRequired: handleFinishRequired,
+  });
+
+  // Salir de la página corta el micrófono y deja trozos sin subir.
+  const leaveRisk = recorder.isRecording || busy;
+  useEffect(() => {
+    if (!leaveRisk) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [leaveRisk]);
 
   const refreshPending = useCallback(async () => {
     const items = await pendingUploads();
@@ -434,13 +480,14 @@ export function PresentationStudio({
       await recorder.start();
       router.refresh();
     } catch (error) {
+      const recordingId = recordingIdRef.current;
       recordingIdRef.current = null;
       setLiveRecordingId(null);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "No se ha podido acceder al micrófono. Revisa el permiso del navegador.",
-      );
+      // La grabación ya existe en el servidor pero sin audio: se retira.
+      if (recordingId) {
+        void fetch(`/api/presentations/${recordingId}`, { method: "DELETE" }).catch(() => undefined);
+      }
+      toast.error(microphoneErrorMessage(error));
     } finally {
       setBusy(false);
     }
@@ -476,6 +523,10 @@ export function PresentationStudio({
       router.refresh();
     }
   }
+
+  useEffect(() => {
+    stopRef.current = stopRecording;
+  });
 
   async function uploadFile(file: File) {
     const mimeType = FILE_TYPES[file.type];

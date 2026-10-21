@@ -1,0 +1,54 @@
+name: Modelos de IA
+
+on:
+  pull_request:
+    paths:
+      - src/lib/ai/**
+      - scripts/check-nvidia-models.mjs
+      - .github/workflows/ai-models.yml
+  schedule:
+    # Cada 6 horas: NVIDIA retira modelos sin previo aviso.
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    name: Modelos por defecto en el catálogo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22
+      - name: Comprobar catálogo de NVIDIA
+        run: node scripts/check-nvidia-models.mjs
+
+  production:
+    name: Salud de la IA en producción
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HEALTH_URL: ${{ secrets.PRODUCTION_URL }}
+      JOBS_CRON_SECRET: ${{ secrets.JOBS_CRON_SECRET }}
+    steps:
+      - name: Consultar /api/health/ai
+        run: |
+          if [ -z "$HEALTH_URL" ] || [ -z "$JOBS_CRON_SECRET" ]; then
+            echo "::warning::Faltan los secretos PRODUCTION_URL o JOBS_CRON_SECRET; se omite."
+            exit 0
+          fi
+          status=$(curl -sS -o body.json -w '%{http_code}' \
+            -H "Authorization: Bearer $JOBS_CRON_SECRET" \
+            "${HEALTH_URL%/}/api/health/ai")
+          cat body.json
+          if [ "$status" != "200" ]; then
+            echo "::error::La IA de producción no está sana (HTTP $status)."
+            exit 1
+          fi

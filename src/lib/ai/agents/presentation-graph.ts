@@ -12,6 +12,7 @@ import {
   type JuryReport,
   type PresentationInsights,
 } from "@/lib/ai/presentation-insights";
+import { NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/models";
 
 // Agentes que analizan la transcripción COMPLETA de una exposición. Cinco
 // especialistas trabajan en paralelo y un revisor descarta cualquier cita que
@@ -49,6 +50,8 @@ export type GraphDependencies = {
   acquireSlot: () => Promise<void>;
   /** Persiste el resultado de un agente para no repetirlo en un reintento. */
   saveNode: (node: AnalysisNode, value: unknown) => Promise<void>;
+  /** Límite para no empezar un intento que no cabe en la función. */
+  deadlineMs: number;
 };
 
 const GraphState = Annotation.Root({
@@ -66,20 +69,14 @@ const GraphState = Annotation.Root({
 
 type State = typeof GraphState.State;
 
-function model() {
-  const apiKey = process.env.NVIDIA_API_KEY;
-  const modelId = process.env.NVIDIA_MODEL;
-  if (!apiKey || !modelId) {
-    throw new Error("Falta configurar NVIDIA_API_KEY o NVIDIA_MODEL.");
-  }
+function model(modelId: string) {
   return new ChatOpenAI({
     model: modelId,
-    apiKey,
+    apiKey: process.env.NVIDIA_API_KEY,
     temperature: 0.15,
     maxTokens: 3000,
-    timeout: 120_000,
-    maxRetries: 1,
-    configuration: { baseURL: "https://integrate.api.nvidia.com/v1" },
+    maxRetries: 0,
+    configuration: { baseURL: NVIDIA_BASE_URL },
   });
 }
 
@@ -136,9 +133,8 @@ export async function runPresentationGraph({
   previous: AnalysisState;
   deps: GraphDependencies;
 }): Promise<{ insights: PresentationInsights; jury: JuryReport; removedQuotes: number }> {
-  const llm = model();
-
-  // Cada agente reutiliza su resultado guardado si ya terminó en un intento anterior.
+  // Cada agente reutiliza su resultado guardado si ya terminó en un intento
+  // anterior, y si su modelo falla prueba el siguiente de la cadena.
   function agent<T extends Record<string, unknown>>(
     node: AnalysisNode,
     schema: z.ZodType<T>,
@@ -147,16 +143,25 @@ export async function runPresentationGraph({
     return async (state: State) => {
       const saved = previous[node];
       if (saved) return { [node]: saved };
-      await deps.acquireSlot();
-      const result = (await llm
-        .withStructuredOutput(schema, { name: node, method: "jsonSchema" })
-        .invoke([
-          { role: "system", content: BASE_RULES },
-          { role: "user", content: `${instructions(state)}\n\n${context(state)}` },
-        ])) as T;
-      const parsed = schema.parse(result);
-      await deps.saveNode(node, parsed);
-      return { [node]: parsed };
+      const { result } = await withModelFallback(
+        "analysis",
+        async (modelId, signal) => {
+          await deps.acquireSlot();
+          const output = await model(modelId)
+            .withStructuredOutput(schema, { name: node, method: "jsonSchema" })
+            .invoke(
+              [
+                { role: "system", content: BASE_RULES },
+                { role: "user", content: `${instructions(state)}\n\n${context(state)}` },
+              ],
+              { signal },
+            );
+          return schema.parse(output);
+        },
+        { deadlineMs: deps.deadlineMs, attemptTimeoutMs: 120_000 },
+      );
+      await deps.saveNode(node, result);
+      return { [node]: result };
     };
   }
 

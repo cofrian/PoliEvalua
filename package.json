@@ -19,6 +19,8 @@
     "test:features": "node scripts/test-platform-features.mjs",
     "test:security": "npm run test:rls && npm run test:tenants && npm run test:features",
     "test:ci": "npm run lint && npm run typecheck && npm run build",
+    "test:models": "node scripts/check-nvidia-models.mjs",
+    "bench:models": "node scripts/benchmark-nvidia-models.mjs",
     "test:all": "npm run test:ci && npm run test:security && npm run test:e2e"
   },
   "dependencies": {

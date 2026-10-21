@@ -16,10 +16,12 @@ function copyResponseCookies(source: NextResponse, target: NextResponse) {
 }
 
 export async function middleware(request: NextRequest) {
-  // Transcriptores y el pulso de pg_cron no tienen sesión: usan su propio token.
+  // Transcriptores, el pulso de pg_cron y la sonda de salud no tienen sesión:
+  // usan su propio token.
   if (
     request.nextUrl.pathname.startsWith("/api/worker/") ||
-    request.nextUrl.pathname.startsWith("/api/jobs/")
+    request.nextUrl.pathname.startsWith("/api/jobs/") ||
+    request.nextUrl.pathname.startsWith("/api/health/")
   ) {
     return NextResponse.next({ request });
   }

@@ -8,6 +8,8 @@ import {
   assistantResponseSchema,
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
+import { aiErrorResponse } from "@/lib/ai/error-response";
+import { aiConfigured, NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/models";
 import {
   clientIp,
   isBlocked,
@@ -40,6 +42,7 @@ Reglas obligatorias:
 - La propuesta se guardará como borrador y necesitará confirmación humana.`;
 
 export async function POST(request: Request) {
+  const startedAt = Date.now();
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
@@ -97,13 +100,11 @@ export async function POST(request: Request) {
   }
   await recordAttempt(admin, "assistant", rateKeys);
 
-  const apiKey = process.env.NVIDIA_API_KEY;
-  const modelId = process.env.NVIDIA_MODEL;
-  if (!apiKey || !modelId) {
+  if (!aiConfigured()) {
     return NextResponse.json(
       {
         error:
-          "El asistente está preparado, pero falta configurar NVIDIA_API_KEY y NVIDIA_MODEL en el servidor.",
+          "El asistente está preparado, pero falta configurar NVIDIA_API_KEY en el servidor.",
       },
       { status: 503 },
     );
@@ -137,25 +138,35 @@ export async function POST(request: Request) {
 
   const provider = createOpenAICompatible({
     name: "nvidia",
-    baseURL: "https://integrate.api.nvidia.com/v1",
-    apiKey,
+    baseURL: NVIDIA_BASE_URL,
+    apiKey: process.env.NVIDIA_API_KEY,
     supportsStructuredOutputs: true,
   });
 
   try {
-    const { output } = await generateText({
-      model: provider.chatModel(modelId),
-      output: Output.object({ schema: assistantResponseSchema }),
-      system: SYSTEM_PROMPT,
-      prompt: `Contexto actual del espacio (sin datos personales):\n${JSON.stringify({
-        event,
-        academic,
-        evaluationPage,
-        rubric,
-      })}\n\nPetición del gestor:\n${parsed.data.message}`,
-      maxOutputTokens: 4000,
-      temperature: 0.2,
-    });
+    const {
+      result: { output },
+      modelId,
+    } = await withModelFallback(
+      "builder",
+      (id, abortSignal) =>
+        generateText({
+          model: provider.chatModel(id),
+          output: Output.object({ schema: assistantResponseSchema }),
+          system: SYSTEM_PROMPT,
+          prompt: `Contexto actual del espacio (sin datos personales):\n${JSON.stringify({
+            event,
+            academic,
+            evaluationPage,
+            rubric,
+          })}\n\nPetición del gestor:\n${parsed.data.message}`,
+          maxOutputTokens: 4000,
+          temperature: 0.2,
+          maxRetries: 0,
+          abortSignal,
+        }),
+      { deadlineMs: startedAt + 40_000, attemptTimeoutMs: 30_000 },
+    );
 
     const proposal =
       output.scope === "evaluation" && output.proposal
@@ -190,16 +201,9 @@ export async function POST(request: Request) {
       proposal,
     });
   } catch (error) {
-    console.error(
-      "Error del proveedor de evaluación:",
-      error instanceof Error ? error.message : "Error desconocido",
-    );
-    return NextResponse.json(
-      {
-        error:
-          "NVIDIA no ha podido generar una propuesta válida. Inténtalo de nuevo con una descripción más concreta.",
-      },
-      { status: 502 },
+    return aiErrorResponse(
+      error,
+      "NVIDIA no ha podido generar una propuesta válida. Inténtalo de nuevo con una descripción más concreta.",
     );
   }
 }

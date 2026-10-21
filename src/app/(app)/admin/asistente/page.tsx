@@ -1,5 +1,6 @@
 import { AssistantBuilder, type AssistantProposalItem } from "@/components/app/assistant-builder";
 import { evaluationProposalSchema } from "@/lib/ai/evaluation-proposal";
+import { aiConfigured } from "@/lib/ai/models";
 import { getSession } from "@/lib/app/session";
 
 export default async function AssistantPage() {
@@ -25,7 +26,7 @@ export default async function AssistantPage() {
 
   return (
     <AssistantBuilder
-      configured={Boolean(process.env.NVIDIA_API_KEY && process.env.NVIDIA_MODEL)}
+      configured={aiConfigured()}
       initialItems={items}
     />
   );

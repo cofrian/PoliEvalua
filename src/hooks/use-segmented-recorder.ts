@@ -62,12 +62,21 @@ export function pickRecordingFormat() {
 export function useSegmentedRecorder({
   maxSeconds,
   onSegment,
+  onFinishRequired,
 }: {
   maxSeconds: number;
   onSegment: (segment: RecordedSegment) => void;
+  /**
+   * La grabación debe terminar sin que la persona pulse «Parar»: límite de
+   * tiempo alcanzado o micrófono perdido. Quien usa el hook debe llamar a stop()
+   * y cerrar la grabación en el servidor.
+   */
+  onFinishRequired: (reason: "limit" | "interrupted") => void;
 }) {
   const sessionRef = useRef<Session | null>(null);
   const onSegmentRef = useRef(onSegment);
+  const onFinishRef = useRef(onFinishRequired);
+  const finishRequestedRef = useRef(false);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -76,7 +85,14 @@ export function useSegmentedRecorder({
 
   useEffect(() => {
     onSegmentRef.current = onSegment;
-  }, [onSegment]);
+    onFinishRef.current = onFinishRequired;
+  }, [onSegment, onFinishRequired]);
+
+  const requestFinish = useCallback((reason: "limit" | "interrupted") => {
+    if (finishRequestedRef.current || !sessionRef.current) return;
+    finishRequestedRef.current = true;
+    onFinishRef.current(reason);
+  }, []);
 
   const startSegment = useCallback((session: Session, seq: number): ActiveSegment => {
     const recorder = new MediaRecorder(session.stream, {
@@ -203,13 +219,19 @@ export function useSegmentedRecorder({
       setElapsedSeconds(Math.floor((now - session.startedAt) / 1000));
     }, 100);
 
+    // Micrófono desconectado, llamada entrante o permiso retirado.
+    stream.getAudioTracks().forEach((track) =>
+      track.addEventListener("ended", () => requestFinish("interrupted"), { once: true }),
+    );
+
+    finishRequestedRef.current = false;
     sessionRef.current = session;
     setAnalyser(analyserNode);
     setWakeLockActive(Boolean(wakeLock));
     setSegmentCount(0);
     setElapsedSeconds(0);
     setIsRecording(true);
-  }, [rotate, startSegment]);
+  }, [requestFinish, rotate, startSegment]);
 
   /** Termina: cierra el último segmento y espera a los que estaban solapando. */
   const stop = useCallback(async () => {
@@ -230,8 +252,27 @@ export function useSegmentedRecorder({
   }, [closeSegment, release]);
 
   useEffect(() => {
-    if (isRecording && elapsedSeconds >= maxSeconds) void stop();
-  }, [elapsedSeconds, isRecording, maxSeconds, stop]);
+    if (isRecording && elapsedSeconds >= maxSeconds) requestFinish("limit");
+  }, [elapsedSeconds, isRecording, maxSeconds, requestFinish]);
+
+  // El navegador suelta el bloqueo de pantalla al cambiar de pestaña: se recupera al volver.
+  useEffect(() => {
+    if (!isRecording) return;
+    const reacquire = async () => {
+      const session = sessionRef.current;
+      if (document.visibilityState !== "visible" || !session) return;
+      if (session.wakeLock && !session.wakeLock.released) return;
+      try {
+        session.wakeLock = (await navigator.wakeLock?.request("screen")) ?? null;
+      } catch {
+        session.wakeLock = null;
+      }
+      setWakeLockActive(Boolean(session.wakeLock));
+      await session.context.resume().catch(() => undefined);
+    };
+    document.addEventListener("visibilitychange", reacquire);
+    return () => document.removeEventListener("visibilitychange", reacquire);
+  }, [isRecording]);
 
   useEffect(
     () => () => {
