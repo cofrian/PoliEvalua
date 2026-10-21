@@ -1,27 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import fs from "node:fs";
+import { loadTestEnv } from "../scripts/load-test-env.mjs";
 
 // Recorre la app como lo harán el jurado, los mentores y el admin, contra la
 // base de datos real. Crea usuarios de prueba (correo @test.local) y los borra
 // al terminar junto con sus notas y evaluaciones.
 
-const env = Object.fromEntries(
-  fs
-    .readFileSync(".env.local", "utf8")
-    .split(/\r?\n/)
-    .filter((l) => l.includes("=") && !l.startsWith("#"))
-    .map((l) => [
-      l.slice(0, l.indexOf("=")).trim(),
-      l
-        .slice(l.indexOf("=") + 1)
-        .trim()
-        .replace(/^"|"$/g, ""),
-    ]),
-);
+const env = loadTestEnv();
 const db = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY,
+  env.NEXT_PUBLIC_SUPABASE_URL!,
+  env.SUPABASE_SERVICE_ROLE_KEY!,
   {
     auth: { persistSession: false },
   },

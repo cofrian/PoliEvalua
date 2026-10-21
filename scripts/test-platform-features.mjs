@@ -1,22 +1,10 @@
 // Integración de los módulos configurables contra el proyecto Supabase enlazado.
 // Todos los datos de esta prueba se crean en un espacio temporal y se eliminan.
 import { randomBytes } from "node:crypto";
-import fs from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { loadTestEnv } from "./load-test-env.mjs";
 
-const env = Object.fromEntries(
-  fs
-    .readFileSync(".env.local", "utf8")
-    .split(/\r?\n/)
-    .filter((line) => line.includes("=") && !line.startsWith("#"))
-    .map((line) => {
-      const separator = line.indexOf("=");
-      return [
-        line.slice(0, separator).trim(),
-        line.slice(separator + 1).trim().replace(/^"|"$/g, ""),
-      ];
-    }),
-);
+const env = loadTestEnv();
 
 const admin = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,

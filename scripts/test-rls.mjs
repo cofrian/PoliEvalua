@@ -5,21 +5,9 @@
 // Uso: node scripts/test-rls.mjs   (lee las claves de .env.local)
 import { createClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
-import fs from "node:fs";
+import { loadTestEnv } from "./load-test-env.mjs";
 
-const env = Object.fromEntries(
-  fs
-    .readFileSync(".env.local", "utf8")
-    .split(/\r?\n/)
-    .filter((l) => l.includes("=") && !l.startsWith("#"))
-    .map((l) => [
-      l.slice(0, l.indexOf("=")).trim(),
-      l
-        .slice(l.indexOf("=") + 1)
-        .trim()
-        .replace(/^"|"$/g, ""),
-    ]),
-);
+const env = loadTestEnv();
 const URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const admin = createClient(URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },

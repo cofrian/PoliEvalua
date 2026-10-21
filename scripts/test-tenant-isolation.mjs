@@ -2,19 +2,10 @@
 // Crea datos temporales con service_role, intenta cruzarlos con usuarios
 // normales y elimina únicamente los registros temporales al terminar.
 import { randomBytes } from "node:crypto";
-import fs from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { loadTestEnv } from "./load-test-env.mjs";
 
-const env = Object.fromEntries(
-  fs
-    .readFileSync(".env.local", "utf8")
-    .split(/\r?\n/)
-    .filter((line) => line.includes("=") && !line.startsWith("#"))
-    .map((line) => [
-      line.slice(0, line.indexOf("=")).trim(),
-      line.slice(line.indexOf("=") + 1).trim().replace(/^"|"$/g, ""),
-    ]),
-);
+const env = loadTestEnv();
 
 const admin = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,
