@@ -4,7 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { getAccount } from "@/lib/app/session";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const spaceSchema = z.object({
   name: z.string().trim().min(3).max(100),
@@ -21,6 +23,10 @@ const spaceSchema = z.object({
 });
 
 export type CreateSpaceState = {
+  error?: string;
+};
+
+export type JoinSpaceState = {
   error?: string;
 };
 
@@ -48,6 +54,66 @@ export async function selectSpaceAction(formData: FormData) {
 
   if (!membership) throw new Error("No tienes acceso activo a este espacio.");
   await setActiveSpace(membership.event_id);
+  redirect("/equipos");
+}
+
+export async function joinSpaceAction(
+  _previousState: JoinSpaceState,
+  formData: FormData,
+): Promise<JoinSpaceState> {
+  const parsed = z
+    .object({
+      accessCode: z.string().trim().min(6).max(40),
+      role: z.enum(["judge", "mentor"]),
+    })
+    .safeParse({
+      accessCode: formData.get("accessCode"),
+      role: formData.get("role"),
+    });
+
+  if (!parsed.success) return { error: "Revisa el código y el rol." };
+
+  const { user } = await getAccount();
+  const admin = createAdminClient();
+  const attemptKeys = [`ip:${await clientIp()}`, `user:${user.id}`];
+  if (await isBlocked(admin, "bad_code", attemptKeys)) {
+    return { error: "Demasiados intentos. Espera unos minutos." };
+  }
+
+  const { data: event } = await admin
+    .from("events")
+    .select("id")
+    .eq("signup_code", parsed.data.accessCode.toUpperCase())
+    .eq("signup_open", true)
+    .maybeSingle();
+
+  if (!event) {
+    await recordAttempt(admin, "bad_code", attemptKeys);
+    return { error: "El código no es válido o el acceso está cerrado." };
+  }
+
+  const { data: current } = await admin
+    .from("event_members")
+    .select("status")
+    .eq("event_id", event.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (current?.status === "inactive") {
+    return { error: "Tu acceso a este espacio está desactivado. Contacta con su gestor." };
+  }
+
+  if (!current) {
+    const { error } = await admin.from("event_members").insert({
+      event_id: event.id,
+      user_id: user.id,
+      role: parsed.data.role,
+      status: "active",
+    });
+    if (error) return { error: "No se ha podido añadir el espacio a tu cuenta." };
+  }
+
+  await setActiveSpace(event.id);
   redirect("/equipos");
 }
 

@@ -65,7 +65,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild className="h-12 border-white/55 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white" variant="outline">
-                <Link href="/login">Crear un espacio</Link>
+                <Link href="/registro">Crear un espacio</Link>
               </Button>
             </div>
           </div>

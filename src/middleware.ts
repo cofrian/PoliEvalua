@@ -69,7 +69,11 @@ export async function middleware(request: NextRequest) {
       return copyResponseCookies(response, NextResponse.redirect(loginUrl));
     }
 
-    if (AUTH_ENTRY_ROUTES.has(pathname)) {
+    const isInvitationAccess =
+      (pathname === "/login" || pathname === "/registro") &&
+      request.nextUrl.searchParams.has("invite");
+
+    if (AUTH_ENTRY_ROUTES.has(pathname) && !isInvitationAccess) {
       const spacesUrl = request.nextUrl.clone();
       spacesUrl.pathname = "/espacios";
       spacesUrl.search = "";

@@ -54,6 +54,7 @@ const createdUserIds = new Set<string>();
 const createdEventIds = new Set<string>();
 
 let accessCode = "";
+let eventId = "";
 let team: { id: string; name: string };
 let secondTeam: { id: string; name: string };
 let criteriaCount = 0;
@@ -61,31 +62,49 @@ let judgePage: Page;
 let mentorPage: Page;
 let adminPage: Page;
 
-async function login(
+async function rememberUser(email: string) {
+  const { data, error } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (error) throw error;
+  const user = data.users.find((candidate) => candidate.email === email);
+  if (!user) throw new Error(`No se creó el usuario ${email}`);
+  createdUserIds.add(user.id);
+  return user;
+}
+
+async function register(
   browser: Browser,
   who: { name: string; email: string },
-  code: string,
-  role: "Juez" | "Mentor" = "Juez",
 ) {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto("/login");
+  await page.goto("/registro");
   await page.getByLabel("Nombre completo").fill(who.name);
   await page.getByLabel("Correo electrónico").fill(who.email);
   await page.getByLabel("Contraseña").fill(testPassword);
-  await page.getByText(role, { exact: true }).click();
-  await page.getByLabel("Código de acceso").fill(code);
-  await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("**/equipos");
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await page.waitForURL("**/espacios");
+  await rememberUser(who.email);
+  return page;
+}
 
-  const { data, error } = await db.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-  if (error) throw error;
-  const createdUser = data.users.find((user) => user.email === who.email);
-  if (!createdUser) throw new Error(`No se creó el usuario ${who.email}`);
-  createdUserIds.add(createdUser.id);
+async function joinSpace(page: Page, role: "Juez" | "Mentor") {
+  await page.getByLabel("Código del espacio").fill(accessCode);
+  await page.getByLabel("Participaré como").selectOption(role === "Juez" ? "judge" : "mentor");
+  await page.getByRole("button", { name: "Entrar al espacio" }).click();
+  await page.waitForURL("**/equipos");
+}
+
+async function login(browser: Browser, who: { email: string }) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto("/login");
+  await page.getByLabel("Correo electrónico").fill(who.email);
+  await page.getByLabel("Contraseña").fill(testPassword);
+  await page.getByRole("button", { name: "Entrar en la plataforma" }).click();
+  await page.waitForURL("**/espacios");
+  const card = page.locator("article", { hasText: "València Hack" });
+  await card.getByRole("button", { name: "Entrar al espacio" }).click();
+  await page.waitForURL("**/equipos");
   return page;
 }
 
@@ -106,8 +125,10 @@ test.beforeAll(async () => {
 
   const { data: event } = await db
     .from("events")
-    .select("signup_code, status")
+    .select("id, signup_code, status")
+    .eq("slug", "valencia-hack")
     .single();
+  eventId = event!.id;
   accessCode = event!.signup_code;
   expect(event!.status, "el evento no debe estar cerrado para probar").not.toBe(
     "closed",
@@ -153,23 +174,23 @@ test("1. Portada y acceso con contraseña", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("Next.js")).toHaveCount(0);
   await page.getByRole("link", { name: "Entrar" }).click();
-  await expect(page.getByLabel("Código de acceso")).toBeVisible();
+  await expect(page.getByLabel("Código de acceso")).toHaveCount(0);
+  await expect(page.getByLabel("Nombre completo")).toHaveCount(0);
   await expect(page.getByLabel("Contraseña")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Crear cuenta" })).toBeVisible();
   await expect(
     page.getByAltText(/Universitat Politècnica de València/).first(),
   ).toBeVisible();
 });
 
-test("2. Un código incorrecto no deja entrar", async ({ page }) => {
+test("2. Un usuario inexistente no puede entrar", async ({ page }) => {
   await page.goto("/login");
-  await page.getByLabel("Nombre completo").fill("Intruso");
   await page
     .getByLabel("Correo electrónico")
     .fill(`e2e-intruso-${stamp}@test.local`);
   await page.getByLabel("Contraseña").fill(testPassword);
-  await page.getByLabel("Código de acceso").fill("CODIGO-FALSO");
-  await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page.getByText("Código incorrecto.").first()).toBeVisible();
+  await page.getByRole("button", { name: "Entrar en la plataforma" }).click();
+  await expect(page.getByText("Correo o contraseña incorrectos.")).toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
 
@@ -182,6 +203,7 @@ test("3. Sin sesión, las páginas internas llevan al acceso", async ({
     "/resultados",
     "/admin",
     "/perfil",
+    "/espacios",
   ]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login/);
@@ -189,7 +211,9 @@ test("3. Sin sesión, las páginas internas llevan al acceso", async ({
 });
 
 test("4. El juez entra y ve los equipos", async ({ browser }) => {
-  judgePage = await login(browser, people.judge, accessCode, "Juez");
+  judgePage = await register(browser, people.judge);
+  await expect(judgePage.getByText("Tu cuenta ya está lista")).toBeVisible();
+  await joinSpace(judgePage, "Juez");
   await expect(
     judgePage.getByRole("heading", { name: "Equipos" }),
   ).toBeVisible();
@@ -222,7 +246,8 @@ test("5. El juez crea una nota privada y otra compartida", async () => {
 test("6. El mentor entra: ve lo compartido, no lo privado, y no puede votar", async ({
   browser,
 }) => {
-  mentorPage = await login(browser, people.mentor, accessCode, "Mentor");
+  mentorPage = await register(browser, people.mentor);
+  await joinSpace(mentorPage, "Mentor");
   await expect(
     mentorPage.getByText("Mentor", { exact: true }).first(),
   ).toBeVisible();
@@ -309,10 +334,22 @@ test("9. El juez puede usar la rúbrica y su perfil", async () => {
   await expect(judgePage).toHaveURL(/\/equipos/); // resultados solo tras el cierre
 });
 
-test("10. El admin entra con su código y ve lo privado", async ({
+test("10. El propietario entra con su cuenta y ve lo privado", async ({
   browser,
 }) => {
-  adminPage = await login(browser, people.admin, env.ADMIN_ACCESS_CODE);
+  adminPage = await register(browser, people.admin);
+  const adminUser = await rememberUser(people.admin.email);
+  const { error } = await db.from("event_members").insert({
+    event_id: eventId,
+    user_id: adminUser.id,
+    role: "owner",
+    status: "active",
+  });
+  if (error) throw error;
+  await adminPage.reload();
+  const eventCard = adminPage.locator("article", { hasText: "València Hack" });
+  await eventCard.getByRole("button", { name: "Entrar al espacio" }).click();
+  await adminPage.waitForURL("**/equipos");
   await expect(
     adminPage.getByText("Propietario", { exact: true }).first(),
   ).toBeVisible();
@@ -438,7 +475,7 @@ test("14. El propietario crea otro espacio sin mezclar sus equipos", async () =>
   await adminPage.goto("/espacios");
   await expect(adminPage.getByRole("heading", { name })).toBeVisible();
   const originalCard = adminPage.locator("article", { hasText: "València Hack" });
-  await originalCard.getByRole("button", { name: "Abrir espacio" }).click();
+  await originalCard.getByRole("button", { name: "Entrar al espacio" }).click();
   await adminPage.waitForURL("**/equipos");
   await expect(adminPage.getByRole("link", { name: team.name })).toBeVisible();
 });
@@ -454,10 +491,14 @@ test("15. Una invitación personal concede solo su rol y espacio", async ({ brow
   const page = await context.newPage();
   await page.goto(inviteLink);
   await expect(page.getByLabel("Código de acceso")).toHaveCount(0);
+  await page.getByRole("link", { name: "Crear cuenta" }).click();
   await page.getByLabel("Nombre completo").fill(people.invited.name);
   await page.getByLabel("Correo electrónico").fill(people.invited.email);
   await page.getByLabel("Contraseña").fill(testPassword);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await page.waitForURL("**/espacios");
+  const invitedCard = page.locator("article", { hasText: "València Hack" });
+  await invitedCard.getByRole("button", { name: "Entrar al espacio" }).click();
   await page.waitForURL("**/equipos");
   await expect(page.getByText("Mentor", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: team.name })).toBeVisible();
@@ -472,8 +513,7 @@ test("15. Una invitación personal concede solo su rol y espacio", async ({ brow
 test("16. Volver a entrar recupera las notas (mismo correo)", async ({
   browser,
 }) => {
-  const again = await login(browser, people.judge, accessCode, "Mentor");
-  // Conserva su rol de juez aunque marque mentor
+  const again = await login(browser, people.judge);
   await expect(again.getByText("Juez", { exact: true }).first()).toBeVisible();
   await again.goto(`/equipos/${team.id}`);
   await expect(again.getByText(privateText)).toBeVisible();

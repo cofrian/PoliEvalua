@@ -36,6 +36,8 @@ Cada espacio tendrá nombre, slug, tipo, descripción, estado, fechas, idioma, z
 
 ### Personas e invitaciones
 
+- La cuenta se crea y se inicia sesión solo con nombre, correo y contraseña; no pertenece a un espacio concreto.
+- Después de entrar, la persona elige uno de sus espacios, crea uno nuevo o se une mediante invitación/código.
 - Invitación individual por correo o enlace con caducidad.
 - Importación CSV.
 - Código de acceso opcional para eventos presenciales.
