@@ -11,8 +11,12 @@ const LOCK = new URL("../package-lock.json", import.meta.url);
 const lock = JSON.parse(readFileSync(LOCK, "utf8"));
 const packages = lock.packages;
 
+// Con shell, cada argumento va entre comillas: en cmd.exe «^» es un carácter de
+// escape y «^1.11.1» llegaría a npm como «1.11.1».
 const npm = (args) =>
-  JSON.parse(execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", args, { encoding: "utf8", shell: true }));
+  JSON.parse(
+    execFileSync(`npm ${args.map((arg) => `"${arg}"`).join(" ")}`, { encoding: "utf8", shell: true }),
+  );
 
 /** Igual que Node: busca el paquete subiendo por los node_modules anidados. */
 function resolves(fromPath, name) {
