@@ -2,6 +2,7 @@ import {
   setUserRoleAction,
   toggleUserDisabledAction,
   updateEventAction,
+  updateStudentVisibilityAction,
   revokeInvitationAction,
 } from "@/app/(app)/admin/actions";
 import { InvitationForm } from "@/components/app/invitation-form";
@@ -9,13 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
-
-const statusLabels = {
-  setup: "Preparación",
-  building: "Building (notas)",
-  judging: "Defensas (votación)",
-  closed: "Cerrado",
-} as const;
 
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
@@ -26,7 +20,13 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function AdminPage() {
-  const { supabase, user, event } = await getSession();
+  const { supabase, user, event, words } = await getSession();
+  const statusLabels = words.stageLabels;
+  const settings = (event.settings ?? {}) as { join_roles?: string[]; enabled_roles?: string[] };
+  const enabledRoles = settings.enabled_roles ?? [];
+  const joinRoles = (settings.join_roles ?? ["judge", "mentor"])
+    .map((role) => roleLabels[role as SpaceRole]?.toLowerCase())
+    .filter(Boolean);
 
   const [{ data: eventSettings }, { data: memberships }, { data: evals }, { data: invitations }] =
     await Promise.all([
@@ -106,12 +106,28 @@ export default async function AdminPage() {
         </section>
       ) : null}
 
+      {enabledRoles.includes("student") ? (
+        <section className={cardClass}>
+          <h2 className="mb-2 font-display text-2xl">Alumnado</h2>
+          <form action={updateStudentVisibilityAction} className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input defaultChecked={words.studentsSeeRubric} name="showRubric" type="checkbox" />
+              Mostrar la rúbrica al alumnado antes de su {words.presentation}
+            </label>
+            <Button className="h-9" type="submit" variant="outline">
+              Guardar
+            </Button>
+          </form>
+        </section>
+      ) : null}
+
       <section className={cardClass}>
         <h2 className="mb-2 font-display text-2xl">Acceso por código</h2>
         <p className="text-sm leading-6">
           Comparte este enlace y el código de acceso{" "}
           <strong>{eventSettings?.signup_code}</strong>. Cada persona entra con su
-          nombre, su correo y su rol (juez o mentor).
+          nombre, su correo y su rol
+          {joinRoles.length ? ` (${joinRoles.join(", ")})` : ""}.
         </p>
         <p className="mt-2 rounded-md bg-paper-50 px-3 py-2 font-mono text-sm dark:bg-ink-950">
           {siteUrl || "https://valencia-hack-jurado.vercel.app"}/login

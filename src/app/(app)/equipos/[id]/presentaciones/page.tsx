@@ -15,7 +15,7 @@ export default async function TeamPresentationsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, role, isAdmin, event } = await getSession();
+  const { supabase, user, role, isAdmin, event, recording, words } = await getSession();
 
   const [{ data: team }, { data: recordings }, { data: juryReports }] = await Promise.all([
     supabase
@@ -56,7 +56,7 @@ export default async function TeamPresentationsPage({
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-bold text-muted-foreground">
-            Equipo #{team.number} · {team.name}
+            {words.unit} #{team.number} · {team.name}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl">
             Exposiciones y materiales
@@ -71,7 +71,14 @@ export default async function TeamPresentationsPage({
       </header>
 
       <PresentationStudio
-        canCreate={role !== "viewer"}
+        canCreate={role !== "viewer" && recording.enabled}
+        recordingDisabledReason={
+          recording.enabled
+            ? null
+            : isAdmin
+              ? "La grabación está desactivada en este espacio. Actívala en Admin → Grabaciones: todas las personas verán antes un aviso."
+              : "La grabación de exposiciones no está activada en este espacio."
+        }
         canManage={isAdmin}
         initialRecords={(recordings ?? []) as unknown as PresentationRecord[]}
         juryReports={(juryReports ?? []) as unknown as JuryReportRecord[]}

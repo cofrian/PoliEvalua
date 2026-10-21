@@ -145,6 +145,57 @@ export async function updateEventAction(formData: FormData) {
   refreshAll();
 }
 
+// ========== GRABACIÓN ==========
+
+export async function updateRecordingSettingsAction(formData: FormData) {
+  const { supabase, user, event, recording } = await requireAdmin();
+  const enabled = formData.get("enabled") === "on";
+  const customText = text(formData, "noticeText").slice(0, 2000) || null;
+
+  // Activar o cambiar el texto obliga a que todos vuelvan a confirmar el aviso.
+  const mustReconfirm =
+    enabled && (!recording.enabled || customText !== recording.customText);
+  const next = {
+    enabled,
+    notice_version: mustReconfirm ? recording.noticeVersion + 1 : recording.noticeVersion,
+    notice_text: customText,
+  };
+
+  const { data: current } = await supabase
+    .from("events")
+    .select("settings")
+    .eq("id", event.id)
+    .single();
+  const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), recording: next };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error("No se ha podido guardar la configuración de grabación.");
+
+  await logAudit(supabase, event.id, user.id, "configurar_grabacion", "events", event.id, next);
+  refreshAll();
+}
+
+// ========== ALUMNADO ==========
+
+export async function updateStudentVisibilityAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const showRubric = formData.get("showRubric") === "on";
+  const { data: current } = await supabase
+    .from("events")
+    .select("settings")
+    .eq("id", event.id)
+    .single();
+  const settings = {
+    ...((current?.settings as Record<string, unknown> | null) ?? {}),
+    students: { show_rubric: showRubric },
+  };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error("No se ha podido guardar la visibilidad para el alumnado.");
+  await logAudit(supabase, event.id, user.id, "visibilidad_alumnado", "events", event.id, {
+    show_rubric: showRubric,
+  });
+  refreshAll();
+}
+
 // ========== RETOS ==========
 
 export async function saveChallengeAction(formData: FormData) {

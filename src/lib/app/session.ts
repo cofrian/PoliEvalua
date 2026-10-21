@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
+import { recordingSettings } from "@/lib/app/recording-notice";
+import { vocabulary } from "@/lib/app/vocabulary";
 import { createClient } from "@/lib/supabase/server";
 
 export type SpaceRole =
@@ -34,12 +36,14 @@ type EventSummary = {
   kind: "hackathon" | "class" | "awards" | "project" | "custom";
   status: "setup" | "building" | "judging" | "closed";
   audit_mode: boolean;
+  settings: Record<string, unknown> | null;
 };
 
 type MembershipRow = {
   event_id: string;
   role: SpaceRole;
   status: "active" | "inactive";
+  recording_notice_version: number | null;
   events: EventSummary | EventSummary[] | null;
 };
 
@@ -74,7 +78,7 @@ export const getSession = cache(async () => {
   const { data } = await supabase
     .from("event_members")
     .select(
-      "event_id, role, status, events(id, name, slug, kind, status, audit_mode)",
+      "event_id, role, status, recording_notice_version, events(id, name, slug, kind, status, audit_mode, settings)",
     )
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -105,5 +109,7 @@ export const getSession = cache(async () => {
     isAdmin,
     event,
     eventClosed: event.status === "closed",
+    recording: recordingSettings(event.settings),
+    words: vocabulary(event),
   };
 });

@@ -17,7 +17,7 @@ export default async function TeamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, profile, canVote, isAdmin, event } = await getSession();
+  const { supabase, user, profile, canVote, isAdmin, event, recording, words } = await getSession();
 
   const [{ data: team }, { data: notes }, { data: evaluation }, { data: canVoteThisTeam }] =
     await Promise.all([
@@ -54,6 +54,19 @@ export default async function TeamPage({
 
   if (!team) notFound();
 
+  // Grabación en curso: aún subiendo trozos y sin cerrar (las abandonadas se limpian a las 3 h).
+  const { count: liveRecordings } = recording.enabled
+    ? await supabase
+        .from("presentation_recordings")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", event.id)
+        .eq("team_id", id)
+        .eq("status", "uploading")
+        .is("finalized_at", null)
+        .is("deleted_at", null)
+        .gt("created_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+    : { count: 0 };
+
   const { data: challenges } = isAdmin
     ? await supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order")
     : { data: [] };
@@ -73,10 +86,15 @@ export default async function TeamPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-bold text-muted-foreground">
-            {challenge?.name} · Equipo #{team.number}
+            {challenge?.name ? `${challenge.name} · ` : ""}{words.unit} #{team.number}
             {team.table_location ? ` · Mesa ${team.table_location}` : ""}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl">{team.name}</h1>
+          {liveRecordings ? (
+            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive" role="status">
+              <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> Grabando la exposición
+            </p>
+          ) : null}
           {team.project_title ? (
             <p className="mt-1 text-lg">{team.project_title}</p>
           ) : null}

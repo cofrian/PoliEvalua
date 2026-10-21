@@ -2,7 +2,7 @@ import { TeamsBrowser, type TeamSummary } from "@/components/app/teams-browser";
 import { getSession } from "@/lib/app/session";
 
 export default async function TeamsPage() {
-  const { supabase, user, canVote, isAdmin, event } = await getSession();
+  const { supabase, user, canVote, isAdmin, event, words } = await getSession();
 
   const [{ data: challenges }, { data: teams }, { data: notes }, { data: evals }, { data: panelMemberships }, { data: panelAssignments }, { data: panels }, { data: evaluationPage }] =
     await Promise.all([
@@ -86,6 +86,7 @@ export default async function TeamsPage() {
       canVote={canVote}
       challenges={challenges ?? []}
       teams={summaries}
+      title={words.units}
     />
   );
 }

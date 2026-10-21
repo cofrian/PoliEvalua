@@ -3,23 +3,25 @@ import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/app/session";
 
-const sections = [
-  { href: "/admin", label: "Evento y usuarios" },
-  { href: "/admin/asistente", label: "Asistente" },
-  { href: "/admin/evaluacion", label: "Evaluación" },
-  { href: "/admin/paneles", label: "Paneles de jurado" },
-  { href: "/admin/academico", label: "Datos académicos" },
-  { href: "/admin/equipos", label: "Equipos" },
-  { href: "/admin/retos", label: "Retos" },
-  { href: "/admin/patrocinadores", label: "Patrocinadores" },
-  { href: "/admin/auditoria", label: "Auditoría" },
-];
-
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { isAdmin } = await getSession();
+  const { isAdmin, event, words } = await getSession();
   if (!isAdmin) redirect("/equipos");
+
+  const academic = event.kind === "class" || event.kind === "project";
+  const sections = [
+    { href: "/admin", label: "Espacio y personas" },
+    { href: "/admin/asistente", label: "Asistente" },
+    ...(words.hasModule("rubric") ? [{ href: "/admin/evaluacion", label: "Evaluación" }] : []),
+    { href: "/admin/paneles", label: `Paneles de ${words.evaluator}` },
+    { href: "/admin/grabaciones", label: "Grabaciones" },
+    ...(academic ? [{ href: "/admin/academico", label: "Datos académicos" }] : []),
+    ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: words.units }] : []),
+    ...(words.showChallenges ? [{ href: "/admin/retos", label: "Retos" }] : []),
+    ...(words.hasModule("sponsors") ? [{ href: "/admin/patrocinadores", label: "Patrocinadores" }] : []),
+    { href: "/admin/auditoria", label: "Auditoría" },
+  ];
 
   return (
     <div className="space-y-6">

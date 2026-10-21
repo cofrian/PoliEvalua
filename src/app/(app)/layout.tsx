@@ -1,18 +1,24 @@
 import Link from "next/link";
 
 import { logoutAction } from "@/app/(auth)/actions";
+import { RecordingNoticeDialog } from "@/components/app/recording-notice-dialog";
 import { SpaceSwitcher } from "@/components/app/space-switcher";
 import { UpvBrand } from "@/components/brand/upv-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NO_AUDIO_GUARANTEE, needsRecordingNotice } from "@/lib/app/recording-notice";
 import { getSession, roleLabels } from "@/lib/app/session";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { supabase, profile, isAdmin, event, eventClosed, memberships } =
+  const { supabase, profile, isAdmin, event, eventClosed, memberships, membership, recording, words, role } =
     await getSession();
+  const showRecordingNotice = needsRecordingNotice(
+    recording,
+    membership.recording_notice_version,
+  );
   const spaces = memberships.flatMap((membership) => {
     const relation = membership.events;
     const space = Array.isArray(relation) ? relation[0] : relation;
@@ -28,9 +34,13 @@ export default async function AppLayout({
 
   const links = [
     { href: "/espacios", label: "Espacios" },
-    { href: "/equipos", label: "Equipos" },
-    { href: "/rubrica", label: "Rúbrica" },
-    ...(isAdmin || eventClosed ? [{ href: "/resultados", label: "Resultados" }] : []),
+    { href: "/equipos", label: words.units },
+    ...(words.hasModule("rubric") && (role !== "student" || words.studentsSeeRubric)
+      ? [{ href: "/rubrica", label: "Rúbrica" }]
+      : []),
+    ...((isAdmin || eventClosed) && words.hasModule("results")
+      ? [{ href: "/resultados", label: "Resultados" }]
+      : []),
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
@@ -104,6 +114,13 @@ export default async function AppLayout({
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {children}
       </main>
+      {showRecordingNotice ? (
+        <RecordingNoticeDialog
+          guarantee={recording.customText ? NO_AUDIO_GUARANTEE : null}
+          spaceName={event.name}
+          text={recording.noticeText}
+        />
+      ) : null}
     </div>
   );
 }

@@ -14,7 +14,11 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function RubricPage() {
-  const { supabase, user, profile, isAdmin, event } = await getSession();
+  const { supabase, user, profile, isAdmin, event, role, words } = await getSession();
+  const isStudent = role === "student";
+  if (isStudent && !words.studentsSeeRubric) {
+    return <p>La rúbrica de este espacio todavía no está visible para el alumnado.</p>;
+  }
 
   const { data: rubric } = await supabase
     .from("rubrics")
@@ -79,7 +83,9 @@ export default async function RubricPage() {
 
       {!canEdit ? (
         <p className="rounded-lg border border-line bg-white px-3 py-2.5 text-sm dark:border-[#262838] dark:bg-[#151621]">
-          Solo las personas propietarias y gestoras pueden cambiar la estructura de la rúbrica.
+          {isStudent
+            ? `Así te evaluará el ${words.evaluator}: revisa cada criterio y lo que se espera en cada nivel antes de tu ${words.presentation}.`
+            : "Solo las personas propietarias y gestoras pueden cambiar la estructura de la rúbrica."}
         </p>
       ) : null}
 
@@ -92,7 +98,7 @@ export default async function RubricPage() {
         userId={user.id}
       />
 
-      <section>
+      {isStudent ? null : <section>
         <h2 className="mb-3 font-display text-2xl">Historial de cambios</h2>
         {changes?.length ? (
           <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm dark:divide-[#262838] dark:border-[#262838] dark:bg-[#151621]">
@@ -116,7 +122,7 @@ export default async function RubricPage() {
             Todavía no se ha cambiado nada.
           </p>
         )}
-      </section>
+      </section>}
     </div>
   );
 }

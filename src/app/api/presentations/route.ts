@@ -5,6 +5,7 @@ import {
   PresentationAccessError,
   presentationErrorResponse,
 } from "@/lib/app/presentation-access";
+import { recordingSettings } from "@/lib/app/recording-notice";
 import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -27,13 +28,23 @@ export async function POST(request: Request) {
       throw new PresentationAccessError(403, "El perfil de consulta no puede crear grabaciones.");
     }
 
-    const { data: team } = await session.supabase
-      .from("teams")
-      .select("id")
-      .eq("id", parsed.data.teamId)
-      .eq("event_id", session.eventId)
-      .maybeSingle();
+    const [{ data: team }, { data: event }] = await Promise.all([
+      session.supabase
+        .from("teams")
+        .select("id")
+        .eq("id", parsed.data.teamId)
+        .eq("event_id", session.eventId)
+        .maybeSingle(),
+      session.supabase.from("events").select("settings").eq("id", session.eventId).maybeSingle(),
+    ]);
     if (!team) throw new PresentationAccessError(404, "No se encuentra el proyecto.");
+    // Sin activar, nadie ha visto el aviso de grabación: no se puede grabar.
+    if (!recordingSettings(event?.settings).enabled) {
+      throw new PresentationAccessError(
+        403,
+        "La grabación de exposiciones no está activada en este espacio. La gestión puede activarla en Admin → Grabaciones.",
+      );
+    }
 
     const admin = createAdminClient();
     const rateKeys = [

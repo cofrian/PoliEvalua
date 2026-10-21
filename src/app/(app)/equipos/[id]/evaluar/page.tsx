@@ -7,9 +7,11 @@ import {
   type Criterion,
   type EvaluationPageConfig,
 } from "@/components/app/evaluation-form";
+import { AiEvidencePanel, type AiEvidence } from "@/components/app/ai-evidence-panel";
 import { NotesDrawer } from "@/components/app/notes-drawer";
 import { NotesPanel, type Note } from "@/components/app/notes-panel";
 import { RubricLiveUpdates } from "@/components/app/rubric-live-updates";
+import type { CriterionEvidence } from "@/lib/ai/presentation-insights";
 import { getSession } from "@/lib/app/session";
 
 export default async function EvaluatePage({
@@ -99,7 +101,7 @@ export default async function EvaluatePage({
     );
   }
 
-  const [{ data: evaluation }, { data: notes }] = await Promise.all([
+  const [{ data: evaluation }, { data: notes }, { data: reports }, { count: processingCount }] = await Promise.all([
     supabase
       .from("evaluations")
       .select(
@@ -118,7 +120,39 @@ export default async function EvaluatePage({
       .eq("event_id", event.id)
       .eq("team_id", team.id)
       .order("created_at", { ascending: false }),
+    // La RLS solo devuelve informes a jurado y gestión.
+    supabase
+      .from("presentation_jury_reports")
+      .select("criteria_evidence, questions, risks, created_at, recording:presentation_recordings!inner(title, status, deleted_at)")
+      .eq("event_id", event.id)
+      .eq("team_id", team.id)
+      .eq("recording.status", "ready")
+      .is("recording.deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("presentation_recordings")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", event.id)
+      .eq("team_id", team.id)
+      .in("status", ["uploading", "queued", "transcribing", "transcribed", "analyzing"])
+      .is("deleted_at", null),
   ]);
+  const report = reports?.[0];
+  const recordingRelation = report?.recording as unknown as { title: string } | { title: string }[] | undefined;
+  const aiEvidence: AiEvidence = report
+    ? {
+        recordingTitle:
+          (Array.isArray(recordingRelation) ? recordingRelation[0]?.title : recordingRelation?.title) ??
+          "Exposición",
+        criteria: (report.criteria_evidence ?? []) as CriterionEvidence[],
+        questions: (report.questions ?? []) as string[],
+        risks: (report.risks ?? []) as string[],
+      }
+    : null;
+  const aiPanel = (
+    <AiEvidencePanel evidence={aiEvidence} processing={(processingCount ?? 0) > 0} teamId={team.id} />
+  );
 
   const criteria: Criterion[] = (
     (rubric.rubric_criteria ?? []) as unknown as (Criterion & {
@@ -167,6 +201,11 @@ export default async function EvaluatePage({
         </h1>
       </div>
 
+      <details className="rounded-xl border border-line bg-white p-4 lg:hidden dark:border-[#262838] dark:bg-[#151621]">
+        <summary className="cursor-pointer font-semibold">Apoyo de la IA</summary>
+        <div className="mt-3">{aiPanel}</div>
+      </details>
+
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <EvaluationForm
           criteria={criteria}
@@ -195,6 +234,9 @@ export default async function EvaluatePage({
           userId={user.id}
         />
         <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto">
+          <div className="mb-6 rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+            {aiPanel}
+          </div>
           <h2 className="mb-3 font-display text-2xl">Notas</h2>
           <NotesPanel
             eventId={event.id}
