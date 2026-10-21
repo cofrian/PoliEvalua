@@ -45,6 +45,10 @@ const people = {
     name: `Invitada Prueba ${stamp}`,
     email: `e2e-invitada-${stamp}@test.local`,
   },
+  account: {
+    name: `Cuenta Prueba ${stamp}`,
+    email: `e2e-cuenta-${stamp}@test.local`,
+  },
 };
 const privateText = `Nota privada ${stamp}`;
 const sharedText = `Nota compartida ${stamp}`;
@@ -525,4 +529,28 @@ test("17. Instalable como app (PWA)", async ({ request }) => {
   expect((await manifest.json()).icons.length).toBeGreaterThan(0);
   expect((await request.get("/sw.js")).status()).toBe(200);
   expect((await request.get("/offline.html")).status()).toBe(200);
+});
+
+test("18. Una cuenta general puede registrarse, salir y volver a entrar", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto("/registro");
+  await page.getByLabel("Nombre completo").fill(people.account.name);
+  await page.getByLabel("Correo electrónico").fill(people.account.email);
+  await page.getByLabel("Contraseña").fill(testPassword);
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await page.waitForURL("**/espacios");
+  await expect(page.getByText("Tu cuenta ya está lista")).toBeVisible();
+  await rememberUser(people.account.email);
+
+  await page.getByRole("button", { name: "Salir" }).click();
+  await page.waitForURL("**/login");
+  await page.getByLabel("Correo electrónico").fill(people.account.email);
+  await page.getByLabel("Contraseña").fill(testPassword);
+  await page.getByRole("button", { name: "Entrar en la plataforma" }).click();
+  await page.waitForURL("**/espacios");
+  await expect(page.getByText("Tu cuenta ya está lista")).toBeVisible();
+
+  await context.close();
 });
