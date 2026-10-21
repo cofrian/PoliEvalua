@@ -5,7 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { selectClass } from "@/lib/app/ui";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +23,32 @@ type ScoreState = Record<string, { score: number | null; comment: string }>;
 
 type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
 
+export type EvaluationPageConfig = {
+  title: string;
+  description: string | null;
+  instructions: string | null;
+  requirements: {
+    key: string;
+    label: string;
+    description: string | null;
+    required: boolean;
+  }[];
+  questions: {
+    key: string;
+    label: string;
+    description: string | null;
+    type: "text" | "textarea" | "boolean" | "select";
+    required: boolean;
+    options: string[];
+  }[];
+};
+
 export function EvaluationForm({
   criteria,
   eventId,
   initial,
   locked,
+  page,
   rubricId,
   scaleMax,
   teamId,
@@ -37,9 +60,11 @@ export function EvaluationForm({
     id: string;
     status: string;
     generalComment: string;
+    formAnswers: Record<string, string | boolean>;
     scores: { criterion_id: string; score: number | null; comment: string | null }[];
   } | null;
   locked: boolean;
+  page: EvaluationPageConfig | null;
   rubricId: string;
   scaleMax: number;
   teamId: string;
@@ -51,6 +76,9 @@ export function EvaluationForm({
   const [status, setStatus] = useState(initial?.status ?? "draft");
   const [generalComment, setGeneralComment] = useState(
     initial?.generalComment ?? "",
+  );
+  const [formAnswers, setFormAnswers] = useState<Record<string, string | boolean>>(
+    initial?.formAnswers ?? {},
   );
   const [scores, setScores] = useState<ScoreState>(() =>
     Object.fromEntries(
@@ -73,7 +101,19 @@ export function EvaluationForm({
     return score ? sum + (score / scaleMax) * criterion.weight : sum;
   }, 0);
   const scoredCount = criteria.filter((c) => scores[c.id]?.score).length;
-  const complete = scoredCount === criteria.length;
+  const requiredAnswersComplete = !page || Boolean(
+    page.requirements.every(
+      (requirement) =>
+        !requirement.required ||
+        formAnswers[`requirement:${requirement.key}`] === true,
+    ) &&
+      page.questions.every((question) => {
+        if (!question.required) return true;
+        const answer = formAnswers[`question:${question.key}`];
+        return typeof answer === "boolean" ? answer : Boolean(answer?.trim());
+      }),
+  );
+  const complete = scoredCount === criteria.length && requiredAnswersComplete;
 
   const save = useCallback(
     async (nextStatus?: "draft" | "submitted") => {
@@ -85,6 +125,7 @@ export function EvaluationForm({
         judge_id: userId,
         rubric_id: rubricId,
         general_comment: generalComment.trim() || null,
+        form_answers: formAnswers,
         ...(nextStatus
           ? {
               status: nextStatus,
@@ -133,7 +174,7 @@ export function EvaluationForm({
       setDirty(false);
       return true;
     },
-    [supabase, eventId, teamId, userId, rubricId, generalComment, scores],
+    [supabase, eventId, teamId, userId, rubricId, generalComment, formAnswers, scores],
   );
 
   // Autoguardado: 800 ms después del último cambio.
@@ -152,9 +193,14 @@ export function EvaluationForm({
     setDirty(true);
   }
 
+  function updateAnswer(key: string, answer: string | boolean) {
+    setFormAnswers((current) => ({ ...current, [key]: answer }));
+    setDirty(true);
+  }
+
   async function submit() {
     if (!complete) {
-      toast.error("Puntúa todos los criterios antes de enviar.");
+      toast.error("Completa los requisitos, las preguntas obligatorias y todos los criterios.");
       return;
     }
     const ok = await save("submitted");
@@ -191,6 +237,106 @@ export function EvaluationForm({
           Ya has enviado esta evaluación. Puedes corregirla hasta que se cierre la
           votación.
         </p>
+      ) : null}
+
+      {page ? (
+        <section className="space-y-5 rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+          <div>
+            <h2 className="font-display text-2xl">{page.title}</h2>
+            {page.description ? (
+              <p className="mt-1 text-sm text-muted-foreground">{page.description}</p>
+            ) : null}
+            {page.instructions ? (
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{page.instructions}</p>
+            ) : null}
+          </div>
+
+          {page.requirements.length ? (
+            <fieldset className="space-y-2">
+              <legend className="font-display text-lg">Comprobación de requisitos</legend>
+              {page.requirements.map((requirement) => (
+                <label
+                  className="flex gap-3 rounded-lg border border-line p-3 text-sm dark:border-[#383C3D]"
+                  key={requirement.key}
+                >
+                  <input
+                    checked={formAnswers[`requirement:${requirement.key}`] === true}
+                    disabled={locked}
+                    onChange={(event) =>
+                      updateAnswer(`requirement:${requirement.key}`, event.target.checked)
+                    }
+                    type="checkbox"
+                  />
+                  <span>
+                    <strong className="block">
+                      {requirement.label}{requirement.required ? " *" : ""}
+                    </strong>
+                    {requirement.description ? (
+                      <span className="text-muted-foreground">{requirement.description}</span>
+                    ) : null}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+
+          {page.questions.length ? (
+            <fieldset className="space-y-4">
+              <legend className="font-display text-lg">Preguntas adicionales</legend>
+              {page.questions.map((question) => {
+                const key = `question:${question.key}`;
+                const answer = formAnswers[key];
+                return (
+                  <label className="block space-y-1 text-sm font-semibold" key={question.key}>
+                    <span className="block">
+                      {question.label}{question.required ? " *" : ""}
+                    </span>
+                    {question.description ? (
+                      <span className="block font-normal text-muted-foreground">
+                        {question.description}
+                      </span>
+                    ) : null}
+                    {question.type === "textarea" ? (
+                      <Textarea
+                        disabled={locked}
+                        onChange={(event) => updateAnswer(key, event.target.value)}
+                        value={typeof answer === "string" ? answer : ""}
+                      />
+                    ) : question.type === "boolean" ? (
+                      <span className="flex items-center gap-2 font-normal">
+                        <input
+                          checked={answer === true}
+                          disabled={locked}
+                          onChange={(event) => updateAnswer(key, event.target.checked)}
+                          type="checkbox"
+                        />
+                        Sí
+                      </span>
+                    ) : question.type === "select" ? (
+                      <select
+                        className={`${selectClass} w-full`}
+                        disabled={locked}
+                        onChange={(event) => updateAnswer(key, event.target.value)}
+                        value={typeof answer === "string" ? answer : ""}
+                      >
+                        <option value="">Selecciona una opción</option>
+                        {question.options.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        disabled={locked}
+                        onChange={(event) => updateAnswer(key, event.target.value)}
+                        value={typeof answer === "string" ? answer : ""}
+                      />
+                    )}
+                  </label>
+                );
+              })}
+            </fieldset>
+          ) : null}
+        </section>
       ) : null}
 
       <ol className="space-y-5">
@@ -288,7 +434,7 @@ export function EvaluationForm({
             <span className="text-base text-muted-foreground"> / 100</span>
           </p>
           <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-            {scoredCount}/{criteria.length} criterios · {saveLabel}
+            {scoredCount}/{criteria.length} criterios · {requiredAnswersComplete ? "requisitos completos" : "faltan requisitos"} · {saveLabel}
           </p>
         </div>
         {!locked ? (

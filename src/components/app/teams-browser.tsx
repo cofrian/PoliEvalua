@@ -17,6 +17,7 @@ export type TeamSummary = {
   memberCount: number;
   myNotes: number;
   sharedNotes: number;
+  canEvaluate: boolean;
   status: "pending" | "draft" | "submitted" | "incomplete";
 };
 
@@ -134,7 +135,7 @@ export function TeamsBrowser({
                       </p>
                     ) : null}
                   </div>
-                  {canVote ? (
+                  {team.canEvaluate ? (
                     <Badge
                       className={cn("shrink-0 border", statusStyles[team.status])}
                       variant="outline"
@@ -147,6 +148,11 @@ export function TeamsBrowser({
                   {team.memberCount} integrantes · {team.myNotes} notas mías ·{" "}
                   {team.sharedNotes} compartidas
                 </p>
+                {canVote && !team.canEvaluate ? (
+                  <p className="text-xs font-semibold text-orange-700 dark:text-orange-300">
+                    Asignado a otro panel
+                  </p>
+                ) : null}
               </Link>
             </li>
           ))}

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import {
   EvaluationForm,
   type Criterion,
+  type EvaluationPageConfig,
 } from "@/components/app/evaluation-form";
 import { NotesDrawer } from "@/components/app/notes-drawer";
 import { NotesPanel, type Note } from "@/components/app/notes-panel";
@@ -17,7 +18,7 @@ export default async function EvaluatePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, canVote, event, role } = await getSession();
+  const { supabase, user, canVote, isAdmin, event, role } = await getSession();
 
   const { data: team } = await supabase
     .from("teams")
@@ -48,15 +49,37 @@ export default async function EvaluatePage({
     );
   }
 
-  const { data: rubric } = await supabase
-    .from("rubrics")
-    .select(
-      "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor))",
-    )
-    .eq("is_active", true)
-    .eq("event_id", event.id)
-    .limit(1)
-    .maybeSingle();
+  const { data: canVoteThisTeam } = await supabase.rpc("can_vote_team", {
+    target_event: event.id,
+    target_team: team.id,
+  });
+  if (!canVoteThisTeam) {
+    return (
+      <div className="space-y-6">
+        {back}
+        <p className="rounded-xl border border-orange-500/50 bg-orange-500/10 p-6">
+          Este proyecto no está asignado a ninguno de tus paneles de jurado.
+        </p>
+      </div>
+    );
+  }
+
+  const [{ data: rubric }, { data: evaluationPage }] = await Promise.all([
+    supabase
+      .from("rubrics")
+      .select(
+        "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor))",
+      )
+      .eq("is_active", true)
+      .eq("event_id", event.id)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("evaluation_pages")
+      .select("title, description, instructions, requirements, questions, status, opens_at, closes_at")
+      .eq("event_id", event.id)
+      .maybeSingle(),
+  ]);
 
   if (!rubric) {
     return (
@@ -67,11 +90,20 @@ export default async function EvaluatePage({
     );
   }
 
+  if (evaluationPage?.status === "draft" && !isAdmin) {
+    return (
+      <div className="space-y-6">
+        {back}
+        <p>La página de evaluación todavía está en preparación.</p>
+      </div>
+    );
+  }
+
   const [{ data: evaluation }, { data: notes }] = await Promise.all([
     supabase
       .from("evaluations")
       .select(
-        "id, status, general_comment, evaluation_scores(criterion_id, score, comment)",
+        "id, status, general_comment, form_answers, evaluation_scores(criterion_id, score, comment)",
       )
       .eq("event_id", event.id)
       .eq("team_id", team.id)
@@ -103,13 +135,32 @@ export default async function EvaluatePage({
         (a, b) => a.score - b.score,
       ),
     }));
+  const page = evaluationPage
+    ? ({
+        title: evaluationPage.title,
+        description: evaluationPage.description,
+        instructions: evaluationPage.instructions,
+        requirements: Array.isArray(evaluationPage.requirements)
+          ? evaluationPage.requirements
+          : [],
+        questions: Array.isArray(evaluationPage.questions)
+          ? evaluationPage.questions
+          : [],
+      } as EvaluationPageConfig)
+    : null;
+  const now = Date.now();
+  const locked =
+    event.status === "closed" ||
+    evaluationPage?.status === "closed" ||
+    Boolean(evaluationPage?.opens_at && new Date(evaluationPage.opens_at).getTime() > now) ||
+    Boolean(evaluationPage?.closes_at && new Date(evaluationPage.closes_at).getTime() <= now);
 
   return (
     <div className="space-y-6">
       {back}
       <div>
         <p className="text-sm font-bold text-muted-foreground">
-          {rubric.name}
+          {page?.title ?? rubric.name}
         </p>
         <h1 className="font-display text-3xl sm:text-4xl">
           Evaluar · {team.name}
@@ -126,11 +177,18 @@ export default async function EvaluatePage({
                   id: evaluation.id,
                   status: evaluation.status,
                   generalComment: evaluation.general_comment ?? "",
+                  formAnswers:
+                    evaluation.form_answers &&
+                    typeof evaluation.form_answers === "object" &&
+                    !Array.isArray(evaluation.form_answers)
+                      ? (evaluation.form_answers as Record<string, string | boolean>)
+                      : {},
                   scores: evaluation.evaluation_scores ?? [],
                 }
               : null
           }
-          locked={event.status === "closed"}
+          locked={locked}
+          page={page}
           rubricId={rubric.id}
           scaleMax={rubric.scale_max}
           teamId={team.id}

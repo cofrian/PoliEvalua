@@ -33,6 +33,7 @@ type SpaceKind = "hackathon" | "class" | "awards" | "project" | "custom";
 const templates: Record<SpaceKind, {
   participantMode: string;
   evaluationMode: string;
+  academic: boolean;
   roles: string[];
   joinRoles: string[];
   modules: string[];
@@ -40,6 +41,7 @@ const templates: Record<SpaceKind, {
   hackathon: {
     participantMode: "teams",
     evaluationMode: "rubric",
+    academic: false,
     roles: ["judge", "mentor"],
     joinRoles: ["judge", "mentor"],
     modules: ["participants", "rubric", "notes", "results", "sponsors"],
@@ -47,6 +49,7 @@ const templates: Record<SpaceKind, {
   class: {
     participantMode: "groups",
     evaluationMode: "mixed",
+    academic: true,
     roles: ["teacher", "student"],
     joinRoles: ["student"],
     modules: ["participants", "rubric", "notes", "results"],
@@ -54,6 +57,7 @@ const templates: Record<SpaceKind, {
   awards: {
     participantMode: "candidates",
     evaluationMode: "rubric",
+    academic: false,
     roles: ["reviewer", "viewer"],
     joinRoles: ["viewer"],
     modules: ["participants", "rubric", "notes", "results"],
@@ -61,6 +65,7 @@ const templates: Record<SpaceKind, {
   project: {
     participantMode: "individuals",
     evaluationMode: "mixed",
+    academic: false,
     roles: ["teacher", "student", "reviewer"],
     joinRoles: ["student"],
     modules: ["participants", "rubric", "notes", "results"],
@@ -68,6 +73,7 @@ const templates: Record<SpaceKind, {
   custom: {
     participantMode: "individuals",
     evaluationMode: "feedback",
+    academic: false,
     roles: ["reviewer"],
     joinRoles: [],
     modules: ["participants", "notes"],
@@ -95,6 +101,7 @@ export function CreateSpaceForm() {
   const [kind, setKind] = useState<SpaceKind>("hackathon");
   const [participantMode, setParticipantMode] = useState(templates.hackathon.participantMode);
   const [evaluationMode, setEvaluationMode] = useState(templates.hackathon.evaluationMode);
+  const [academic, setAcademic] = useState(templates.hackathon.academic);
   const [roles, setRoles] = useState<string[]>(templates.hackathon.roles);
   const [joinRoles, setJoinRoles] = useState<string[]>(templates.hackathon.joinRoles);
   const [modules, setModules] = useState<string[]>(templates.hackathon.modules);
@@ -104,6 +111,7 @@ export function CreateSpaceForm() {
     setKind(nextKind);
     setParticipantMode(template.participantMode);
     setEvaluationMode(template.evaluationMode);
+    setAcademic(template.academic);
     setRoles(template.roles);
     setJoinRoles(template.joinRoles);
     setModules(template.modules);
@@ -225,7 +233,26 @@ export function CreateSpaceForm() {
       </fieldset>
 
       <fieldset className="space-y-4">
-        <legend className="font-heading text-xl font-semibold">4. Quién participa</legend>
+        <legend className="font-heading text-xl font-semibold">4. Contexto académico</legend>
+        <label className="flex items-center gap-3 rounded-lg border border-input p-3 text-sm font-semibold">
+          <input checked={academic} name="academicEnabled" onChange={(event) => setAcademic(event.target.checked)} type="checkbox" />
+          Vincular este espacio a una asignatura y una titulación
+        </label>
+        {academic ? (
+          <div className="grid gap-4 rounded-xl border border-line p-4 sm:grid-cols-2 dark:border-[#383C3D]">
+            <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span className="block">Universidad o institución</span><Input defaultValue="Universitat Politècnica de València" name="institution" required /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Centro o escuela</span><Input name="school" placeholder="ETSINF" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Titulación</span><Input name="degree" placeholder="Grado en Ingeniería Informática" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Asignatura</span><Input name="subjectName" required /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Código de asignatura</span><Input name="subjectCode" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Curso académico</span><Input name="academicYear" placeholder="2026–2027" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Semestre</span><Input name="term" placeholder="Primer semestre" /></label>
+          </div>
+        ) : null}
+      </fieldset>
+
+      <fieldset className="space-y-4">
+        <legend className="font-heading text-xl font-semibold">5. Quién participa</legend>
         <p className="text-sm text-muted-foreground">Tú serás la persona propietaria. Activa los demás perfiles que utilizará este espacio.</p>
         <div className="grid gap-3 sm:grid-cols-2">
           {roleOptions.map((role) => (
@@ -245,7 +272,7 @@ export function CreateSpaceForm() {
       </fieldset>
 
       <fieldset className="space-y-4">
-        <legend className="font-heading text-xl font-semibold">5. Acceso mediante código</legend>
+        <legend className="font-heading text-xl font-semibold">6. Acceso mediante código</legend>
         <div className="space-y-2">
           <Label htmlFor="accessCode">Código inicial</Label>
           <Input autoCapitalize="characters" autoComplete="off" className="uppercase" id="accessCode" minLength={6} name="accessCode" placeholder="INNOVA-2027" required />

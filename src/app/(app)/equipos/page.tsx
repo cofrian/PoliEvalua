@@ -2,9 +2,9 @@ import { TeamsBrowser, type TeamSummary } from "@/components/app/teams-browser";
 import { getSession } from "@/lib/app/session";
 
 export default async function TeamsPage() {
-  const { supabase, user, canVote, event } = await getSession();
+  const { supabase, user, canVote, isAdmin, event } = await getSession();
 
-  const [{ data: challenges }, { data: teams }, { data: notes }, { data: evals }] =
+  const [{ data: challenges }, { data: teams }, { data: notes }, { data: evals }, { data: panelMemberships }, { data: panelAssignments }, { data: panels }, { data: evaluationPage }] =
     await Promise.all([
       supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order"),
       supabase
@@ -18,7 +18,34 @@ export default async function TeamsPage() {
         .select("team_id, status, scored_criteria, total_criteria")
         .eq("event_id", event.id)
         .eq("judge_id", user.id),
+      supabase
+        .from("jury_panel_members")
+        .select("panel_id")
+        .eq("event_id", event.id)
+        .eq("user_id", user.id),
+      supabase
+        .from("jury_panel_assignments")
+        .select("panel_id, team_id, round")
+        .eq("event_id", event.id),
+      supabase
+        .from("jury_panels")
+        .select("id")
+        .eq("event_id", event.id)
+        .eq("active", true),
+      supabase
+        .from("evaluation_pages")
+        .select("current_round")
+        .eq("event_id", event.id)
+        .maybeSingle(),
     ]);
+
+  const myPanelIds = new Set((panelMemberships ?? []).map((item) => item.panel_id));
+  const activePanelIds = new Set((panels ?? []).map((item) => item.id));
+  const currentRound = evaluationPage?.current_round ?? 1;
+  const activeAssignments = (panelAssignments ?? []).filter(
+    (item) => item.round === currentRound && activePanelIds.has(item.panel_id),
+  );
+  const assignmentsEnabled = activeAssignments.length > 0;
 
   const summaries: TeamSummary[] = (teams ?? []).map((team) => {
     const teamNotes = (notes ?? []).filter((n) => n.team_id === team.id);
@@ -36,6 +63,14 @@ export default async function TeamsPage() {
       sharedNotes: teamNotes.filter(
         (n) => n.is_shared && n.author_id !== user.id,
       ).length,
+      canEvaluate:
+        canVote &&
+        (isAdmin ||
+          !assignmentsEnabled ||
+          activeAssignments.some(
+            (assignment) =>
+              assignment.team_id === team.id && myPanelIds.has(assignment.panel_id),
+          )),
       status: !evaluation
         ? "pending"
         : evaluation.status !== "submitted"

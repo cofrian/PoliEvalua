@@ -5,6 +5,10 @@ import { getSession } from "@/lib/app/session";
 
 const sections = [
   { href: "/admin", label: "Evento y usuarios" },
+  { href: "/admin/asistente", label: "Asistente" },
+  { href: "/admin/evaluacion", label: "Evaluación" },
+  { href: "/admin/paneles", label: "Paneles de jurado" },
+  { href: "/admin/academico", label: "Datos académicos" },
   { href: "/admin/equipos", label: "Equipos" },
   { href: "/admin/retos", label: "Retos" },
   { href: "/admin/patrocinadores", label: "Patrocinadores" },

@@ -24,10 +24,22 @@ const spaceSchema = z
     enabledRoles: z.array(participantRoleSchema).min(1),
     joinRoles: z.array(joinRoleSchema),
     modules: z.array(moduleSchema).min(1),
+    academicEnabled: z.boolean(),
+    institution: z.string().trim().max(160).optional(),
+    school: z.string().trim().max(160).optional(),
+    degree: z.string().trim().max(160).optional(),
+    subjectName: z.string().trim().max(160).optional(),
+    subjectCode: z.string().trim().max(60).optional(),
+    academicYear: z.string().trim().max(40).optional(),
+    term: z.string().trim().max(80).optional(),
   })
   .refine(
     (data) => data.joinRoles.every((role) => data.enabledRoles.includes(role)),
     { message: "Los perfiles con código deben estar habilitados.", path: ["joinRoles"] },
+  )
+  .refine(
+    (data) => !data.academicEnabled || (data.subjectName?.length ?? 0) >= 2,
+    { message: "Indica la asignatura del espacio académico.", path: ["subjectName"] },
   );
 
 export type CreateSpaceState = {
@@ -149,6 +161,14 @@ export async function createSpaceAction(
     enabledRoles: formData.getAll("enabledRoles"),
     joinRoles: formData.getAll("joinRoles"),
     modules: formData.getAll("modules"),
+    academicEnabled: formData.get("academicEnabled") === "on",
+    institution: formData.get("institution") ?? undefined,
+    school: formData.get("school") ?? undefined,
+    degree: formData.get("degree") ?? undefined,
+    subjectName: formData.get("subjectName") ?? undefined,
+    subjectCode: formData.get("subjectCode") ?? undefined,
+    academicYear: formData.get("academicYear") ?? undefined,
+    term: formData.get("term") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -171,6 +191,18 @@ export async function createSpaceAction(
       enabled_roles: parsed.data.enabledRoles,
       join_roles: parsed.data.joinRoles,
       modules: parsed.data.modules,
+      academic: parsed.data.academicEnabled
+        ? {
+            institution:
+              parsed.data.institution || "Universitat Politècnica de València",
+            school: parsed.data.school || null,
+            degree: parsed.data.degree || null,
+            subject_name: parsed.data.subjectName,
+            subject_code: parsed.data.subjectCode || null,
+            academic_year: parsed.data.academicYear || null,
+            term: parsed.data.term || null,
+          }
+        : null,
     },
   });
 

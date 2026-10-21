@@ -156,6 +156,7 @@ test.beforeAll(async () => {
   const { data: rubric } = await db
     .from("rubrics")
     .select("rubric_criteria(id, deleted_at)")
+    .eq("event_id", eventId)
     .eq("is_active", true)
     .single();
   criteriaCount = (
@@ -276,7 +277,7 @@ test("6. El mentor entra: ve lo compartido, no lo privado, y no puede votar", as
 
   await mentorPage.goto("/rubrica");
   await expect(
-    mentorPage.getByText(/Como mentor puedes consultar la rúbrica/),
+    mentorPage.getByText(/Solo las personas propietarias y gestoras pueden cambiar/),
   ).toBeVisible();
   await expect(
     mentorPage.getByRole("button", { name: "Añadir criterio" }),
@@ -310,7 +311,7 @@ test("8. El juez evalúa: nota en vivo, autoguardado y envío", async () => {
   await groups.nth(0).getByRole("radio").nth(2).click();
   await judgePage.getByRole("button", { name: "Enviar evaluación" }).click();
   await expect(
-    judgePage.getByText("Puntúa todos los criterios antes de enviar."),
+    judgePage.getByText("Completa los requisitos, las preguntas obligatorias y todos los criterios."),
   ).toBeVisible();
 
   for (let i = 1; i < criteriaCount; i++) {
@@ -574,6 +575,8 @@ test("19. La plantilla de asignatura permite alumnado y bloquea roles no autoriz
   await ownerPage.getByLabel("Nombre del espacio").fill(name);
   await ownerPage.getByLabel("Identificador web").fill(slug);
   await ownerPage.getByLabel("Código inicial").fill(code);
+  await ownerPage.locator('input[name="degree"]').fill("Grado en Ingeniería Informática");
+  await ownerPage.locator('input[name="subjectName"]').fill("Proyectos de Inteligencia Artificial");
   await expect(ownerPage.locator('input[name="enabledRoles"][value="student"]')).toBeChecked();
   await expect(ownerPage.locator('input[name="joinRoles"][value="student"]')).toBeChecked();
   await ownerPage.getByRole("button", { name: "Crear espacio" }).click();
@@ -592,7 +595,24 @@ test("19. La plantilla de asignatura permite alumnado y bloquea roles no autoriz
     enabled_roles: ["teacher", "student"],
     join_roles: ["student"],
     modules: ["participants", "rubric", "notes", "results"],
+    academic: {
+      institution: "Universitat Politècnica de València",
+      degree: "Grado en Ingeniería Informática",
+      subject_name: "Proyectos de Inteligencia Artificial",
+    },
   });
+
+  const [{ data: academic }, { data: evaluationPage }, { data: rubric }] = await Promise.all([
+    db.from("event_academic_contexts").select("subject_name, degree").eq("event_id", created.id).single(),
+    db.from("evaluation_pages").select("status, current_round").eq("event_id", created.id).single(),
+    db.from("rubrics").select("id").eq("event_id", created.id).eq("is_active", true).single(),
+  ]);
+  expect(academic).toMatchObject({
+    subject_name: "Proyectos de Inteligencia Artificial",
+    degree: "Grado en Ingeniería Informática",
+  });
+  expect(evaluationPage).toMatchObject({ status: "draft", current_round: 1 });
+  expect(rubric?.id).toBeTruthy();
 
   const { data: challenge, error: challengeError } = await db
     .from("challenges")

@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Evalúa UPV
 
-## Getting Started
+Plataforma multiespacio para organizar evaluaciones de hackathones, premios,
+eventos, asignaturas y proyectos. Cada espacio mantiene sus miembros, roles,
+equipos, rúbrica, imagen y resultados completamente separados mediante RLS de
+PostgreSQL.
 
-First, run the development server:
+El proyecto nació para València Hack y se ha generalizado para que cualquier
+gestor pueda crear su propio proceso. No es un servicio oficial de la
+Universitat Politècnica de València.
+
+## Funciones principales
+
+- Cuentas personales reutilizables y recuperación de contraseña.
+- Espacios independientes con propietario, gestores, jurado, mentores,
+  docentes, alumnado, evaluadores y perfiles de consulta.
+- Rúbricas dinámicas, páginas de evaluación, preguntas y requisitos.
+- Contexto académico: centro, titulación, asignatura, curso y semestre.
+- Paneles de jurado con reparto por proyectos y rondas.
+- Notas privadas o compartidas, resultados en directo y exportaciones.
+- Personalización de colores, nombre y logotipos por espacio.
+- Asistente especializado que prepara borradores y exige confirmación humana.
+
+## Stack
+
+Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Supabase Auth/Postgres/RLS/
+Realtime/Storage y Vercel. El asistente usa una API OpenAI-compatible; la
+configuración actual apunta a NVIDIA NIM sin acoplar el dominio al proveedor.
+
+## Desarrollo local
+
+Requisitos: Node.js 20 o posterior, npm y un proyecto Supabase.
 
 ```bash
+npm ci
+Copy-Item .env.example .env.local
+npx supabase link --project-ref TU_PROJECT_REF
+npx supabase db push
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Rellena `.env.local` con tus propias credenciales. Nunca confirmes ese archivo
+ni una clave `service_role` en Git.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Visibilidad | Uso |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Cliente | URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cliente | Clave pública limitada por RLS |
+| `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor | Operaciones administrativas verificadas |
+| `NEXT_PUBLIC_SITE_URL` | Cliente | URL canónica del despliegue |
+| `ADMIN_ACCESS_CODE` | Solo servidor | Activación administrativa heredada |
+| `NVIDIA_API_KEY` | Solo servidor | Proveedor del asistente |
+| `NVIDIA_MODEL` | Solo servidor | Identificador del modelo NIM |
 
-## Learn More
+## Verificación
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run test:ci
+npm run test:security
+npm run test:e2e
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Las pruebas de seguridad e integración usan un Supabase real, crean datos
+temporales identificables y los eliminan al finalizar. No las ejecutes contra
+un proyecto ajeno.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Seguridad y privacidad
 
-## Deploy on Vercel
+Los datos no viven en el repositorio. La separación entre espacios y la
+privacidad de evaluaciones se aplican en PostgreSQL mediante RLS, claves
+foráneas compuestas y funciones con comprobación de rol. La clave del proveedor
+de IA permanece en el servidor y al modelo no se le envían participantes ni
+evaluaciones personales.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Consulta [SECURITY.md](SECURITY.md) antes de comunicar una vulnerabilidad y
+[CONTRIBUTING.md](CONTRIBUTING.md) antes de proponer cambios.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Licencia
+
+Código publicado bajo licencia MIT. Los nombres, marcas, logotipos y datos de
+cada organización conservan sus derechos respectivos y no quedan cubiertos por
+esa licencia.

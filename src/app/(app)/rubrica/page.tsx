@@ -14,7 +14,7 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function RubricPage() {
-  const { supabase, user, profile, canVote, isAdmin, event } = await getSession();
+  const { supabase, user, profile, isAdmin, event } = await getSession();
 
   const { data: rubric } = await supabase
     .from("rubrics")
@@ -53,7 +53,7 @@ export default async function RubricPage() {
       ),
     }));
 
-  const canEdit = isAdmin || (canVote && !rubric.locked);
+  const canEdit = isAdmin;
 
   return (
     <div className="space-y-8">
@@ -79,9 +79,7 @@ export default async function RubricPage() {
 
       {!canEdit ? (
         <p className="rounded-lg border border-line bg-white px-3 py-2.5 text-sm dark:border-[#262838] dark:bg-[#151621]">
-          {canVote
-            ? "La rúbrica está bloqueada: solo el admin puede cambiarla."
-            : "Como mentor puedes consultar la rúbrica, pero no editarla."}
+          Solo las personas propietarias y gestoras pueden cambiar la estructura de la rúbrica.
         </p>
       ) : null}
 

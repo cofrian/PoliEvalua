@@ -73,21 +73,22 @@ async function makeUser(role, eventId) {
 }
 
 try {
+  const { data: event } = await admin
+    .from("events")
+    .select("*")
+    .eq("slug", "valencia-hack")
+    .single();
   const { data: team } = await admin
     .from("teams")
     .select("id")
+    .eq("event_id", event.id)
     .limit(1)
     .single();
   const { data: rubric } = await admin
     .from("rubrics")
     .select("id, rubric_criteria(id, weight, deleted_at)")
+    .eq("event_id", event.id)
     .eq("is_active", true)
-    .limit(1)
-    .single();
-  const { data: event } = await admin
-    .from("events")
-    .select("*")
-    .limit(1)
     .single();
   const criteria = rubric.rubric_criteria.filter((c) => !c.deleted_at);
 
@@ -405,17 +406,15 @@ try {
     .select("locked")
     .eq("id", rubric.id)
     .single();
-  if (!wasLocked.locked) {
-    const { data: judgeRubric } = await judgeA.client
-      .from("rubric_criteria")
-      .update({ weight: criterion.weight })
-      .eq("id", criterion.id)
-      .select("id");
-    check(
-      "Un juez SÍ puede editar la rúbrica sin bloquear",
-      judgeRubric?.length === 1,
-    );
-  }
+  const { data: judgeRubric } = await judgeA.client
+    .from("rubric_criteria")
+    .update({ weight: criterion.weight })
+    .eq("id", criterion.id)
+    .select("id");
+  check(
+    "Un juez NO puede cambiar la estructura de la rúbrica",
+    !judgeRubric?.length,
+  );
 
   const { error: lockError } = await boss.client
     .from("rubrics")

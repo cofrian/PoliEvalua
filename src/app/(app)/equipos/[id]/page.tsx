@@ -19,7 +19,7 @@ export default async function TeamPage({
   const { id } = await params;
   const { supabase, user, profile, canVote, isAdmin, event } = await getSession();
 
-  const [{ data: team }, { data: notes }, { data: evaluation }] =
+  const [{ data: team }, { data: notes }, { data: evaluation }, { data: canVoteThisTeam }] =
     await Promise.all([
       supabase
         .from("teams")
@@ -44,6 +44,12 @@ export default async function TeamPage({
         .eq("team_id", id)
         .eq("judge_id", user.id)
         .maybeSingle(),
+      canVote
+        ? supabase.rpc("can_vote_team", {
+            target_event: event.id,
+            target_team: id,
+          })
+        : Promise.resolve({ data: false }),
     ]);
 
   if (!team) notFound();
@@ -81,7 +87,7 @@ export default async function TeamPage({
             />
           </div>
         </div>
-        {canVote ? (
+        {canVote && canVoteThisTeam ? (
           <Button asChild className="h-11 px-5 font-bold">
             <Link href={`/equipos/${team.id}/evaluar`}>
               {evaluation?.status === "submitted"

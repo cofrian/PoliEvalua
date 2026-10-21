@@ -8,13 +8,17 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:rls": "node scripts/test-rls.mjs",
     "test:tenants": "node scripts/test-tenant-isolation.mjs",
-    "test:security": "npm run test:rls && npm run test:tenants",
-    "test:all": "npm run lint && npm run test:security && npm run test:e2e"
+    "test:features": "node scripts/test-platform-features.mjs",
+    "test:security": "npm run test:rls && npm run test:tenants && npm run test:features",
+    "test:ci": "npm run lint && npm run typecheck && npm run build",
+    "test:all": "npm run test:ci && npm run test:security && npm run test:e2e"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.75",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -22,6 +26,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-query": "^5.104.2",
+    "ai": "^7.0.148",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
@@ -55,5 +60,9 @@
     "supabase": "^2.121.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "braces": "3.0.3",
+    "postcss": "8.5.31"
   }
 }
