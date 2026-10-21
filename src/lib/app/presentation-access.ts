@@ -46,6 +46,28 @@ export async function getPresentationApiSession() {
   };
 }
 
+type PresentationSession = Awaited<ReturnType<typeof getPresentationApiSession>>;
+
+/** Grabación del espacio activo que el usuario puede modificar (autor o gestor). */
+export async function getOwnedRecording(session: PresentationSession, id: string) {
+  const { data: recording } = await session.supabase
+    .from("presentation_recordings")
+    .select("id, event_id, team_id, created_by, status, storage_path, finalized_at, audio_deleted_at")
+    .eq("id", id)
+    .eq("event_id", session.eventId)
+    .maybeSingle();
+  if (!recording) {
+    throw new PresentationAccessError(404, "No se encuentra la grabación.");
+  }
+  if (recording.created_by !== session.user.id && !session.canManage) {
+    throw new PresentationAccessError(
+      403,
+      "Solo quien creó la grabación o un gestor puede modificarla.",
+    );
+  }
+  return recording;
+}
+
 export function presentationErrorResponse(error: unknown) {
   if (error instanceof PresentationAccessError) {
     return Response.json({ error: error.message }, { status: error.status });

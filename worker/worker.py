@@ -83,10 +83,7 @@ def process_job(model: WhisperModel, job: dict) -> None:
         started = time.monotonic()
         text = transcribe(model, audio_path, job.get("language"))
 
-    if not text:
-        report_failure(job_id, "No se detectó voz en la grabación.", retryable=False)
-        return
-
+    # Un segmento sin voz (pausa larga) es válido: se envía vacío.
     response = session.post(
         f"{APP_URL}/api/worker/jobs/{job_id}/complete",
         json={"workerId": WORKER_ID, "transcript": text},

@@ -53,3 +53,4 @@ next-env.d.ts
 # Trabajador de transcripción
 worker/.venv/
 worker/*.log
+worker/__pycache__/

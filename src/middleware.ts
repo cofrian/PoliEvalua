@@ -16,8 +16,11 @@ function copyResponseCookies(source: NextResponse, target: NextResponse) {
 }
 
 export async function middleware(request: NextRequest) {
-  // Los transcriptores no tienen sesión: se autentican con su propio token.
-  if (request.nextUrl.pathname.startsWith("/api/worker/")) {
+  // Transcriptores y el pulso de pg_cron no tienen sesión: usan su propio token.
+  if (
+    request.nextUrl.pathname.startsWith("/api/worker/") ||
+    request.nextUrl.pathname.startsWith("/api/jobs/")
+  ) {
     return NextResponse.next({ request });
   }
 

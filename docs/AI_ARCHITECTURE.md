@@ -36,3 +36,48 @@ La primera versión genera texto estructurado. No ejecuta herramientas externas,
 no navega por documentos privados y no aplica cambios sin una acción humana.
 El servicio alojado gratuito de NVIDIA debe tratarse como entorno de prototipo;
 antes de uso productivo se deben revisar sus condiciones y capacidad.
+
+# Exposiciones: grabación, transcripción y agentes
+
+## Flujo
+
+1. **Grabación por segmentos** (`src/hooks/use-segmented-recorder.ts`). El
+   navegador graba Opus a 32 kbps y corta un segmento nuevo a partir de los
+   100 s en la primera pausa de 400 ms (o a los 150 s si no la hay). El grabador
+   siguiente arranca 2 s antes de parar el anterior, así ninguna palabra queda
+   cortada. Cada segmento se guarda en IndexedDB y se sube en cuanto se cierra;
+   si falla la red, la página ofrece "Reanudar subida".
+2. **Cola** (`processing_jobs`, `src/lib/app/processing-queue.ts`). Cada
+   segmento confirmado crea un trabajo `transcribe_segment`. Los ejecutores
+   reclaman trabajos con `claim_processing_job` (`FOR UPDATE SKIP LOCKED`).
+   Hay reintentos con espera creciente (15 s, 30 s, 60 s) y un límite global de
+   trabajos internos simultáneos (`MAX_INTERNAL_CONCURRENCY`).
+3. **Transcripción**: NVIDIA Parakeet primero, con un limitador global en la
+   base de datos (`take_provider_slot`, `NVIDIA_REQUESTS_PER_MINUTE`). Si NVIDIA
+   rechaza el formato se convierte a WAV con ffmpeg. Si agota los intentos, el
+   trabajo pasa a `runner = external` y lo recoge un trabajador Whisper
+   (Kaggle, Colab o PC) por `/api/worker/*`.
+4. **Unión** (`assemble`): con todos los segmentos listos se unen los textos
+   eliminando las palabras repetidas del solape (`merge-transcripts.ts`), se
+   guarda la transcripción completa y se borra todo el audio.
+5. **Agentes** (`analyze`, `src/lib/ai/agents/presentation-graph.ts`): un grafo
+   LangGraph con cinco agentes en paralelo sobre la transcripción completa
+   (resumen, esquema, mapa mental, evidencias por criterio de la rúbrica,
+   preguntas y puntos débiles) y un revisor que elimina cualquier cita que no
+   aparezca literalmente en el texto. Cada agente guarda su resultado en
+   `analysis_state`, así un reintento no repite lo ya hecho.
+
+## Disparadores
+
+- Tras cada subida y al cerrar la grabación, la propia petición ejecuta hasta
+  dos trabajos internos con `after()`.
+- `pg_cron` llama cada minuto a `/api/jobs/tick` mientras haya trabajos
+  internos pendientes (reintentos, aplazados y reservas caducadas). La URL y el
+  secreto viven en Supabase Vault (`jobs_tick_url`, `jobs_cron_secret`).
+
+## Privacidad
+
+El audio solo existe mientras se transcribe. A NVIDIA llegan el audio de cada
+segmento y después el texto; a los trabajadores externos, solo los segmentos
+que NVIDIA no pudo procesar. El informe del jurado está en
+`presentation_jury_reports` y la RLS solo lo muestra a quien puede evaluar.

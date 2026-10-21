@@ -5,17 +5,19 @@ import {
   BrainCircuit,
   CheckCircle2,
   Clock3,
+  FileAudio,
   FileText,
+  Gavel,
   Lightbulb,
   ListTree,
   LoaderCircle,
   Lock,
   Mic,
   Play,
+  RotateCw,
   Sparkles,
   Square,
   Trash2,
-  UploadCloud,
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,7 +28,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { PresentationInsights } from "@/lib/ai/presentation-insights";
+import { useSegmentedRecorder, type RecordedSegment } from "@/hooks/use-segmented-recorder";
+import type { CriterionEvidence, PresentationInsights } from "@/lib/ai/presentation-insights";
+import {
+  createRecording,
+  finalizeRecording,
+  markStopped,
+  pendingUploads,
+  resumeUpload,
+  segmentKey,
+  uploadSegment,
+} from "@/lib/app/segment-upload";
+import type { PendingRecording } from "@/lib/app/segment-store";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +54,12 @@ type PresentationStatus =
   | "failed"
   | "inactive";
 
+export type PresentationSegment = {
+  seq: number;
+  status: "uploading" | "queued" | "transcribing" | "done" | "failed";
+  transcript: string | null;
+};
+
 export type PresentationRecord = {
   id: string;
   title: string;
@@ -48,6 +67,7 @@ export type PresentationRecord = {
   visibility: "private" | "event";
   duration_seconds: number;
   size_bytes: number;
+  segments_expected: number | null;
   transcript: string | null;
   summary: string | null;
   key_points: string[];
@@ -59,38 +79,46 @@ export type PresentationRecord = {
   created_at: string;
   created_by: string;
   creator: { full_name: string } | null;
+  segments: PresentationSegment[];
 };
 
-type RecorderResources = {
-  context: AudioContext;
-  source: MediaStreamAudioSourceNode;
-  analyser: AnalyserNode;
-  stream: MediaStream;
-  recorder: MediaRecorder;
-  chunks: Blob[];
+export type JuryReportRecord = {
+  recording_id: string;
+  criteria_evidence: CriterionEvidence[];
+  questions: string[];
+  risks: string[];
 };
 
-const MAX_SECONDS = 20 * 60;
-const MAX_BYTES = 50 * 1024 * 1024;
-// 32 kbps de Opus conserva la voz sin pérdida apreciable para Whisper.
-const AUDIO_BITS_PER_SECOND = 32_000;
-const RECORDING_FORMATS = [
-  { recorder: "audio/webm;codecs=opus", upload: "audio/webm" },
-  { recorder: "audio/ogg;codecs=opus", upload: "audio/ogg" },
-  { recorder: "audio/webm", upload: "audio/webm" },
-  { recorder: "audio/mp4", upload: "audio/mp4" },
-] as const;
+const MAX_SECONDS = 60 * 60;
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
+const FILE_TYPES: Record<string, string> = {
+  "audio/webm": "audio/webm",
+  "audio/ogg": "audio/ogg",
+  "audio/mp4": "audio/mp4",
+  "audio/x-m4a": "audio/mp4",
+  "audio/m4a": "audio/mp4",
+  "audio/mpeg": "audio/mpeg",
+  "audio/mp3": "audio/mpeg",
+  "audio/wav": "audio/wav",
+  "audio/x-wav": "audio/wav",
+};
 
 const statusLabels: Record<PresentationStatus, string> = {
-  uploading: "Subiendo",
+  uploading: "Grabando / subiendo",
   uploaded: "Audio subido",
   queued: "En cola",
   transcribing: "Transcribiendo",
   transcribed: "Texto listo",
-  analyzing: "Creando materiales",
+  analyzing: "Agentes analizando",
   ready: "Análisis listo",
   failed: "Requiere atención",
   inactive: "Retirada",
+};
+
+const coverageLabels: Record<CriterionEvidence["coverage"], string> = {
+  clear: "Tratado con claridad",
+  partial: "Tratado en parte",
+  absent: "No se menciona",
 };
 
 function formatDuration(seconds: number) {
@@ -103,13 +131,21 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function pickRecordingFormat() {
-  if (typeof MediaRecorder === "undefined") return null;
-  return (
-    RECORDING_FORMATS.find((format) =>
-      MediaRecorder.isTypeSupported(format.recorder),
-    ) ?? null
-  );
+function audioDuration(file: File) {
+  return new Promise<number>((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(audio.duration) ? audio.duration : 0);
+    };
+    audio.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(0);
+    };
+    audio.src = url;
+  });
 }
 
 function MindMap({ map }: { map: PresentationInsights["mindMap"] }) {
@@ -199,82 +235,167 @@ function Waveform({ analyser }: { analyser: AnalyserNode | null }) {
   );
 }
 
+function JuryReport({ report }: { report: JuryReportRecord }) {
+  return (
+    <section className="rounded-2xl border-2 border-upv-blue/40 bg-upv-blue/5 p-4 sm:p-5">
+      <h4 className="flex items-center gap-2 font-display text-lg">
+        <Gavel className="size-5" /> Para el jurado
+      </h4>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Solo lo ven el jurado y la gestión. Las citas están comprobadas contra la
+        transcripción; no es una nota ni una recomendación de voto.
+      </p>
+
+      {report.criteria_evidence.length ? (
+        <div className="mt-4 space-y-3">
+          {report.criteria_evidence.map((item, index) => (
+            <article className="rounded-xl bg-card p-3 shadow-sm" key={`${item.criterion}-${index}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-bold">{item.criterion}</p>
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-bold",
+                    item.coverage === "clear" && "bg-leaf-500/15 text-leaf-500",
+                    item.coverage === "partial" && "bg-upv-yellow/25",
+                    item.coverage === "absent" && "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {coverageLabels[item.coverage]}
+                </span>
+              </div>
+              {item.evidence.length ? (
+                <ul className="mt-2 space-y-2 text-sm">
+                  {item.evidence.map((entry, entryIndex) => (
+                    <li key={`${entry.quote}-${entryIndex}`}>
+                      <blockquote className="border-l-2 border-upv-blue pl-3 italic">
+                        «{entry.quote}»
+                      </blockquote>
+                      <p className="mt-1 pl-3 text-xs text-muted-foreground">{entry.explanation}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div>
+          <h5 className="mb-2 font-bold">Preguntas sugeridas</h5>
+          <ol className="list-decimal space-y-1.5 pl-5 text-sm">
+            {report.questions.map((question, index) => (
+              <li key={`${question}-${index}`}>{question}</li>
+            ))}
+          </ol>
+        </div>
+        {report.risks.length ? (
+          <div>
+            <h5 className="mb-2 font-bold">Puntos a aclarar</h5>
+            <ul className="space-y-1.5 text-sm">
+              {report.risks.map((risk, index) => (
+                <li className="flex gap-2" key={`${risk}-${index}`}>
+                  <span aria-hidden>⚠️</span> {risk}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function progressText(record: PresentationRecord) {
+  const done = record.segments.filter((segment) => segment.status === "done").length;
+  const total = record.segments_expected ?? record.segments.length;
+  if (record.status === "analyzing") return "Los agentes están creando resumen, esquema, mapa mental e informe…";
+  if (record.status === "uploading") return `Recibiendo audio: ${done}/${total} partes ya transcritas.`;
+  if (record.status === "queued" && done === 0) return "En cola: se procesará en cuanto haya hueco.";
+  return `Transcribiendo: ${done}/${total} partes listas.`;
+}
+
 export function PresentationStudio({
   teamId,
   userId,
   canCreate,
   canManage,
   initialRecords,
+  juryReports,
 }: {
   teamId: string;
   userId: string;
   canCreate: boolean;
   canManage: boolean;
   initialRecords: PresentationRecord[];
+  juryReports: JuryReportRecord[];
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const resourcesRef = useRef<RecorderResources | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
-  const uploadMimeRef = useRef<string>("audio/webm");
-  const [isRecording, setIsRecording] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const recordingIdRef = useRef<string | null>(null);
+  const uploadsRef = useRef<Promise<void>[]>([]);
+  const sizeRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [liveRecordingId, setLiveRecordingId] = useState<string | null>(null);
   const [title, setTitle] = useState("Nueva exposición");
   const [visibility, setVisibility] = useState<"private" | "event">("private");
   const [busy, setBusy] = useState(false);
+  const [uploaded, setUploaded] = useState(0);
+  const [failedUploads, setFailedUploads] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [manualTranscripts, setManualTranscripts] = useState<Record<string, string>>({});
+  const [pending, setPending] = useState<{ recording: PendingRecording; segments: number }[]>([]);
 
-  const releaseResources = useCallback(async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-    const resources = resourcesRef.current;
-    resourcesRef.current = null;
-    if (!resources) return;
-    if (resources.recorder.state !== "inactive") resources.recorder.stop();
-    resources.source.disconnect();
-    resources.analyser.disconnect();
-    resources.stream.getTracks().forEach((track) => track.stop());
-    await resources.context.close().catch(() => undefined);
+  const reportsById = useMemo(
+    () => new Map(juryReports.map((report) => [report.recording_id, report])),
+    [juryReports],
+  );
+
+  const handleSegment = useCallback(
+    (segment: RecordedSegment) => {
+      const recordingId = recordingIdRef.current;
+      if (!recordingId) return;
+      sizeRef.current += segment.blob.size;
+      const upload = uploadSegment(supabase, {
+        key: segmentKey(recordingId, segment.seq),
+        recordingId,
+        ...segment,
+      })
+        .then(() => setUploaded((count) => count + 1))
+        .catch(() => {
+          // El segmento sigue en IndexedDB: se podrá reanudar la subida.
+          setFailedUploads((count) => count + 1);
+        });
+      uploadsRef.current.push(upload);
+    },
+    [supabase],
+  );
+
+  const recorder = useSegmentedRecorder({ maxSeconds: MAX_SECONDS, onSegment: handleSegment });
+
+  const refreshPending = useCallback(async () => {
+    const items = await pendingUploads();
+    setPending(
+      items
+        .filter((item) => item.recording.recordingId !== recordingIdRef.current)
+        .map((item) => ({ recording: item.recording, segments: item.segments.length })),
+    );
   }, []);
 
-  const stopRecording = useCallback(async () => {
-    const resources = resourcesRef.current;
-    if (!resources) return;
-    const stopped = new Promise<void>((resolve) => {
-      resources.recorder.addEventListener("stop", () => resolve(), { once: true });
-    });
-    resources.recorder.stop();
-    await stopped;
-    const blob = new Blob(resources.chunks, { type: uploadMimeRef.current });
-    setIsRecording(false);
-    setAnalyser(null);
-    await releaseResources();
-    if (blob.size > MAX_BYTES) {
-      toast.error("La grabación supera 50 MB. Haz una toma más corta.");
-      setAudioBlob(null);
-      return;
-    }
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    const url = URL.createObjectURL(blob);
-    previewUrlRef.current = url;
-    setPreviewUrl(url);
-    setAudioBlob(blob);
-  }, [releaseResources]);
-
   useEffect(() => {
-    if (isRecording && seconds >= MAX_SECONDS) {
-      toast.info("Se ha alcanzado el máximo de 20 minutos.");
-      void stopRecording();
-    }
-  }, [isRecording, seconds, stopRecording]);
+    void refreshPending();
+  }, [refreshPending]);
 
   // La cola trabaja fuera de esta pestaña: refrescamos al cambiar el estado.
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        router.refresh();
+      }, 800);
+    };
     const channel = supabase
       .channel(`presentations:${teamId}`)
       .on(
@@ -285,149 +406,136 @@ export function PresentationStudio({
           table: "presentation_recordings",
           filter: `team_id=eq.${teamId}`,
         },
-        () => router.refresh(),
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "presentation_segments" },
+        refresh,
       )
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       void supabase.removeChannel(channel);
     };
   }, [router, supabase, teamId]);
 
-  useEffect(
-    () => () => {
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      void releaseResources();
-    },
-    [releaseResources],
-  );
-
   async function startRecording() {
-    const format = pickRecordingFormat();
-    if (!navigator.mediaDevices?.getUserMedia || !format) {
-      toast.error("Este navegador no permite grabar desde el micrófono.");
-      return;
-    }
+    if (!title.trim()) return;
+    setBusy(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
-      });
-      const context = new AudioContext();
-      await context.resume();
-      const source = context.createMediaStreamSource(stream);
-      const analyserNode = context.createAnalyser();
-      analyserNode.fftSize = 2048;
-      source.connect(analyserNode);
-      const recorder = new MediaRecorder(stream, {
-        mimeType: format.recorder,
-        audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
-      });
-      const chunks: Blob[] = [];
-      recorder.addEventListener("dataavailable", (event) => {
-        if (event.data.size > 0) chunks.push(event.data);
-      });
-      recorder.start(1000);
-      uploadMimeRef.current = format.upload;
-      resourcesRef.current = {
-        context,
-        source,
-        analyser: analyserNode,
-        stream,
-        recorder,
-        chunks,
-      };
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = null;
-      setPreviewUrl(null);
-      setAudioBlob(null);
-      setSeconds(0);
-      setAnalyser(analyserNode);
-      setIsRecording(true);
-      timerRef.current = setInterval(
-        () => setSeconds((current) => current + 1),
-        1000,
-      );
-    } catch {
+      const id = await createRecording({ teamId, title: title.trim(), visibility });
+      recordingIdRef.current = id;
+      setLiveRecordingId(id);
+      uploadsRef.current = [];
+      sizeRef.current = 0;
+      setUploaded(0);
+      setFailedUploads(0);
+      await recorder.start();
+      router.refresh();
+    } catch (error) {
+      recordingIdRef.current = null;
+      setLiveRecordingId(null);
       toast.error(
-        "No se ha podido acceder al micrófono. Revisa el permiso del navegador.",
+        error instanceof Error
+          ? error.message
+          : "No se ha podido acceder al micrófono. Revisa el permiso del navegador.",
       );
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function uploadAndProcess() {
-    if (!audioBlob || !title.trim()) return;
+  async function stopRecording() {
+    const recordingId = recordingIdRef.current;
     setBusy(true);
     try {
-      const uploadResponse = await fetch("/api/presentations/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          teamId,
-          title: title.trim(),
-          sizeBytes: audioBlob.size,
-          durationSeconds: seconds,
-          visibility,
-          mimeType: uploadMimeRef.current,
-        }),
+      const result = await recorder.stop();
+      if (!recordingId || !result) return;
+      await Promise.all(uploadsRef.current);
+      const saved = await markStopped(recordingId, {
+        segmentsExpected: result.segments,
+        durationSeconds: result.durationSeconds,
+        sizeBytes: sizeRef.current,
       });
-      const uploadPayload = (await uploadResponse.json()) as {
-        id?: string;
-        path?: string;
-        token?: string;
-        error?: string;
-      };
-      if (!uploadResponse.ok || !uploadPayload.id || !uploadPayload.path || !uploadPayload.token) {
-        throw new Error(uploadPayload.error || "No se pudo preparar la subida.");
-      }
-
-      const { error: storageError } = await supabase.storage
-        .from("presentation-audio")
-        .uploadToSignedUrl(uploadPayload.path, uploadPayload.token, audioBlob, {
-          contentType: uploadMimeRef.current,
-          upsert: false,
-        });
-      if (storageError) throw new Error("No se pudo guardar el audio privado.");
-
-      toast.success("Audio subido. Lo ponemos en la cola de transcripción…");
-      setActiveId(uploadPayload.id);
-      const processResponse = await fetch(
-        `/api/presentations/${uploadPayload.id}/process`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
-        },
-      );
-      const processPayload = (await processResponse.json()) as {
-        error?: string;
-        warning?: string;
-        status?: string;
-      };
-      if (!processResponse.ok) {
-        throw new Error(processPayload.error || "No se pudo transcribir el audio.");
-      }
-      if (processPayload.warning) toast.warning(processPayload.warning);
-      else
-        toast.success(
-          "En cola. Te avisaremos aquí cuando el texto y los materiales estén listos.",
+      if (await finalizeRecording(saved)) {
+        toast.success("Grabación completa. El texto y los materiales aparecerán aquí.");
+        setTitle("Nueva exposición");
+      } else {
+        toast.warning(
+          "Parte del audio no se ha podido subir. Está guardado en este navegador: pulsa «Reanudar subida».",
         );
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo cerrar la grabación.");
+    } finally {
+      recordingIdRef.current = null;
+      setLiveRecordingId(null);
+      setBusy(false);
+      void refreshPending();
+      router.refresh();
+    }
+  }
 
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = null;
-      setPreviewUrl(null);
-      setAudioBlob(null);
-      setSeconds(0);
-      setTitle("Nueva exposición");
+  async function uploadFile(file: File) {
+    const mimeType = FILE_TYPES[file.type];
+    if (!mimeType) {
+      toast.error("Formato no admitido. Usa MP3, M4A, WAV, OGG o WEBM.");
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      toast.error("El archivo supera 20 MB. Expórtalo en MP3 o M4A para que ocupe menos.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const seconds = Math.max(1, Math.round(await audioDuration(file)));
+      const id = await createRecording({
+        teamId,
+        title: title.trim() || file.name.slice(0, 160),
+        visibility,
+      });
+      await uploadSegment(supabase, {
+        key: segmentKey(id, 0),
+        recordingId: id,
+        seq: 0,
+        startMs: 0,
+        endMs: seconds * 1000,
+        mimeType,
+        blob: file,
+      });
+      const saved = await markStopped(id, {
+        segmentsExpected: 1,
+        durationSeconds: seconds,
+        sizeBytes: file.size,
+      });
+      await finalizeRecording(saved);
+      toast.success("Archivo subido. Lo estamos transcribiendo.");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo procesar el audio.");
-      router.refresh();
+      toast.error(error instanceof Error ? error.message : "No se pudo subir el archivo.");
+      void refreshPending();
     } finally {
       setBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function resume(recording: PendingRecording) {
+    setActiveId(recording.recordingId);
+    try {
+      const finished = await resumeUpload(supabase, recording);
+      toast.success(
+        finished
+          ? "Subida completada. Ya se está transcribiendo."
+          : "Audio subido. La grabación se cerrará cuando termines de grabar.",
+      );
+    } catch {
+      toast.error("Sigue sin haber conexión. Inténtalo de nuevo en un momento.");
+    } finally {
       setActiveId(null);
+      void refreshPending();
+      router.refresh();
     }
   }
 
@@ -446,19 +554,12 @@ export function PresentationStudio({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transcript ? { transcript } : {}),
       });
-      const payload = (await response.json()) as {
-        error?: string;
-        warning?: string;
-        status?: string;
-      };
+      const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "No se pudo procesar.");
-      if (payload.warning) toast.warning(payload.warning);
-      else if (payload.status === "queued") toast.success("Grabación devuelta a la cola.");
-      else toast.success("Materiales generados.");
+      toast.success("Vuelto a poner en cola.");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo procesar.");
-      router.refresh();
     } finally {
       setActiveId(null);
     }
@@ -468,9 +569,7 @@ export function PresentationStudio({
     if (!window.confirm("¿Retirar esta grabación? Dejará de aparecer en la biblioteca.")) return;
     setActiveId(record.id);
     try {
-      const response = await fetch(`/api/presentations/${record.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(`/api/presentations/${record.id}`, { method: "DELETE" });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "No se pudo retirar.");
       toast.success("Grabación retirada.");
@@ -482,8 +581,40 @@ export function PresentationStudio({
     }
   }
 
+  const liveRecord = initialRecords.find((record) => record.id === liveRecordingId);
+  const liveText = liveRecord?.segments
+    .filter((segment) => segment.status === "done" && segment.transcript)
+    .map((segment) => segment.transcript)
+    .join(" ");
+
   return (
     <div className="space-y-8">
+      {pending.length ? (
+        <section className="rounded-2xl border border-upv-yellow bg-upv-yellow/10 p-4">
+          <h3 className="font-display">Subidas pendientes en este navegador</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Se cortó la conexión mientras grababas. El audio está guardado aquí; súbelo para no perderlo.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {pending.map(({ recording, segments }) => (
+              <li className="flex flex-wrap items-center justify-between gap-2" key={recording.recordingId}>
+                <span className="text-sm font-semibold">
+                  {recording.title || "Grabación"} · {segments} parte(s) sin subir
+                </span>
+                <Button
+                  disabled={activeId === recording.recordingId}
+                  onClick={() => void resume(recording)}
+                  size="sm"
+                  type="button"
+                >
+                  <RotateCw /> Reanudar subida
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="relative overflow-hidden rounded-3xl bg-upv-900 p-5 text-white shadow-xl sm:p-8 dark:bg-[#1b1d1e]">
         <div className="pointer-events-none absolute -right-14 -top-14 size-52 rounded-full bg-upv-yellow/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-1/4 size-56 rounded-full bg-upv-blue/20 blur-3xl" />
@@ -492,16 +623,15 @@ export function PresentationStudio({
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold">
               <Sparkles className="size-4 text-upv-yellow" /> Estudio de exposición
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl">
-              De la voz a las ideas
-            </h2>
+            <h2 className="font-display text-3xl sm:text-4xl">De la voz a las ideas</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
-              Graba una presentación y crea automáticamente su transcripción,
-              resumen, esquema y mapa mental. El audio se borra al terminar.
+              El audio se sube por partes mientras grabas y se transcribe a la vez.
+              Al terminar, unos agentes crean resumen, esquema, mapa mental y un
+              informe para el jurado. La voz se borra en cuanto hay texto.
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/70">
-              <span className="rounded-full bg-white/10 px-3 py-1">Opus · ~3 MB cada 15 min</span>
-              <span className="rounded-full bg-white/10 px-3 py-1">Máximo 20 min</span>
+              <span className="rounded-full bg-white/10 px-3 py-1">Subida por partes</span>
+              <span className="rounded-full bg-white/10 px-3 py-1">Hasta 60 min</span>
               <span className="rounded-full bg-white/10 px-3 py-1">Sin guardar la voz</span>
             </div>
           </div>
@@ -509,47 +639,118 @@ export function PresentationStudio({
           <div className="rounded-2xl border border-white/15 bg-black/20 p-4 backdrop-blur sm:p-5">
             {canCreate ? (
               <>
+                {!recorder.isRecording ? (
+                  <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <div className="space-y-1.5">
+                      <Label className="text-white/80" htmlFor="presentation-title">
+                        Nombre de la exposición
+                      </Label>
+                      <Input
+                        className="border-white/20 bg-white/10 text-white"
+                        id="presentation-title"
+                        maxLength={160}
+                        onChange={(event) => setTitle(event.target.value)}
+                        value={title}
+                      />
+                    </div>
+                    <button
+                      aria-pressed={visibility === "event"}
+                      className="flex h-9 items-center justify-center gap-2 rounded-lg border border-white/20 px-3 text-sm font-semibold hover:bg-white/10"
+                      onClick={() =>
+                        setVisibility((current) => (current === "private" ? "event" : "private"))
+                      }
+                      type="button"
+                    >
+                      {visibility === "private" ? (
+                        <><Lock className="size-4" /> Solo yo</>
+                      ) : (
+                        <><Users className="size-4" /> Todo el espacio</>
+                      )}
+                    </button>
+                  </div>
+                ) : null}
+
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span
                       className={cn(
                         "size-3 rounded-full",
-                        isRecording ? "animate-pulse bg-upv-red" : "bg-white/30",
+                        recorder.isRecording ? "animate-pulse bg-upv-red" : "bg-white/30",
                       )}
                     />
                     <span className="font-mono text-2xl font-bold tabular-nums">
-                      {formatDuration(seconds)}
+                      {formatDuration(recorder.elapsedSeconds)}
                     </span>
                   </div>
-                  <span className="text-xs text-white/60">{formatDuration(MAX_SECONDS)}</span>
+                  {recorder.isRecording ? (
+                    <span className="text-xs text-white/70">
+                      {recorder.segmentCount} parte(s) · {uploaded} subida(s)
+                      {failedUploads ? ` · ${failedUploads} pendiente(s)` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-white/60">{formatDuration(MAX_SECONDS)}</span>
+                  )}
                 </div>
-                {isRecording ? (
-                  <Waveform analyser={analyser} />
+                {recorder.isRecording ? (
+                  <Waveform analyser={recorder.analyser} />
                 ) : (
                   <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-white/20 text-white/55">
-                    <AudioLines className="mr-2 size-5" /> El audio aparecerá aquí
+                    <AudioLines className="mr-2 size-5" /> Pon el móvil cerca de quien expone
                   </div>
                 )}
-                <div className="mt-4 flex justify-center">
-                  {isRecording ? (
+                {recorder.isRecording && !recorder.wakeLockActive ? (
+                  <p className="mt-2 text-xs text-upv-yellow">
+                    No bloquees la pantalla mientras grabas: este navegador no puede mantenerla encendida.
+                  </p>
+                ) : null}
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  {recorder.isRecording ? (
                     <Button
                       className="h-12 rounded-full bg-upv-red px-6 text-white hover:bg-upv-red/85"
+                      disabled={busy}
                       onClick={() => void stopRecording()}
                       type="button"
                     >
-                      <Square className="size-4 fill-current" /> Detener grabación
+                      <Square className="size-4 fill-current" /> Terminar exposición
                     </Button>
                   ) : (
-                    <Button
-                      className="h-12 rounded-full bg-upv-yellow px-6 font-bold text-upv-ink hover:bg-upv-yellow/85"
-                      disabled={busy}
-                      onClick={() => void startRecording()}
-                      type="button"
-                    >
-                      <Mic className="size-5" /> {audioBlob ? "Grabar de nuevo" : "Empezar a grabar"}
-                    </Button>
+                    <>
+                      <Button
+                        className="h-12 rounded-full bg-upv-yellow px-6 font-bold text-upv-ink hover:bg-upv-yellow/85"
+                        disabled={busy || !title.trim()}
+                        onClick={() => void startRecording()}
+                        type="button"
+                      >
+                        {busy ? <LoaderCircle className="size-5 animate-spin" /> : <Mic className="size-5" />}
+                        Empezar a grabar
+                      </Button>
+                      <Button
+                        className="h-12 rounded-full border-white/30 bg-transparent text-white hover:bg-white/10"
+                        disabled={busy}
+                        onClick={() => fileInputRef.current?.click()}
+                        type="button"
+                        variant="outline"
+                      >
+                        <FileAudio className="size-5" /> Subir archivo
+                      </Button>
+                      <input
+                        accept="audio/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) void uploadFile(file);
+                        }}
+                        ref={fileInputRef}
+                        type="file"
+                      />
+                    </>
                   )}
                 </div>
+                {recorder.isRecording && liveText ? (
+                  <p className="mt-4 max-h-28 overflow-y-auto rounded-xl bg-black/25 p-3 text-xs leading-5 text-white/80">
+                    {liveText}
+                  </p>
+                ) : null}
               </>
             ) : (
               <div className="flex min-h-40 items-center justify-center text-center text-sm text-white/70">
@@ -560,71 +761,13 @@ export function PresentationStudio({
         </div>
       </section>
 
-      {audioBlob && previewUrl ? (
-        <section className="rounded-2xl border border-upv-blue/40 bg-card p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-xl bg-upv-blue/15 p-2.5">
-              <CheckCircle2 className="size-5 text-upv-700 dark:text-upv-blue" />
-            </div>
-            <div>
-              <h3 className="font-display text-lg">Grabación preparada</h3>
-              <p className="text-xs text-muted-foreground">
-                {formatDuration(seconds)} · {formatSize(audioBlob.size)}
-              </p>
-            </div>
-          </div>
-          <audio className="mb-5 w-full" controls src={previewUrl}>
-            Tu navegador no puede reproducir este audio.
-          </audio>
-          <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div className="space-y-2">
-              <Label htmlFor="presentation-title">Nombre de la exposición</Label>
-              <Input
-                id="presentation-title"
-                maxLength={160}
-                onChange={(event) => setTitle(event.target.value)}
-                value={title}
-              />
-            </div>
-            <button
-              aria-pressed={visibility === "event"}
-              className="flex h-10 items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold hover:bg-muted"
-              onClick={() =>
-                setVisibility((current) =>
-                  current === "private" ? "event" : "private",
-                )
-              }
-              type="button"
-            >
-              {visibility === "private" ? (
-                <><Lock className="size-4" /> Solo yo</>
-              ) : (
-                <><Users className="size-4" /> Todo el espacio</>
-              )}
-            </button>
-          </div>
-          <Button
-            className="mt-4 h-11 w-full font-bold sm:w-auto"
-            disabled={busy || !title.trim()}
-            onClick={() => void uploadAndProcess()}
-            type="button"
-          >
-            {busy ? (
-              <><LoaderCircle className="animate-spin" /> Procesando…</>
-            ) : (
-              <><UploadCloud /> Subir, transcribir y crear materiales</>
-            )}
-          </Button>
-        </section>
-      ) : null}
-
       <section>
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground uppercase">
               Biblioteca del proyecto
             </p>
-            <h2 className="font-display text-2xl">Exposiciones guardadas</h2>
+            <h2 className="font-display text-2xl">Exposiciones</h2>
           </div>
           <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">
             {initialRecords.length}
@@ -645,8 +788,9 @@ export function PresentationStudio({
               const mine = record.created_by === userId;
               const processing =
                 activeId === record.id ||
-                ["queued", "transcribing", "analyzing"].includes(record.status);
+                ["uploading", "queued", "transcribing", "analyzing"].includes(record.status);
               const canEdit = mine || canManage;
+              const report = reportsById.get(record.id);
               return (
                 <details
                   className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm [content-visibility:auto]"
@@ -666,7 +810,7 @@ export function PresentationStudio({
                       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         <span>{record.creator?.full_name ?? "Usuario"}</span>
                         <span><Clock3 className="mr-1 inline size-3" />{formatDuration(record.duration_seconds)}</span>
-                        <span>{formatSize(record.size_bytes)}</span>
+                        {record.size_bytes ? <span>{formatSize(record.size_bytes)}</span> : null}
                         <span>{record.visibility === "private" ? "🔒 Privada" : "👥 Compartida"}</span>
                       </div>
                     </div>
@@ -704,12 +848,8 @@ export function PresentationStudio({
 
                     {processing ? (
                       <div className="flex items-center gap-3 rounded-xl bg-muted p-4 text-sm">
-                        <LoaderCircle className="size-5 animate-spin" />
-                        {record.status === "analyzing"
-                          ? "Creando resumen, esquema y mapa mental…"
-                          : record.status === "queued"
-                            ? "En cola: el primer transcriptor libre lo recogerá."
-                            : "Convirtiendo el audio en texto…"}
+                        <LoaderCircle className="size-5 shrink-0 animate-spin" />
+                        {progressText(record)}
                       </div>
                     ) : null}
 
@@ -776,6 +916,8 @@ export function PresentationStudio({
                       </section>
                     ) : null}
 
+                    {report ? <JuryReport report={report} /> : null}
+
                     {record.transcript ? (
                       <details className="rounded-xl border border-border p-4">
                         <summary className="cursor-pointer font-bold">Ver transcripción completa</summary>
@@ -789,7 +931,7 @@ export function PresentationStudio({
                       <section className="rounded-xl border border-dashed border-border p-4">
                         <h4 className="font-display">Recuperar o completar el análisis</h4>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                          Puedes reintentar la transcripción automática o pegar un texto corregido para crear los materiales.
+                          Puedes reintentar el procesamiento o pegar un texto corregido para crear los materiales.
                         </p>
                         <Textarea
                           aria-label={`Transcripción manual de ${record.title}`}
@@ -811,14 +953,15 @@ export function PresentationStudio({
                           >
                             <Sparkles /> Analizar este texto
                           </Button>
-                          {!record.transcript && !record.audio_deleted_at ? (
+                          {record.status === "transcribed" ||
+                          (record.status === "failed" && !record.audio_deleted_at) ? (
                             <Button
                               disabled={activeId === record.id}
                               onClick={() => void processRecord(record, false)}
                               type="button"
                               variant="outline"
                             >
-                              <Play /> Reintentar audio
+                              <Play /> Reintentar
                             </Button>
                           ) : null}
                         </div>
@@ -834,7 +977,7 @@ export function PresentationStudio({
 
       <p className="flex items-start gap-2 rounded-xl bg-muted p-3 text-xs leading-5 text-muted-foreground">
         <Lock className="mt-0.5 size-4 shrink-0" />
-        El audio solo existe mientras se transcribe, en un contenedor privado, y se borra después. Una grabación privada solo la ve su autor y la gestión del espacio; una compartida solo la ven miembros activos de este espacio.
+        El audio solo existe mientras se transcribe, en un contenedor privado, y se borra después. Una grabación privada solo la ve su autor y la gestión del espacio; una compartida, los miembros activos de este espacio. El informe para el jurado solo lo ven jurado y gestión.
       </p>
     </div>
   );

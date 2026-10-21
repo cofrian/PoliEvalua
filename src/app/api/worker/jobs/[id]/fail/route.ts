@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { failJob, isWorkerRequest } from "@/lib/app/transcription-queue";
+import { handleJobFailure, isWorkerRequest } from "@/lib/app/processing-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const requestSchema = z.object({
@@ -24,8 +24,8 @@ export async function POST(
 
   const admin = createAdminClient();
   const { data: job } = await admin
-    .from("transcription_jobs")
-    .select("id")
+    .from("processing_jobs")
+    .select("id, kind, runner, recording_id, segment_id, event_id, attempts, max_attempts")
     .eq("id", id)
     .eq("status", "processing")
     .eq("worker_id", parsed.data.workerId)
@@ -34,6 +34,6 @@ export async function POST(
     return Response.json({ error: "El trabajo ya no es tuyo." }, { status: 409 });
   }
 
-  await failJob(admin, job.id, parsed.data.error, parsed.data.retryable);
+  await handleJobFailure(admin, job, parsed.data.error, parsed.data.retryable);
   return Response.json({ ok: true });
 }

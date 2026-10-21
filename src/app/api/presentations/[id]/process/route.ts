@@ -2,17 +2,16 @@ import { after } from "next/server";
 import { z } from "zod";
 
 import {
+  getOwnedRecording,
   getPresentationApiSession,
   PresentationAccessError,
   presentationErrorResponse,
 } from "@/lib/app/presentation-access";
 import {
-  analyzeRecording,
-  enqueueTranscription,
-  wakeWorkers,
-  workerUrls,
-} from "@/lib/app/transcription-queue";
-import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
+  enqueueJob,
+  requeueFailedJobs,
+  runInternalJobs,
+} from "@/lib/app/processing-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const maxDuration = 300;
@@ -21,15 +20,17 @@ const requestSchema = z.object({
   transcript: z.string().trim().min(20).max(200_000).optional(),
 });
 
+/**
+ * Recupera una grabación: con texto pegado a mano lanza solo el análisis;
+ * sin texto, vuelve a encolar los trabajos que fallaron.
+ */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
-    const parsed = requestSchema.safeParse(
-      await request.json().catch(() => ({})),
-    );
+    const parsed = requestSchema.safeParse(await request.json().catch(() => ({})));
     if (!parsed.success) {
       throw new PresentationAccessError(
         400,
@@ -38,62 +39,44 @@ export async function POST(
     }
 
     const session = await getPresentationApiSession();
-    const { data: recording } = await session.supabase
-      .from("presentation_recordings")
-      .select("id, event_id, created_by, status, audio_deleted_at")
-      .eq("id", id)
-      .eq("event_id", session.eventId)
-      .maybeSingle();
-
-    if (!recording) {
-      throw new PresentationAccessError(404, "No se encuentra la grabación.");
-    }
-    if (recording.created_by !== session.user.id && !session.canManage) {
-      throw new PresentationAccessError(
-        403,
-        "Solo quien creó la grabación o un gestor puede procesarla.",
-      );
-    }
-
+    const recording = await getOwnedRecording(session, id);
     const admin = createAdminClient();
-    const rateKeys = [
-      `transcription:user:${session.user.id}`,
-      `transcription:ip:${await clientIp()}`,
-    ];
-    if (await isBlocked(admin, "transcription", rateKeys)) {
-      throw new PresentationAccessError(
-        429,
-        "Has alcanzado el límite de procesamiento. Inténtalo dentro de una hora.",
-      );
-    }
-    await recordAttempt(admin, "transcription", rateKeys);
 
-    // Texto pegado o corregido a mano: no hace falta pasar por la cola.
     if (parsed.data.transcript) {
       await admin
         .from("presentation_recordings")
         .update({
           status: "transcribed",
           transcript: parsed.data.transcript,
+          analysis_state: {},
           error_message: null,
         })
-        .eq("id", recording.id)
-        .eq("event_id", session.eventId);
-      return Response.json(await analyzeRecording(admin, recording.id));
-    }
-
-    if (recording.audio_deleted_at) {
+        .eq("id", id);
+      // Texto nuevo: se descarta un análisis anterior y se repite desde cero.
+      await admin.from("processing_jobs").delete().eq("recording_id", id).eq("kind", "analyze");
+      await enqueueJob(admin, {
+        kind: "analyze",
+        recordingId: id,
+        eventId: recording.event_id,
+        priority: 50,
+      });
+    } else if (recording.status === "failed" && recording.audio_deleted_at) {
       throw new PresentationAccessError(
         409,
         "El audio ya no existe. Pega la transcripción para crear los materiales.",
       );
-    }
-    if (["queued", "transcribing", "analyzing"].includes(recording.status)) {
+    } else if (["failed", "transcribed"].includes(recording.status)) {
+      await requeueFailedJobs(admin, id);
+      await admin
+        .from("presentation_recordings")
+        .update({ status: "queued", error_message: null })
+        .eq("id", id)
+        .eq("status", "failed");
+    } else {
       return Response.json({ status: recording.status });
     }
-    await enqueueTranscription(admin, recording);
-    // Los trabajadores sin URL pública (Kaggle, Colab, PC) consultan solos la cola.
-    if (workerUrls().length > 0) after(wakeWorkers);
+
+    after(() => runInternalJobs(admin, 2));
     return Response.json({ status: "queued" });
   } catch (error) {
     return presentationErrorResponse(error);

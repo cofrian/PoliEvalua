@@ -2,17 +2,18 @@ import { after } from "next/server";
 import { z } from "zod";
 
 import {
-  analyzeRecording,
-  deleteAudio,
+  completeSegment,
   isWorkerRequest,
-} from "@/lib/app/transcription-queue";
+  runInternalJobs,
+} from "@/lib/app/processing-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const maxDuration = 300;
 
 const requestSchema = z.object({
   workerId: z.string().trim().min(1).max(120),
-  transcript: z.string().trim().min(1).max(200_000),
+  // Un segmento sin voz (pausa larga) es válido y llega vacío.
+  transcript: z.string().trim().max(50_000),
 });
 
 export async function POST(
@@ -30,31 +31,20 @@ export async function POST(
 
   const admin = createAdminClient();
   const { data: job } = await admin
-    .from("transcription_jobs")
+    .from("processing_jobs")
     .update({ status: "done", locked_until: null, last_error: null })
     .eq("id", id)
     .eq("status", "processing")
     .eq("worker_id", parsed.data.workerId)
-    .select("recording_id")
+    .select("segment_id")
     .maybeSingle();
-  if (!job) {
-    // La reserva caducó y otro trabajador lo tiene: se descarta este resultado.
+  if (!job?.segment_id) {
+    // La reserva caducó y otro ejecutor lo tiene: se descarta este resultado.
     return Response.json({ error: "El trabajo ya no es tuyo." }, { status: 409 });
   }
 
-  const { data: recording } = await admin
-    .from("presentation_recordings")
-    .update({
-      status: "transcribed",
-      transcript: parsed.data.transcript,
-      error_message: null,
-    })
-    .eq("id", job.recording_id)
-    .select("id, storage_path")
-    .maybeSingle();
-  if (recording) await deleteAudio(admin, recording);
-
-  // El trabajador queda libre al momento; el análisis sigue en segundo plano.
-  after(() => analyzeRecording(admin, job.recording_id));
+  await completeSegment(admin, job.segment_id, parsed.data.transcript, "external");
+  // Si era el último segmento, la unión y el análisis siguen en segundo plano.
+  after(() => runInternalJobs(admin, 2));
   return Response.json({ ok: true });
 }

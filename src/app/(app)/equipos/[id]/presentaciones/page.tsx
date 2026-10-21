@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import {
   PresentationStudio,
+  type JuryReportRecord,
   type PresentationRecord,
 } from "@/components/app/presentation-studio";
 import { getSession } from "@/lib/app/session";
@@ -16,7 +17,7 @@ export default async function TeamPresentationsPage({
   const { id } = await params;
   const { supabase, user, role, isAdmin, event } = await getSession();
 
-  const [{ data: team }, { data: recordings }] = await Promise.all([
+  const [{ data: team }, { data: recordings }, { data: juryReports }] = await Promise.all([
     supabase
       .from("teams")
       .select("id, number, name, project_title")
@@ -26,12 +27,19 @@ export default async function TeamPresentationsPage({
     supabase
       .from("presentation_recordings")
       .select(
-        "id, title, status, visibility, duration_seconds, size_bytes, transcript, summary, key_points, outline, action_items, mind_map, error_message, audio_deleted_at, created_at, created_by, creator:profiles!presentation_recordings_created_by_fkey(full_name)",
+        "id, title, status, visibility, duration_seconds, size_bytes, segments_expected, transcript, summary, key_points, outline, action_items, mind_map, error_message, audio_deleted_at, created_at, created_by, creator:profiles!presentation_recordings_created_by_fkey(full_name), segments:presentation_segments(seq, status, transcript)",
       )
       .eq("event_id", event.id)
       .eq("team_id", id)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .order("seq", { referencedTable: "presentation_segments" }),
+    // La RLS solo devuelve informes a jurado y gestión.
+    supabase
+      .from("presentation_jury_reports")
+      .select("recording_id, criteria_evidence, questions, risks")
+      .eq("event_id", event.id)
+      .eq("team_id", id),
   ]);
 
   if (!team) notFound();
@@ -66,6 +74,7 @@ export default async function TeamPresentationsPage({
         canCreate={role !== "viewer"}
         canManage={isAdmin}
         initialRecords={(recordings ?? []) as unknown as PresentationRecord[]}
+        juryReports={(juryReports ?? []) as unknown as JuryReportRecord[]}
         teamId={team.id}
         userId={user.id}
       />

@@ -3,7 +3,7 @@ import {
   PresentationAccessError,
   presentationErrorResponse,
 } from "@/lib/app/presentation-access";
-import { deleteAudio } from "@/lib/app/transcription-queue";
+import { deleteRecordingAudio } from "@/lib/app/processing-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function DELETE(
@@ -15,7 +15,7 @@ export async function DELETE(
     const session = await getPresentationApiSession();
     const { data: recording } = await session.supabase
       .from("presentation_recordings")
-      .select("id, created_by, storage_path, audio_deleted_at")
+      .select("id, created_by, audio_deleted_at")
       .eq("id", id)
       .eq("event_id", session.eventId)
       .maybeSingle();
@@ -46,7 +46,12 @@ export async function DELETE(
       );
     }
 
-    if (!recording.audio_deleted_at) await deleteAudio(admin, recording);
+    await admin
+      .from("processing_jobs")
+      .delete()
+      .eq("recording_id", recording.id)
+      .eq("status", "queued");
+    if (!recording.audio_deleted_at) await deleteRecordingAudio(admin, recording.id);
     return Response.json({ ok: true });
   } catch (error) {
     return presentationErrorResponse(error);

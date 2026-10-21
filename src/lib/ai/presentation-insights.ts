@@ -29,3 +29,32 @@ export const presentationInsightsSchema = z.object({
 
 export type PresentationInsights = z.infer<typeof presentationInsightsSchema>;
 
+
+export const criterionEvidenceSchema = z.object({
+  criterion: z.string().trim().min(2).max(200),
+  coverage: z.enum(["clear", "partial", "absent"]),
+  evidence: z
+    .array(
+      z.object({
+        quote: z.string().trim().min(3).max(600),
+        explanation: z.string().trim().min(3).max(400),
+      }),
+    )
+    .max(4),
+});
+
+export const juryEvidenceSchema = z.object({
+  criteria: z.array(criterionEvidenceSchema).max(20),
+});
+
+export const juryQuestionsSchema = z.object({
+  questions: z.array(z.string().trim().min(5).max(400)).min(1).max(8),
+  risks: z.array(z.string().trim().min(5).max(400)).max(8),
+});
+
+export type CriterionEvidence = z.infer<typeof criterionEvidenceSchema>;
+export type JuryReport = {
+  criteria: CriterionEvidence[];
+  questions: string[];
+  risks: string[];
+};
