@@ -4,23 +4,31 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
+import { clearAttempts, clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { getAccount } from "@/lib/app/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const spaceSchema = z.object({
-  name: z.string().trim().min(3).max(100),
-  slug: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(3)
-    .max(60)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  kind: z.enum(["hackathon", "class", "awards", "project", "custom"]),
-  accessCode: z.string().trim().min(6).max(40),
-  description: z.string().trim().max(500).optional(),
-});
+const participantRoleSchema = z.enum(["judge", "mentor", "teacher", "student", "reviewer", "viewer"]);
+const joinRoleSchema = z.enum(["judge", "mentor", "student", "reviewer", "viewer"]);
+const moduleSchema = z.enum(["participants", "rubric", "notes", "results", "sponsors"]);
+
+const spaceSchema = z
+  .object({
+    name: z.string().trim().min(3).max(100),
+    slug: z.string().trim().toLowerCase().min(3).max(60).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    kind: z.enum(["hackathon", "class", "awards", "project", "custom"]),
+    accessCode: z.string().trim().min(6).max(40),
+    description: z.string().trim().max(500).optional(),
+    participantMode: z.enum(["teams", "groups", "individuals", "candidates"]),
+    evaluationMode: z.enum(["rubric", "feedback", "mixed"]),
+    enabledRoles: z.array(participantRoleSchema).min(1),
+    joinRoles: z.array(joinRoleSchema),
+    modules: z.array(moduleSchema).min(1),
+  })
+  .refine(
+    (data) => data.joinRoles.every((role) => data.enabledRoles.includes(role)),
+    { message: "Los perfiles con código deben estar habilitados.", path: ["joinRoles"] },
+  );
 
 export type CreateSpaceState = {
   error?: string;
@@ -64,7 +72,7 @@ export async function joinSpaceAction(
   const parsed = z
     .object({
       accessCode: z.string().trim().min(6).max(40),
-      role: z.enum(["judge", "mentor"]),
+      role: joinRoleSchema,
     })
     .safeParse({
       accessCode: formData.get("accessCode"),
@@ -82,7 +90,7 @@ export async function joinSpaceAction(
 
   const { data: event } = await admin
     .from("events")
-    .select("id")
+    .select("id, settings")
     .eq("signup_code", parsed.data.accessCode.toUpperCase())
     .eq("signup_open", true)
     .maybeSingle();
@@ -90,6 +98,14 @@ export async function joinSpaceAction(
   if (!event) {
     await recordAttempt(admin, "bad_code", attemptKeys);
     return { error: "El código no es válido o el acceso está cerrado." };
+  }
+
+  const settings = event.settings as { join_roles?: string[] } | null;
+  const allowedRoles = Array.isArray(settings?.join_roles)
+    ? settings.join_roles
+    : ["judge", "mentor"];
+  if (!allowedRoles.includes(parsed.data.role)) {
+    return { error: "Ese perfil no está habilitado para entrar con código en este espacio." };
   }
 
   const { data: current } = await admin
@@ -113,6 +129,7 @@ export async function joinSpaceAction(
     if (error) return { error: "No se ha podido añadir el espacio a tu cuenta." };
   }
 
+  await clearAttempts(admin, "bad_code", attemptKeys);
   await setActiveSpace(event.id);
   redirect("/equipos");
 }
@@ -127,12 +144,17 @@ export async function createSpaceAction(
     kind: formData.get("kind"),
     accessCode: formData.get("accessCode"),
     description: formData.get("description"),
+    participantMode: formData.get("participantMode"),
+    evaluationMode: formData.get("evaluationMode"),
+    enabledRoles: formData.getAll("enabledRoles"),
+    joinRoles: formData.getAll("joinRoles"),
+    modules: formData.getAll("modules"),
   });
 
   if (!parsed.success) {
     return {
       error:
-        "Revisa el nombre, el identificador y el código de acceso (mínimo 6 caracteres).",
+        "Revisa la identidad, los perfiles, las funciones seleccionadas y el código (mínimo 6 caracteres).",
     };
   }
 
@@ -143,6 +165,13 @@ export async function createSpaceAction(
     p_kind: parsed.data.kind,
     p_signup_code: parsed.data.accessCode.toUpperCase(),
     p_description: parsed.data.description || null,
+    p_settings: {
+      participant_mode: parsed.data.participantMode,
+      evaluation_mode: parsed.data.evaluationMode,
+      enabled_roles: parsed.data.enabledRoles,
+      join_roles: parsed.data.joinRoles,
+      modules: parsed.data.modules,
+    },
   });
 
   if (error || typeof data !== "string") {

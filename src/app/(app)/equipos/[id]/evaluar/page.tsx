@@ -17,7 +17,7 @@ export default async function EvaluatePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, canVote, event } = await getSession();
+  const { supabase, user, canVote, event, role } = await getSession();
 
   const { data: team } = await supabase
     .from("teams")
@@ -42,7 +42,7 @@ export default async function EvaluatePage({
       <div className="space-y-6">
         {back}
         <p className="rounded-xl border border-line bg-white p-6 dark:border-[#262838] dark:bg-[#151621]">
-          Como mentor puedes tomar notas de los equipos, pero no votar.
+          Tu perfil de {role === "mentor" ? "mentoría" : role === "student" ? "estudiante" : "consulta"} puede consultar y tomar notas, pero no votar.
         </p>
       </div>
     );

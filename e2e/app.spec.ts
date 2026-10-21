@@ -49,6 +49,14 @@ const people = {
     name: `Cuenta Prueba ${stamp}`,
     email: `e2e-cuenta-${stamp}@test.local`,
   },
+  student: {
+    name: `Estudiante Prueba ${stamp}`,
+    email: `e2e-estudiante-${stamp}@test.local`,
+  },
+  classOwner: {
+    name: `Docente Propietaria ${stamp}`,
+    email: `e2e-docente-${stamp}@test.local`,
+  },
 };
 const privateText = `Nota privada ${stamp}`;
 const sharedText = `Nota compartida ${stamp}`;
@@ -460,9 +468,9 @@ test("14. El propietario crea otro espacio sin mezclar sus equipos", async () =>
   const slug = `espacio-aislado-${stamp}`;
   await adminPage.goto("/espacios/nuevo");
   await adminPage.getByLabel("Nombre del espacio").fill(name);
-  await adminPage.getByLabel("Tipo de actividad").selectOption("project");
+  await adminPage.getByText("Proyectos", { exact: true }).click();
   await adminPage.getByLabel("Identificador web").fill(slug);
-  await adminPage.getByLabel("Código de acceso inicial").fill(`ESP-${stamp}`);
+  await adminPage.getByLabel("Código inicial").fill(`ESP-${stamp}`);
   await adminPage.getByRole("button", { name: "Crear espacio" }).click();
   await adminPage.waitForURL("**/admin");
 
@@ -553,4 +561,68 @@ test("18. Una cuenta general puede registrarse, salir y volver a entrar", async 
   await expect(page.getByText("Tu cuenta ya está lista")).toBeVisible();
 
   await context.close();
+});
+
+test("19. La plantilla de asignatura permite alumnado y bloquea roles no autorizados", async ({ browser }) => {
+  const name = `Asignatura prueba ${stamp}`;
+  const slug = `asignatura-prueba-${stamp}`;
+  const code = `CLASE-${stamp}`;
+
+  const ownerPage = await register(browser, people.classOwner);
+  await ownerPage.goto("/espacios/nuevo");
+  await ownerPage.getByText("Asignatura", { exact: true }).click();
+  await ownerPage.getByLabel("Nombre del espacio").fill(name);
+  await ownerPage.getByLabel("Identificador web").fill(slug);
+  await ownerPage.getByLabel("Código inicial").fill(code);
+  await expect(ownerPage.locator('input[name="enabledRoles"][value="student"]')).toBeChecked();
+  await expect(ownerPage.locator('input[name="joinRoles"][value="student"]')).toBeChecked();
+  await ownerPage.getByRole("button", { name: "Crear espacio" }).click();
+  await ownerPage.waitForURL("**/admin");
+
+  const { data: created, error: eventError } = await db
+    .from("events")
+    .select("id, settings")
+    .eq("slug", slug)
+    .single();
+  if (eventError) throw eventError;
+  createdEventIds.add(created.id);
+  expect(created.settings).toMatchObject({
+    participant_mode: "groups",
+    evaluation_mode: "mixed",
+    enabled_roles: ["teacher", "student"],
+    join_roles: ["student"],
+    modules: ["participants", "rubric", "notes", "results"],
+  });
+
+  const { data: challenge, error: challengeError } = await db
+    .from("challenges")
+    .insert({ event_id: created.id, name: "Proyecto de clase", order: 1 })
+    .select("id")
+    .single();
+  if (challengeError) throw challengeError;
+  const { data: classTeam, error: teamError } = await db
+    .from("teams")
+    .insert({ event_id: created.id, challenge_id: challenge.id, name: "Grupo de prueba", number: 1 })
+    .select("id")
+    .single();
+  if (teamError) throw teamError;
+
+  const studentPage = await register(browser, people.student);
+  await studentPage.getByLabel("Código del espacio").fill(code);
+  await studentPage.getByLabel("Participaré como").selectOption("judge");
+  await studentPage.getByRole("button", { name: "Entrar al espacio" }).click();
+  await expect(studentPage.getByText(/perfil no está habilitado/)).toBeVisible();
+
+  await studentPage.getByLabel("Código del espacio").fill(code);
+  await studentPage.getByLabel("Participaré como").selectOption("student");
+  await studentPage.getByRole("button", { name: "Entrar al espacio" }).click();
+  await studentPage.waitForURL("**/equipos");
+  await expect(studentPage.getByText("Estudiante", { exact: true }).first()).toBeVisible();
+  await expect(studentPage.getByRole("link", { name: "Grupo de prueba" })).toBeVisible();
+
+  await studentPage.goto(`/equipos/${classTeam.id}/evaluar`);
+  await expect(studentPage.getByText(/perfil de estudiante/)).toBeVisible();
+  await expect(studentPage.getByText(/no votar/)).toBeVisible();
+  await studentPage.goto("/admin");
+  await expect(studentPage).toHaveURL(/\/equipos/);
 });

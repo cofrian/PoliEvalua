@@ -34,6 +34,9 @@ export function JoinSpaceForm() {
         <select className={`${selectClass} w-full`} defaultValue="judge" id="join-role" name="role">
           <option value="judge">Juez</option>
           <option value="mentor">Mentor</option>
+          <option value="student">Estudiante</option>
+          <option value="reviewer">Evaluador</option>
+          <option value="viewer">Consulta</option>
         </select>
       </div>
       <Button disabled={pending} type="submit">

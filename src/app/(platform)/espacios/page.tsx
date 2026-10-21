@@ -21,14 +21,31 @@ type SpaceRelation = {
   slug: string;
   kind: keyof typeof kindLabels;
   status: string;
+  settings: {
+    participant_mode?: "teams" | "groups" | "individuals" | "candidates";
+    evaluation_mode?: "rubric" | "feedback" | "mixed";
+  } | null;
 };
+
+const participantLabels = {
+  teams: "Equipos",
+  groups: "Grupos",
+  individuals: "Proyectos individuales",
+  candidates: "Candidaturas",
+} as const;
+
+const evaluationLabels = {
+  rubric: "Rúbrica",
+  feedback: "Preguntas y comentarios",
+  mixed: "Puntuación y comentarios",
+} as const;
 
 export default async function SpacesPage() {
   const { supabase, user } = await getAccount();
   const activeEventId = (await cookies()).get("active_event_id")?.value;
   const { data } = await supabase
     .from("event_members")
-    .select("event_id, role, events(id, name, slug, kind, status)")
+    .select("event_id, role, events(id, name, slug, kind, status, settings)")
     .eq("user_id", user.id)
     .eq("status", "active")
     .order("joined_at");
@@ -63,6 +80,11 @@ export default async function SpacesPage() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-upv-500 dark:text-upv-300">{kindLabels[space.kind]}</p>
                     <h2 className="mt-2 font-heading text-xl font-semibold">{space.name}</h2>
                     <p className="mt-1 text-sm text-muted-foreground">{roleLabels[membership.role as SpaceRole]}</p>
+                    {space.settings?.participant_mode && space.settings?.evaluation_mode ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {participantLabels[space.settings.participant_mode]} · {evaluationLabels[space.settings.evaluation_mode]}
+                      </p>
+                    ) : null}
                   </div>
                   {active ? <span className="rounded-full bg-upv-blue/20 px-2.5 py-1 text-xs font-semibold">Último espacio</span> : null}
                 </div>

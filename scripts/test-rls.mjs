@@ -48,9 +48,12 @@ async function makeUser(role, eventId) {
   });
   if (error) throw error;
   created.push(data.user.id);
+  const compatibilityRole = ["admin", "judge", "mentor"].includes(role)
+    ? role
+    : "judge";
   await admin
     .from("profiles")
-    .update({ role, disabled: false })
+    .update({ role: compatibilityRole, disabled: false })
     .eq("id", data.user.id);
   await admin.from("event_members").insert({
     event_id: eventId,
@@ -92,6 +95,11 @@ try {
   const judgeB = await makeUser("judge", event.id);
   const mentor = await makeUser("mentor", event.id);
   const boss = await makeUser("admin", event.id);
+  const manager = await makeUser("manager", event.id);
+  const teacher = await makeUser("teacher", event.id);
+  const student = await makeUser("student", event.id);
+  const reviewer = await makeUser("reviewer", event.id);
+  const viewer = await makeUser("viewer", event.id);
 
   // ---------- Notas ----------
   const { data: privateNote } = await judgeA.client
@@ -167,11 +175,67 @@ try {
     .single();
   check("El mentor puede crear notas", Boolean(mentorNote));
 
+  const { data: studentNote, error: studentNoteError } = await student.client
+    .from("notes")
+    .insert({
+      team_id: team.id,
+      author_id: student.id,
+      body: "comentario del estudiante",
+      is_shared: true,
+    })
+    .select("id")
+    .single();
+  check(
+    "Un estudiante puede comentar sin obtener voto",
+    !studentNoteError && Boolean(studentNote),
+    studentNoteError?.message,
+  );
+
+  const { error: viewerNoteError } = await viewer.client.from("notes").insert({
+    team_id: team.id,
+    author_id: viewer.id,
+    body: "el perfil de consulta no debe escribir",
+    is_shared: true,
+  });
+  check("El perfil de consulta NO puede crear notas", Boolean(viewerNoteError));
+
   // ---------- Evaluaciones ----------
   const { error: mentorEvalError } = await mentor.client
     .from("evaluations")
     .insert({ team_id: team.id, judge_id: mentor.id, rubric_id: rubric.id });
   check("El mentor NO puede evaluar", Boolean(mentorEvalError));
+
+  const { error: studentEvalError } = await student.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: student.id, rubric_id: rubric.id });
+  check("El estudiante NO puede evaluar", Boolean(studentEvalError));
+
+  const { error: viewerEvalError } = await viewer.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: viewer.id, rubric_id: rubric.id });
+  check("El perfil de consulta NO puede evaluar", Boolean(viewerEvalError));
+
+  const { data: teacherEval, error: teacherEvalError } = await teacher.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: teacher.id, rubric_id: rubric.id })
+    .select("id")
+    .single();
+  check(
+    "El docente puede evaluar",
+    !teacherEvalError && Boolean(teacherEval),
+    teacherEvalError?.message,
+  );
+
+  const { data: reviewerEval, error: reviewerEvalError } = await reviewer.client
+    .from("evaluations")
+    .insert({ team_id: team.id, judge_id: reviewer.id, rubric_id: rubric.id })
+    .select("id")
+    .single();
+  check(
+    "El evaluador puede evaluar",
+    !reviewerEvalError && Boolean(reviewerEval),
+    reviewerEvalError?.message,
+  );
 
   const { data: evalA, error: evalError } = await judgeA.client
     .from("evaluations")
@@ -417,6 +481,22 @@ try {
     .eq("id", team.id)
     .select("id");
   check("Un juez NO puede renombrar equipos", !teamEdit?.length);
+
+  const { data: currentTeam } = await admin
+    .from("teams")
+    .select("name")
+    .eq("id", team.id)
+    .single();
+  const { data: managerEdit, error: managerEditError } = await manager.client
+    .from("teams")
+    .update({ name: currentTeam.name })
+    .eq("id", team.id)
+    .select("id");
+  check(
+    "El gestor puede administrar equipos",
+    !managerEditError && managerEdit?.length === 1,
+    managerEditError?.message,
+  );
 } catch (error) {
   console.error("Error durante las pruebas:", error.message ?? error);
   failures++;
