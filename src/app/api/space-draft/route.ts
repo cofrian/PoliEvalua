@@ -1,5 +1,4 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, Output } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -8,7 +7,8 @@ import {
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
 import { aiErrorResponse } from "@/lib/ai/error-response";
-import { aiConfigured, NVIDIA_BASE_URL, jsonInstruction, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
+import { generateJson } from "@/lib/ai/generate-json";
+import { aiConfigured, NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/models";
 import { clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -102,22 +102,16 @@ export async function POST(request: Request) {
   });
 
   try {
-    const {
-      result: { output },
-      modelId,
-    } = await withModelFallback(
+    const { result: output, modelId } = await withModelFallback(
       "builder",
       (id, abortSignal) =>
-        generateText({
-          model: provider.chatModel(id),
-          output: Output.object({ schema: spaceDraftSchema }),
-          system: `${SYSTEM_PROMPT}\n\n${jsonInstruction(spaceDraftSchema)}`,
+        generateJson({
+          provider,
+          modelId: id,
+          schema: spaceDraftSchema,
+          system: SYSTEM_PROMPT,
           prompt: `Descripción del espacio que quiere crear el usuario:\n${parsed.data.message}`,
-          maxOutputTokens: 5000,
-          temperature: 0.2,
-          maxRetries: 0,
           abortSignal,
-          providerOptions: { nvidia: NVIDIA_NO_THINKING },
         }),
       { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 60_000 },
     );
