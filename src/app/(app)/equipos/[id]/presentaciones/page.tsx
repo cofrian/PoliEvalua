@@ -2,11 +2,8 @@ import { ArrowLeft, Mic2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  PresentationStudio,
-  type JuryReportRecord,
-  type PresentationRecord,
-} from "@/components/app/presentation-studio";
+import { PresentationStudio } from "@/components/app/presentation-studio";
+import { loadPresentationData, recordingDisabledReason } from "@/lib/app/presentation-data";
 import { getSession } from "@/lib/app/session";
 
 export default async function TeamPresentationsPage({
@@ -15,31 +12,16 @@ export default async function TeamPresentationsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, role, isAdmin, event } = await getSession();
+  const { supabase, user, role, isAdmin, event, recording, words } = await getSession();
 
-  const [{ data: team }, { data: recordings }, { data: juryReports }] = await Promise.all([
+  const [{ data: team }, { records, juryReports }] = await Promise.all([
     supabase
       .from("teams")
       .select("id, number, name, project_title")
       .eq("id", id)
       .eq("event_id", event.id)
       .maybeSingle(),
-    supabase
-      .from("presentation_recordings")
-      .select(
-        "id, title, status, visibility, duration_seconds, size_bytes, segments_expected, transcript, summary, key_points, outline, action_items, mind_map, error_message, audio_deleted_at, created_at, created_by, creator:profiles!presentation_recordings_created_by_fkey(full_name), segments:presentation_segments(seq, status, transcript)",
-      )
-      .eq("event_id", event.id)
-      .eq("team_id", id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .order("seq", { referencedTable: "presentation_segments" }),
-    // La RLS solo devuelve informes a jurado y gestión.
-    supabase
-      .from("presentation_jury_reports")
-      .select("recording_id, criteria_evidence, questions, risks")
-      .eq("event_id", event.id)
-      .eq("team_id", id),
+    loadPresentationData(supabase, event.id, id),
   ]);
 
   if (!team) notFound();
@@ -56,7 +38,7 @@ export default async function TeamPresentationsPage({
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-bold text-muted-foreground">
-            Equipo #{team.number} · {team.name}
+            {words.unit} #{team.number} · {team.name}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl">
             Exposiciones y materiales
@@ -71,10 +53,11 @@ export default async function TeamPresentationsPage({
       </header>
 
       <PresentationStudio
-        canCreate={role !== "viewer"}
+        canCreate={role !== "viewer" && recording.enabled}
+        recordingDisabledReason={recordingDisabledReason(recording.enabled, isAdmin)}
         canManage={isAdmin}
-        initialRecords={(recordings ?? []) as unknown as PresentationRecord[]}
-        juryReports={(juryReports ?? []) as unknown as JuryReportRecord[]}
+        initialRecords={records}
+        juryReports={juryReports}
         teamId={team.id}
         userId={user.id}
       />

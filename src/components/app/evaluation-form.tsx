@@ -16,7 +16,7 @@ export type Criterion = {
   title: string;
   description: string | null;
   weight: number;
-  rubric_levels: { score: number; label: string; descriptor: string | null }[];
+  rubric_levels: { score: number; label: string; descriptor: string | null; example?: string | null }[];
 };
 
 type ScoreState = Record<string, { score: number | null; comment: string }>;
@@ -53,6 +53,7 @@ export function EvaluationForm({
   scaleMax,
   teamId,
   userId,
+  canShareWithTeam = false,
 }: {
   criteria: Criterion[];
   eventId: string;
@@ -60,9 +61,12 @@ export function EvaluationForm({
     id: string;
     status: string;
     generalComment: string;
+    shareWithTeam?: boolean;
     formAnswers: Record<string, string | boolean>;
     scores: { criterion_id: string; score: number | null; comment: string | null }[];
   } | null;
+  /** Solo en espacios con alumnado tiene sentido compartir comentarios con el grupo. */
+  canShareWithTeam?: boolean;
   locked: boolean;
   page: EvaluationPageConfig | null;
   rubricId: string;
@@ -77,6 +81,7 @@ export function EvaluationForm({
   const [generalComment, setGeneralComment] = useState(
     initial?.generalComment ?? "",
   );
+  const [shareWithTeam, setShareWithTeam] = useState(initial?.shareWithTeam ?? false);
   const [formAnswers, setFormAnswers] = useState<Record<string, string | boolean>>(
     initial?.formAnswers ?? {},
   );
@@ -125,6 +130,7 @@ export function EvaluationForm({
         judge_id: userId,
         rubric_id: rubricId,
         general_comment: generalComment.trim() || null,
+        share_with_team: shareWithTeam,
         form_answers: formAnswers,
         ...(nextStatus
           ? {
@@ -174,8 +180,51 @@ export function EvaluationForm({
       setDirty(false);
       return true;
     },
-    [supabase, eventId, teamId, userId, rubricId, generalComment, formAnswers, scores],
+    [supabase, eventId, teamId, userId, rubricId, generalComment, shareWithTeam, formAnswers, scores],
   );
+
+  // Copia local del borrador: si se va la red o se cierra la pestaña antes de
+  // guardar, se recupera al volver. Se borra en cuanto el servidor confirma.
+  const draftKey = `evaluation-draft:${userId}:${teamId}:${rubricId}`;
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current || locked) return;
+    restoredRef.current = true;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as {
+        scores: ScoreState;
+        generalComment: string;
+        formAnswers: Record<string, string | boolean>;
+      };
+      setScores((current) => ({ ...current, ...draft.scores }));
+      setGeneralComment(draft.generalComment);
+      setFormAnswers(draft.formAnswers);
+      setDirty(true);
+      toast.info("Hemos recuperado cambios que no se llegaron a guardar.");
+    } catch {
+      // Sin almacenamiento local (modo privado): solo autoguardado en servidor.
+    }
+  }, [draftKey, locked]);
+
+  useEffect(() => {
+    if (!dirty || locked) return;
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify({ scores, generalComment, formAnswers }));
+    } catch {
+      // Ignorado: el autoguardado en servidor sigue funcionando.
+    }
+  }, [dirty, locked, draftKey, scores, generalComment, formAnswers]);
+
+  useEffect(() => {
+    if (saveState !== "saved" || dirty) return;
+    try {
+      window.localStorage.removeItem(draftKey);
+    } catch {
+      // Ignorado.
+    }
+  }, [saveState, dirty, draftKey]);
 
   // Autoguardado: 800 ms después del último cambio.
   useEffect(() => {
@@ -184,6 +233,18 @@ export function EvaluationForm({
     const timer = setTimeout(() => void save(), 800);
     return () => clearTimeout(timer);
   }, [dirty, locked, save]);
+
+  // Sin conexión el guardado falla: se reintenta al volver la red.
+  useEffect(() => {
+    if (saveState !== "error" || locked) return;
+    const retry = () => void save();
+    window.addEventListener("online", retry);
+    const timer = setInterval(retry, 15_000);
+    return () => {
+      window.removeEventListener("online", retry);
+      clearInterval(timer);
+    };
+  }, [saveState, locked, save]);
 
   function update(criterionId: string, patch: Partial<ScoreState[string]>) {
     setScores((current) => ({
@@ -218,7 +279,7 @@ export function EvaluationForm({
     pending: "Cambios sin guardar…",
     saving: "Guardando…",
     saved: "Guardado",
-    error: "Error al guardar",
+    error: "Sin conexión: guardado en este dispositivo, se reintentará",
   }[saveState];
 
   return (
@@ -395,6 +456,9 @@ export function EvaluationForm({
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   <strong className="text-foreground">{selected.label}:</strong>{" "}
                   {selected.descriptor}
+                  {selected.example ? (
+                    <span className="mt-1 block text-xs italic">Ejemplo: {selected.example}</span>
+                  ) : null}
                 </p>
               ) : null}
               <Textarea
@@ -425,6 +489,26 @@ export function EvaluationForm({
           }}
           value={generalComment}
         />
+        {canShareWithTeam ? (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              checked={shareWithTeam}
+              className="mt-1"
+              disabled={locked}
+              onChange={(event) => {
+                setShareWithTeam(event.target.checked);
+                setDirty(true);
+              }}
+              type="checkbox"
+            />
+            <span>
+              Compartir mis comentarios con el grupo cuando se publiquen los resultados
+              <span className="block text-xs text-muted-foreground">
+                Se mostrarán sin tu nombre. Las puntuaciones siempre se muestran como media.
+              </span>
+            </span>
+          </label>
+        ) : null}
       </div>
 
       <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-4 border-t border-line bg-paper-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border dark:border-[#262838] dark:bg-ink-950/95">

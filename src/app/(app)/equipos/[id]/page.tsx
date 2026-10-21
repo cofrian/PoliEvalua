@@ -8,6 +8,7 @@ import {
 } from "@/components/app/admin-team-editor";
 import { NotesPanel, type Note } from "@/components/app/notes-panel";
 import { Presence } from "@/components/app/presence";
+import { TeamLinks, type TeamLink } from "@/components/app/team-links";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/app/session";
 
@@ -17,14 +18,14 @@ export default async function TeamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { supabase, user, profile, canVote, isAdmin, event } = await getSession();
+  const { supabase, user, profile, canVote, isAdmin, event, recording, words, eventClosed } = await getSession();
 
   const [{ data: team }, { data: notes }, { data: evaluation }, { data: canVoteThisTeam }] =
     await Promise.all([
       supabase
         .from("teams")
         .select(
-          "id, number, name, project_title, description, table_location, challenge_id, challenge:challenges(name), team_members(id, full_name)",
+          "id, number, name, project_title, description, table_location, challenge_id, challenge:challenges(name), team_members(id, full_name, user_id), team_links(id, kind, url, label, created_at)",
         )
         .eq("id", id)
         .eq("event_id", event.id)
@@ -54,12 +55,29 @@ export default async function TeamPage({
 
   if (!team) notFound();
 
+  // Grabación en curso: aún subiendo trozos y sin cerrar (las abandonadas se limpian a las 3 h).
+  const { count: liveRecordings } = recording.enabled
+    ? await supabase
+        .from("presentation_recordings")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", event.id)
+        .eq("team_id", id)
+        .eq("status", "uploading")
+        .is("finalized_at", null)
+        .is("deleted_at", null)
+        .gt("created_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+    : { count: 0 };
+
   const { data: challenges } = isAdmin
     ? await supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order")
     : { data: [] };
 
   const challenge = team.challenge as unknown as { name: string } | null;
-  const members = (team.team_members ?? []) as { id: string; full_name: string }[];
+  const members = (team.team_members ?? []) as { id: string; full_name: string; user_id: string | null }[];
+  const isMyTeam = members.some((member) => member.user_id === user.id);
+  const links = ((team.team_links ?? []) as (TeamLink & { created_at: string })[]).sort((a, b) =>
+    a.created_at.localeCompare(b.created_at),
+  );
 
   return (
     <div className="space-y-6">
@@ -73,10 +91,15 @@ export default async function TeamPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-bold text-muted-foreground">
-            {challenge?.name} · Equipo #{team.number}
+            {challenge?.name ? `${challenge.name} · ` : ""}{words.unit} #{team.number}
             {team.table_location ? ` · Mesa ${team.table_location}` : ""}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl">{team.name}</h1>
+          {liveRecordings ? (
+            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive" role="status">
+              <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> Grabando la exposición
+            </p>
+          ) : null}
           {team.project_title ? (
             <p className="mt-1 text-lg">{team.project_title}</p>
           ) : null}
@@ -135,6 +158,17 @@ export default async function TeamPage({
               </div>
             </details>
           ) : null}
+          <div className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+            <h2 className="mb-2 font-display text-lg">Entregas</h2>
+            <TeamLinks
+              canEdit={isAdmin || (isMyTeam && !eventClosed)}
+              driveUrl={words.materials.driveUrl}
+              eventId={event.id}
+              initialLinks={links}
+              instructions={isMyTeam ? words.materials.instructions : null}
+              teamId={team.id}
+            />
+          </div>
           {team.description ? (
             <div className="rounded-xl border border-line bg-white p-4 text-sm leading-6 dark:border-[#262838] dark:bg-[#151621]">
               <h2 className="mb-2 font-display text-lg">Proyecto</h2>

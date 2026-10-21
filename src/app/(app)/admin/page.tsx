@@ -2,20 +2,17 @@ import {
   setUserRoleAction,
   toggleUserDisabledAction,
   updateEventAction,
+  updateMaterialsSettingsAction,
+  updateStudentVisibilityAction,
   revokeInvitationAction,
 } from "@/app/(app)/admin/actions";
+import { AdminOverview } from "@/components/app/admin-overview";
 import { InvitationForm } from "@/components/app/invitation-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
-
-const statusLabels = {
-  setup: "Preparación",
-  building: "Building (notas)",
-  judging: "Defensas (votación)",
-  closed: "Cerrado",
-} as const;
 
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
@@ -26,7 +23,14 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
 });
 
 export default async function AdminPage() {
-  const { supabase, user, event } = await getSession();
+  const session = await getSession();
+  const { supabase, user, event, words } = session;
+  const statusLabels = words.stageLabels;
+  const settings = (event.settings ?? {}) as { join_roles?: string[]; enabled_roles?: string[] };
+  const enabledRoles = settings.enabled_roles ?? [];
+  const joinRoles = (settings.join_roles ?? ["judge", "mentor"])
+    .map((role) => roleLabels[role as SpaceRole]?.toLowerCase())
+    .filter(Boolean);
 
   const [{ data: eventSettings }, { data: memberships }, { data: evals }, { data: invitations }] =
     await Promise.all([
@@ -53,6 +57,7 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-10">
+      <AdminOverview session={session} />
       {eventSettings ? (
         <section className={cardClass}>
           <h2 className="mb-4 font-display text-2xl">Evento</h2>
@@ -106,12 +111,64 @@ export default async function AdminPage() {
         </section>
       ) : null}
 
+      {enabledRoles.includes("student") ? (
+        <section className={cardClass}>
+          <h2 className="mb-2 font-display text-2xl">Alumnado</h2>
+          <form action={updateStudentVisibilityAction} className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input defaultChecked={words.studentsSeeRubric} name="showRubric" type="checkbox" />
+              Mostrar la rúbrica al alumnado antes de su {words.presentation}
+            </label>
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input defaultChecked={words.resultsPublished} name="publishResults" type="checkbox" />
+              Publicar a cada {words.unitLower} su nota y su feedback
+            </label>
+            <Button className="h-9" type="submit" variant="outline">
+              Guardar
+            </Button>
+          </form>
+        </section>
+      ) : null}
+
+      <section className={cardClass}>
+        <h2 className="mb-2 font-display text-2xl">Entregas</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Las entregas son enlaces: cada {words.unitLower} añade su repositorio, web, vídeo o presentación desde su ficha.
+          Si usáis una carpeta común (Drive, OneDrive…), pon aquí su enlace y aparecerá a todos.
+        </p>
+        <form action={updateMaterialsSettingsAction} className="space-y-3">
+          <label className="block space-y-1 text-sm font-semibold">
+            <span className="block">Carpeta común de entregas (opcional)</span>
+            <Input
+              defaultValue={words.materials.driveUrl ?? ""}
+              inputMode="url"
+              name="driveUrl"
+              placeholder="https://drive.google.com/drive/folders/…"
+            />
+          </label>
+          <label className="block space-y-1 text-sm font-semibold">
+            <span className="block">Instrucciones para la entrega (opcional)</span>
+            <Textarea
+              defaultValue={words.materials.instructions ?? ""}
+              maxLength={2000}
+              name="instructions"
+              placeholder="Sube el PDF de la memoria a la carpeta común y añade aquí el enlace al repositorio y al vídeo de demo antes del viernes a las 23:59."
+              rows={3}
+            />
+          </label>
+          <Button className="h-9" type="submit">
+            Guardar
+          </Button>
+        </form>
+      </section>
+
       <section className={cardClass}>
         <h2 className="mb-2 font-display text-2xl">Acceso por código</h2>
         <p className="text-sm leading-6">
           Comparte este enlace y el código de acceso{" "}
           <strong>{eventSettings?.signup_code}</strong>. Cada persona entra con su
-          nombre, su correo y su rol (juez o mentor).
+          nombre, su correo y su rol
+          {joinRoles.length ? ` (${joinRoles.join(", ")})` : ""}.
         </p>
         <p className="mt-2 rounded-md bg-paper-50 px-3 py-2 font-mono text-sm dark:bg-ink-950">
           {siteUrl || "https://valencia-hack-jurado.vercel.app"}/login

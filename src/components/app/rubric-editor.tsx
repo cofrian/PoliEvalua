@@ -40,6 +40,7 @@ export type EditableCriterion = {
     score: number;
     label: string;
     descriptor: string | null;
+    example?: string | null;
   }[];
 };
 
@@ -347,6 +348,9 @@ function SortableCriterion({
                     <span className="text-muted-foreground">
                       {level.descriptor || "—"}
                     </span>
+                    {level.example ? (
+                      <span className="mt-0.5 block text-xs italic text-muted-foreground">Ejemplo: {level.example}</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -433,7 +437,8 @@ function CriterionForm({
       const original = criterion.rubric_levels.find((l) => l.id === level.id);
       return (
         original?.label !== level.label ||
-        (original?.descriptor ?? "") !== (level.descriptor ?? "")
+        (original?.descriptor ?? "") !== (level.descriptor ?? "") ||
+        (original?.example ?? "") !== (level.example ?? "")
       );
     });
     if (changedLevels.length) {
@@ -444,6 +449,7 @@ function CriterionForm({
           score: level.score,
           label: level.label.trim() || DEFAULT_LEVELS[level.score - 1] || String(level.score),
           descriptor: level.descriptor?.trim() || null,
+          example: level.example?.trim() || null,
         })),
       );
       if (levelsError) toast.error("No se han podido guardar los niveles.");
@@ -517,6 +523,17 @@ function CriterionForm({
               }
               placeholder={`Qué significa un ${level.score}`}
               value={level.descriptor ?? ""}
+            />
+            <Textarea
+              aria-label={`Ejemplo del nivel ${level.score}`}
+              className="min-h-12 text-xs sm:col-start-2"
+              onChange={(e) =>
+                setLevels((current) =>
+                  current.map((l, j) => (j === i ? { ...l, example: e.target.value } : l)),
+                )
+              }
+              placeholder={`Ejemplo opcional: cómo se ve en la práctica un ${level.score}`}
+              value={level.example ?? ""}
             />
           </div>
         ))}

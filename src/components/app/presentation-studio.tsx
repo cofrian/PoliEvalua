@@ -339,11 +339,14 @@ export function PresentationStudio({
   canManage,
   initialRecords,
   juryReports,
+  recordingDisabledReason = null,
 }: {
   teamId: string;
   userId: string;
   canCreate: boolean;
   canManage: boolean;
+  /** Si se indica, explica por qué no se puede grabar (en lugar del mensaje de consulta). */
+  recordingDisabledReason?: string | null;
   initialRecords: PresentationRecord[];
   juryReports: JuryReportRecord[];
 }) {
@@ -805,7 +808,8 @@ export function PresentationStudio({
               </>
             ) : (
               <div className="flex min-h-40 items-center justify-center text-center text-sm text-white/70">
-                El perfil de consulta puede ver materiales compartidos, pero no grabar.
+                {recordingDisabledReason ??
+                  "El perfil de consulta puede ver materiales compartidos, pero no grabar."}
               </div>
             )}
           </div>

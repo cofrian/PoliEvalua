@@ -18,7 +18,7 @@ export type AdminTeam = {
   project_title: string | null;
   description: string | null;
   table_location: string | null;
-  team_members: { id: string; full_name: string }[];
+  team_members: { id: string; full_name: string; email?: string | null; user_id?: string | null }[];
 };
 
 // Formulario de edición de un equipo y sus integrantes (solo admin).
@@ -84,11 +84,25 @@ export function AdminTeamEditor({
             <p className="text-sm font-semibold">Integrantes</p>
             {team.team_members.map((member) => (
               <div className="flex flex-wrap gap-2" key={member.id}>
-                <form action={renameMemberAction} className="flex flex-1 gap-2">
+                <form action={renameMemberAction} className="flex flex-1 flex-wrap gap-2">
                   <input name="id" type="hidden" value={member.id} />
-                  <Input className="h-9" defaultValue={member.full_name} name="fullName" />
+                  <Input aria-label="Nombre" className="h-9 min-w-40 flex-1" defaultValue={member.full_name} name="fullName" />
+                  <Input
+                    aria-label="Correo"
+                    className="h-9 min-w-48 flex-1"
+                    defaultValue={member.email ?? ""}
+                    name="email"
+                    placeholder="correo@upv.es"
+                    type="email"
+                  />
+                  <span
+                    className="flex h-9 items-center text-xs text-muted-foreground"
+                    title={member.user_id ? "Ha entrado en el espacio con este correo" : "Aún no ha entrado con este correo"}
+                  >
+                    {member.user_id ? "✔ Con cuenta" : member.email ? "Sin entrar" : ""}
+                  </span>
                   <Button className="h-9" type="submit" variant="outline">
-                    Renombrar
+                    Guardar
                   </Button>
                 </form>
                 <form action={removeMemberAction}>
@@ -101,7 +115,8 @@ export function AdminTeamEditor({
             ))}
             <form action={addMemberAction} className="flex gap-2">
               <input name="teamId" type="hidden" value={team.id} />
-              <Input className="h-9" name="fullName" placeholder="Nuevo integrante" />
+              <Input aria-label="Nombre" className="h-9" name="fullName" placeholder="Nuevo integrante" />
+              <Input aria-label="Correo" className="h-9" name="email" placeholder="correo@upv.es (opcional)" type="email" />
               <Button className="h-9" type="submit" variant="outline">
                 Añadir
               </Button>

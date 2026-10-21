@@ -238,6 +238,52 @@ export async function createSpaceAction(
   redirect("/admin");
 }
 
+export type DuplicateSpaceState = { error?: string };
+
+/**
+ * Crea un espacio nuevo con la configuración de otro (rúbrica, página de
+ * evaluación, datos académicos, paneles y ajustes), sin personas ni datos.
+ */
+export async function duplicateSpaceAction(
+  _previousState: DuplicateSpaceState,
+  formData: FormData,
+): Promise<DuplicateSpaceState> {
+  const parsed = z
+    .object({
+      sourceId: z.string().uuid(),
+      name: z.string().trim().min(3).max(100),
+      slug: z.string().trim().toLowerCase().min(3).max(60).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      accessCode: z.string().trim().min(6).max(40),
+    })
+    .safeParse({
+      sourceId: formData.get("sourceId"),
+      name: formData.get("name"),
+      slug: formData.get("slug"),
+      accessCode: formData.get("accessCode"),
+    });
+  if (!parsed.success) {
+    return { error: "Revisa el nombre, el identificador (minúsculas y guiones) y el código (mínimo 6)." };
+  }
+
+  const { supabase } = await getAccount();
+  const { data, error } = await supabase.rpc("duplicate_event_space", {
+    source_event: parsed.data.sourceId,
+    p_name: parsed.data.name,
+    p_slug: parsed.data.slug,
+    p_signup_code: parsed.data.accessCode,
+  });
+  if (error || typeof data !== "string") {
+    return {
+      error: error?.message.toLowerCase().includes("duplicate")
+        ? "Ese identificador o código de acceso ya está en uso."
+        : "No se ha podido duplicar el espacio.",
+    };
+  }
+
+  await setActiveSpace(data);
+  redirect("/admin");
+}
+
 function parseAssistantProposal(value: FormDataEntryValue | null) {
   if (typeof value !== "string" || !value) return null;
   try {

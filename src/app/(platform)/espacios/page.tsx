@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { selectSpaceAction } from "@/app/(app)/espacios/actions";
+import { DuplicateSpaceForm } from "@/components/app/duplicate-space-form";
 import { JoinSpaceForm } from "@/components/app/join-space-form";
 import { Button } from "@/components/ui/button";
 import { getAccount, roleLabels, type SpaceRole } from "@/lib/app/session";
@@ -94,6 +95,9 @@ export default async function SpacesPage() {
                     Entrar al espacio
                   </Button>
                 </form>
+                {membership.role === "owner" || membership.role === "manager" ? (
+                  <DuplicateSpaceForm sourceId={space.id} sourceName={space.name} />
+                ) : null}
               </article>
             );
           })}

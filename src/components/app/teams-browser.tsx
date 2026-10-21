@@ -39,10 +39,13 @@ export function TeamsBrowser({
   challenges,
   teams,
   canVote,
+  title = "Equipos",
 }: {
   challenges: { id: string; name: string }[];
   teams: TeamSummary[];
   canVote: boolean;
+  /** Nombre de la unidad en plural según el tipo de espacio. */
+  title?: string;
 }) {
   const [challenge, setChallenge] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -65,7 +68,7 @@ export function TeamsBrowser({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl">Equipos</h1>
+          <h1 className="font-display text-3xl sm:text-4xl">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {teams.length} equipos ·{" "}
             {canVote
