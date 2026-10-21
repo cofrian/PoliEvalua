@@ -1,5 +1,4 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, Output } from "ai";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -9,7 +8,8 @@ import {
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
 import { aiErrorResponse } from "@/lib/ai/error-response";
-import { aiConfigured, NVIDIA_BASE_URL, jsonInstruction, NVIDIA_NO_THINKING, withModelFallback } from "@/lib/ai/models";
+import { generateJson } from "@/lib/ai/generate-json";
+import { aiConfigured, NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/models";
 import {
   clientIp,
   isBlocked,
@@ -144,27 +144,22 @@ export async function POST(request: Request) {
   });
 
   try {
-    const {
-      result: { output },
-      modelId,
-    } = await withModelFallback(
+    const { result: output, modelId } = await withModelFallback(
       "builder",
       (id, abortSignal) =>
-        generateText({
-          model: provider.chatModel(id),
-          output: Output.object({ schema: assistantResponseSchema }),
-          system: `${SYSTEM_PROMPT}\n\n${jsonInstruction(assistantResponseSchema)}`,
+        generateJson({
+          provider,
+          modelId: id,
+          schema: assistantResponseSchema,
+          system: SYSTEM_PROMPT,
           prompt: `Contexto actual del espacio (sin datos personales):\n${JSON.stringify({
             event,
             academic,
             evaluationPage,
             rubric,
           })}\n\nPetición del gestor:\n${parsed.data.message}`,
-          maxOutputTokens: 4000,
-          temperature: 0.2,
-          maxRetries: 0,
           abortSignal,
-          providerOptions: { nvidia: NVIDIA_NO_THINKING },
+          maxOutputTokens: 4000,
         }),
       { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 60_000 },
     );
