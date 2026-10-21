@@ -2,12 +2,14 @@ import {
   setUserRoleAction,
   toggleUserDisabledAction,
   updateEventAction,
+  updateMaterialsSettingsAction,
   updateStudentVisibilityAction,
   revokeInvitationAction,
 } from "@/app/(app)/admin/actions";
 import { InvitationForm } from "@/components/app/invitation-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
 
@@ -120,6 +122,38 @@ export default async function AdminPage() {
           </form>
         </section>
       ) : null}
+
+      <section className={cardClass}>
+        <h2 className="mb-2 font-display text-2xl">Entregas</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Las entregas son enlaces: cada {words.unitLower} añade su repositorio, web, vídeo o presentación desde su ficha.
+          Si usáis una carpeta común (Drive, OneDrive…), pon aquí su enlace y aparecerá a todos.
+        </p>
+        <form action={updateMaterialsSettingsAction} className="space-y-3">
+          <label className="block space-y-1 text-sm font-semibold">
+            <span className="block">Carpeta común de entregas (opcional)</span>
+            <Input
+              defaultValue={words.materials.driveUrl ?? ""}
+              inputMode="url"
+              name="driveUrl"
+              placeholder="https://drive.google.com/drive/folders/…"
+            />
+          </label>
+          <label className="block space-y-1 text-sm font-semibold">
+            <span className="block">Instrucciones para la entrega (opcional)</span>
+            <Textarea
+              defaultValue={words.materials.instructions ?? ""}
+              maxLength={2000}
+              name="instructions"
+              placeholder="Sube el PDF de la memoria a la carpeta común y añade aquí el enlace al repositorio y al vídeo de demo antes del viernes a las 23:59."
+              rows={3}
+            />
+          </label>
+          <Button className="h-9" type="submit">
+            Guardar
+          </Button>
+        </form>
+      </section>
 
       <section className={cardClass}>
         <h2 className="mb-2 font-display text-2xl">Acceso por código</h2>

@@ -196,6 +196,30 @@ export async function updateStudentVisibilityAction(formData: FormData) {
   refreshAll();
 }
 
+// ========== ENTREGAS ==========
+
+export async function updateMaterialsSettingsAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const driveUrl = text(formData, "driveUrl");
+  if (driveUrl && !/^https?:\/\//i.test(driveUrl)) {
+    throw new Error("El enlace de la carpeta debe empezar por https://");
+  }
+  const materials = {
+    drive_url: driveUrl.slice(0, 2000) || null,
+    instructions: text(formData, "instructions").slice(0, 2000) || null,
+  };
+  const { data: current } = await supabase
+    .from("events")
+    .select("settings")
+    .eq("id", event.id)
+    .single();
+  const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), materials };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error("No se ha podido guardar la configuración de entregas.");
+  await logAudit(supabase, event.id, user.id, "configurar_entregas", "events", event.id, materials);
+  refreshAll();
+}
+
 // ========== RETOS ==========
 
 export async function saveChallengeAction(formData: FormData) {
@@ -283,9 +307,16 @@ export async function addMemberAction(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const teamId = text(formData, "teamId");
   const fullName = text(formData, "fullName");
+  const email = text(formData, "email").toLowerCase() || null;
   if (!fullName) return;
+  if (email && !z.string().email().safeParse(email).success) {
+    throw new Error("El correo no es válido.");
+  }
 
-  await supabase.from("team_members").insert({ event_id: event.id, team_id: teamId, full_name: fullName });
+  const { error } = await supabase
+    .from("team_members")
+    .insert({ event_id: event.id, team_id: teamId, full_name: fullName, email });
+  if (error?.code === "23505") throw new Error("Ese correo ya está en otro grupo de este espacio.");
   await logAudit(supabase, event.id, user.id, "añadir_participante", "teams", teamId, { fullName });
   refreshAll();
 }
@@ -294,9 +325,18 @@ export async function renameMemberAction(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const fullName = text(formData, "fullName");
+  const email = text(formData, "email").toLowerCase() || null;
   if (!fullName) return;
+  if (email && !z.string().email().safeParse(email).success) {
+    throw new Error("El correo no es válido.");
+  }
 
-  await supabase.from("team_members").update({ full_name: fullName }).eq("id", id).eq("event_id", event.id);
+  const { error } = await supabase
+    .from("team_members")
+    .update({ full_name: fullName, email })
+    .eq("id", id)
+    .eq("event_id", event.id);
+  if (error?.code === "23505") throw new Error("Ese correo ya está en otro grupo de este espacio.");
   await logAudit(supabase, event.id, user.id, "renombrar_participante", "team_members", id, { fullName });
   refreshAll();
 }
@@ -403,6 +443,91 @@ export async function importTeamsAction(
     ok: true,
     message: `Importación hecha: ${created} equipos nuevos, ${updated} actualizados y ${members} participantes añadidos.`,
   };
+}
+
+export type RosterImportState = { ok: boolean; message: string } | null;
+
+const rosterSchema = z
+  .array(
+    z.object({
+      fullName: z.string().trim().min(1).max(160),
+      email: z.string().trim().toLowerCase().email(),
+      group: z.string().trim().max(100).nullable(),
+    }),
+  )
+  .min(1)
+  .max(1000);
+
+/**
+ * Da de alta al alumnado ya revisado en la vista previa. Crea los grupos que
+ * falten (por nombre) y añade a cada persona con su correo; quien ya estaba en
+ * el espacio con ese correo se salta. Al entrar con ese correo, cada estudiante
+ * queda vinculado a su grupo automáticamente.
+ */
+export async function importRosterAction(
+  _previous: RosterImportState,
+  formData: FormData,
+): Promise<RosterImportState> {
+  const { supabase, user, event, words } = await requireAdmin();
+  let parsed: z.infer<typeof rosterSchema>;
+  try {
+    parsed = rosterSchema.parse(JSON.parse(text(formData, "roster")));
+  } catch {
+    return { ok: false, message: "La lista no es válida. Revisa la vista previa e inténtalo de nuevo." };
+  }
+
+  const [{ data: teams }, { data: existingMembers }] = await Promise.all([
+    supabase.from("teams").select("id, name, number").eq("event_id", event.id),
+    supabase.from("team_members").select("email").eq("event_id", event.id).not("email", "is", null),
+  ]);
+  const teamIds = new Map((teams ?? []).map((team) => [team.name.toLowerCase(), team.id]));
+  let nextNumber = Math.max(0, ...(teams ?? []).map((team) => team.number ?? 0)) + 1;
+  const known = new Set((existingMembers ?? []).map((member) => member.email?.toLowerCase()));
+
+  const pending = parsed.filter((student) => !known.has(student.email));
+  const skipped = parsed.length - pending.length;
+  const withoutGroup = pending.filter((student) => !student.group).length;
+  let createdGroups = 0;
+
+  for (const name of new Set(pending.flatMap((student) => (student.group ? [student.group] : [])))) {
+    if (teamIds.has(name.toLowerCase())) continue;
+    const { data, error } = await supabase
+      .from("teams")
+      .insert({ event_id: event.id, name, number: nextNumber })
+      .select("id")
+      .single();
+    if (error || !data) return { ok: false, message: `No se ha podido crear «${name}».` };
+    teamIds.set(name.toLowerCase(), data.id);
+    nextNumber += 1;
+    createdGroups += 1;
+  }
+
+  const rows = pending
+    .filter((student) => student.group)
+    .map((student) => ({
+      event_id: event.id,
+      team_id: teamIds.get(student.group!.toLowerCase())!,
+      full_name: student.fullName,
+      email: student.email,
+    }));
+  if (rows.length) {
+    const { error } = await supabase.from("team_members").insert(rows);
+    if (error) return { ok: false, message: "No se ha podido guardar el alumnado. No se ha añadido nadie." };
+  }
+
+  await logAudit(supabase, event.id, user.id, "importar_alumnado", "team_members", null, {
+    added: rows.length,
+    skipped,
+    createdGroups,
+  });
+  refreshAll();
+  const parts = [
+    `${rows.length} estudiantes añadidos`,
+    `${createdGroups} ${words.unitsLower} nuevos`,
+    skipped ? `${skipped} ya estaban` : null,
+    withoutGroup ? `${withoutGroup} sin ${words.unitLower} (no se han añadido)` : null,
+  ].filter(Boolean);
+  return { ok: true, message: `${parts.join(" · ")}.` };
 }
 
 // ========== PATROCINADORES ==========

@@ -56,6 +56,12 @@ export function vocabulary(event: { kind: SpaceKind; settings?: Record<string, u
     stageLabels: stages[academic ? "class" : "event"],
     /** Los retos son propios de hackathons. */
     showChallenges: event.kind === "hackathon",
+    /** Carpeta común de entregas e instrucciones (events.settings.materials). */
+    materials: {
+      driveUrl: (settings.materials as { drive_url?: string | null } | undefined)?.drive_url ?? null,
+      instructions:
+        (settings.materials as { instructions?: string | null } | undefined)?.instructions ?? null,
+    },
     /** El alumnado ve la rúbrica salvo que la gestión lo desactive. */
     studentsSeeRubric:
       (settings.students as { show_rubric?: boolean } | undefined)?.show_rubric !== false,

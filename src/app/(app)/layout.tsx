@@ -34,6 +34,7 @@ export default async function AppLayout({
 
   const links = [
     { href: "/espacios", label: "Espacios" },
+    ...(role === "student" ? [{ href: "/mi-grupo", label: `Mi ${words.unitLower}` }] : []),
     { href: "/equipos", label: words.units },
     ...(words.hasModule("rubric") && (role !== "student" || words.studentsSeeRubric)
       ? [{ href: "/rubrica", label: "Rúbrica" }]
