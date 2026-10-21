@@ -78,6 +78,7 @@ export default async function EvaluatePage({
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <EvaluationForm
+          canShareWithTeam={context.hasStudents}
           criteria={context.criteria}
           eventId={event.id}
           initial={context.initial}

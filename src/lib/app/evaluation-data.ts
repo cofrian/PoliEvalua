@@ -20,12 +20,14 @@ export type EvaluationContext =
         id: string;
         status: string;
         generalComment: string;
+        shareWithTeam: boolean;
         formAnswers: Record<string, string | boolean>;
         scores: { criterion_id: string; score: number | null; comment: string | null }[];
       } | null;
       notes: Note[];
       aiEvidence: AiEvidence;
       aiProcessing: boolean;
+      hasStudents: boolean;
     };
 
 /** Todo lo necesario para que una persona evalúe a un grupo, con sus permisos. */
@@ -82,7 +84,7 @@ export async function loadEvaluationContext(
     await Promise.all([
       supabase
         .from("evaluations")
-        .select("id, status, general_comment, form_answers, evaluation_scores(criterion_id, score, comment)")
+        .select("id, status, general_comment, share_with_team, form_answers, evaluation_scores(criterion_id, score, comment)")
         .eq("event_id", event.id)
         .eq("team_id", teamId)
         .eq("judge_id", user.id)
@@ -167,6 +169,7 @@ export async function loadEvaluationContext(
           id: evaluation.id,
           status: evaluation.status,
           generalComment: evaluation.general_comment ?? "",
+          shareWithTeam: evaluation.share_with_team ?? false,
           formAnswers:
             evaluation.form_answers &&
             typeof evaluation.form_answers === "object" &&
@@ -179,5 +182,6 @@ export async function loadEvaluationContext(
     notes: (notes ?? []) as unknown as Note[],
     aiEvidence,
     aiProcessing: (processingCount ?? 0) > 0,
+    hasStudents: (((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? []).includes("student"),
   };
 }

@@ -65,6 +65,9 @@ export function vocabulary(event: { kind: SpaceKind; settings?: Record<string, u
     /** El alumnado ve la rúbrica salvo que la gestión lo desactive. */
     studentsSeeRubric:
       (settings.students as { show_rubric?: boolean } | undefined)?.show_rubric !== false,
+    /** Cada grupo ve su feedback solo cuando la gestión lo publica. */
+    resultsPublished:
+      (settings.students as { publish_results?: boolean } | undefined)?.publish_results === true,
     /** null = espacio antiguo sin módulos guardados: se muestra todo. */
     hasModule: (module: SpaceModule) => !modules || modules.includes(module),
   };

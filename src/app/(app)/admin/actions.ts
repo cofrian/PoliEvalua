@@ -179,6 +179,7 @@ export async function updateRecordingSettingsAction(formData: FormData) {
 export async function updateStudentVisibilityAction(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const showRubric = formData.get("showRubric") === "on";
+  const publishResults = formData.get("publishResults") === "on";
   const { data: current } = await supabase
     .from("events")
     .select("settings")
@@ -186,12 +187,13 @@ export async function updateStudentVisibilityAction(formData: FormData) {
     .single();
   const settings = {
     ...((current?.settings as Record<string, unknown> | null) ?? {}),
-    students: { show_rubric: showRubric },
+    students: { show_rubric: showRubric, publish_results: publishResults },
   };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
   if (error) throw new Error("No se ha podido guardar la visibilidad para el alumnado.");
   await logAudit(supabase, event.id, user.id, "visibilidad_alumnado", "events", event.id, {
     show_rubric: showRubric,
+    publish_results: publishResults,
   });
   refreshAll();
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LiveRefresh } from "@/components/app/live-refresh";
@@ -5,19 +6,24 @@ import { LiveVotes } from "@/components/app/live-votes";
 import { PrintButton } from "@/components/app/print-button";
 import { ResultsChart } from "@/components/app/results-chart";
 import { Button } from "@/components/ui/button";
-import { loadResults } from "@/lib/app/results";
+import { DiscrepanciesPanel } from "@/components/app/discrepancies-panel";
+import { findDiscrepancies, loadResults, resultSections } from "@/lib/app/results";
 import { getSession } from "@/lib/app/session";
 
 const cell = "px-3 py-2";
 
 export default async function ResultsPage() {
-  const { supabase, isAdmin, eventClosed, event } = await getSession();
+  const { supabase, isAdmin, eventClosed, event, words } = await getSession();
   if (!isAdmin && !eventClosed) redirect("/equipos");
 
-  const { challenges, criteria, scaleMax, teams } = await loadResults(
-    supabase,
-    event.id,
-  );
+  const [results, { data: evaluationPage }] = await Promise.all([
+    loadResults(supabase, event.id),
+    supabase.from("evaluation_pages").select("min_evaluations").eq("event_id", event.id).maybeSingle(),
+  ]);
+  const { criteria, scaleMax } = results;
+  const minEvaluations = evaluationPage?.min_evaluations ?? 1;
+  const settings = (event.settings ?? {}) as { enabled_roles?: string[] };
+  const hasStudents = (settings.enabled_roles ?? []).includes("student");
 
   return (
     <div className="space-y-10">
@@ -41,6 +47,13 @@ export default async function ResultsPage() {
           <Button asChild variant="outline">
             <a href="/resultados/csv">CSV por juez</a>
           </Button>
+          {hasStudents ? (
+            <Button asChild variant="outline">
+              <a href="/resultados/csv?tipo=acta" title="Una fila por estudiante con su nota sobre 10">
+                Acta (CSV)
+              </a>
+            </Button>
+          ) : null}
           <PrintButton />
         </div>
       </div>
@@ -51,8 +64,19 @@ export default async function ResultsPage() {
         </div>
       ) : null}
 
-      {challenges.map((challenge) => {
-        const ranking = teams.filter((t) => t.challengeId === challenge.id);
+      {isAdmin ? (
+        <div className="print:hidden">
+          <DiscrepanciesPanel
+            discrepancies={findDiscrepancies(results, minEvaluations)}
+            minEvaluations={minEvaluations}
+            scaleMax={scaleMax}
+            unitsLower={words.unitsLower}
+          />
+        </div>
+      ) : null}
+
+      {resultSections(results, words.units).map((challenge) => {
+        const ranking = challenge.teams;
         let position = 0;
 
         return (
@@ -74,7 +98,7 @@ export default async function ResultsPage() {
                 <thead className="border-b border-line text-left text-xs text-muted-foreground uppercase dark:border-[#262838]">
                   <tr>
                     <th className={cell}>#</th>
-                    <th className={cell}>Equipo</th>
+                    <th className={cell}>{words.unit}</th>
                     <th className={`${cell} text-right`}>Media</th>
                     {criteria.map((c) => (
                       <th className={`${cell} text-right`} key={c.id} title={c.title}>
@@ -100,6 +124,14 @@ export default async function ResultsPage() {
                         <td className={cell}>
                           <span className="text-muted-foreground">#{team.number} </span>
                           {team.name}
+                          {isAdmin && hasStudents && team.evaluations.length ? (
+                            <Link
+                              className="ml-2 text-xs font-semibold underline print:hidden"
+                              href={`/resultados/grupo/${team.teamId}`}
+                            >
+                              Feedback
+                            </Link>
+                          ) : null}
                         </td>
                         <td className={`${cell} text-right font-bold`}>
                           {team.average ?? "–"}

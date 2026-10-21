@@ -178,6 +178,25 @@ try {
   ]);
   check("Otro grupo no ve las entregas ajenas", (studentBLinks ?? []).length === 0);
   check("El jurado ve las entregas", (judgeLinks ?? []).length === 1);
+
+  // Feedback (migración 0021): solo el propio grupo y solo una vez publicado.
+  const { error: unpublishedError } = await studentA.client.rpc("team_feedback", { target_team: groupA });
+  check("Sin publicar, el grupo no puede ver su feedback", Boolean(unpublishedError));
+  const { data: eventRow } = await admin.from("events").select("settings").eq("id", eventId).single();
+  await admin
+    .from("events")
+    .update({ settings: { ...(eventRow?.settings ?? {}), students: { publish_results: true } } })
+    .eq("id", eventId);
+  const [{ data: ownFeedback, error: ownFeedbackError }, { error: otherFeedbackError }] = await Promise.all([
+    studentA.client.rpc("team_feedback", { target_team: groupA }),
+    studentB.client.rpc("team_feedback", { target_team: groupA }),
+  ]);
+  check(
+    "Publicado, el grupo ve su feedback",
+    !ownFeedbackError && ownFeedback?.evaluations === 1,
+    ownFeedbackError?.message ?? JSON.stringify(ownFeedback),
+  );
+  check("Otro grupo no puede ver ese feedback", Boolean(otherFeedbackError));
 } catch (error) {
   failures += 1;
   console.error("✘ Error inesperado:", error instanceof Error ? error.message : error);

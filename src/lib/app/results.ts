@@ -30,6 +30,83 @@ export type ResultsData = {
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
+/**
+ * Secciones de resultados: una por reto y otra con lo que no tiene reto. En
+ * una asignatura (sin retos) todo queda en una sola sección.
+ */
+export function resultSections(data: ResultsData, fallbackTitle: string) {
+  const known = new Set(data.challenges.map((challenge) => challenge.id));
+  return [
+    ...data.challenges.map((challenge) => ({
+      id: challenge.id,
+      name: challenge.name,
+      teams: data.teams.filter((team) => team.challengeId === challenge.id),
+    })),
+    {
+      id: "none",
+      name: data.challenges.length ? "Sin reto" : fallbackTitle,
+      teams: data.teams.filter((team) => !team.challengeId || !known.has(team.challengeId)),
+    },
+  ].filter((section) => section.teams.length);
+}
+
+export type Discrepancies = {
+  /** Evaluadores que puntúan sistemáticamente por encima o por debajo de los demás. */
+  judges: { judgeId: string; judgeName: string; bias: number; evaluated: number }[];
+  /** Criterios en los que el jurado no se pone de acuerdo para un grupo. */
+  criteria: { teamId: string; teamName: string; criterion: string; spread: number }[];
+  /** Grupos con menos evaluaciones de las necesarias. */
+  underEvaluated: { teamId: string; teamName: string; count: number }[];
+};
+
+/**
+ * Señales para revisar antes de cerrar. El sesgo de un evaluador es la media de
+ * (su total − la media del grupo sin contarle a él), en puntos sobre 100.
+ */
+export function findDiscrepancies(data: ResultsData, minEvaluations: number): Discrepancies {
+  const biasByJudge = new Map<string, { name: string; deltas: number[] }>();
+  for (const team of data.teams) {
+    if (team.evaluations.length < 2) continue;
+    const sum = team.evaluations.reduce((total, evaluation) => total + evaluation.total, 0);
+    for (const evaluation of team.evaluations) {
+      const others = (sum - evaluation.total) / (team.evaluations.length - 1);
+      const entry = biasByJudge.get(evaluation.judgeId) ?? { name: evaluation.judgeName, deltas: [] };
+      entry.deltas.push(evaluation.total - others);
+      biasByJudge.set(evaluation.judgeId, entry);
+    }
+  }
+  const judges = [...biasByJudge.entries()]
+    .map(([judgeId, entry]) => ({
+      judgeId,
+      judgeName: entry.name,
+      evaluated: entry.deltas.length,
+      bias: round(entry.deltas.reduce((a, b) => a + b, 0) / entry.deltas.length),
+    }))
+    .filter((judge) => judge.evaluated >= 2 && Math.abs(judge.bias) >= 10)
+    .sort((a, b) => Math.abs(b.bias) - Math.abs(a.bias));
+
+  // Desacuerdo en un criterio: diferencia entre la nota más alta y la más baja
+  // de al menos la mitad de la escala.
+  const criteria = data.teams
+    .flatMap((team) =>
+      data.criteria.map((criterion) => {
+        const values = team.evaluations
+          .map((evaluation) => evaluation.scores[criterion.id]?.score)
+          .filter((value): value is number => typeof value === "number");
+        const spread = values.length >= 2 ? Math.max(...values) - Math.min(...values) : 0;
+        return { teamId: team.teamId, teamName: team.name, criterion: criterion.title, spread };
+      }),
+    )
+    .filter((item) => item.spread >= data.scaleMax / 2)
+    .sort((a, b) => b.spread - a.spread);
+
+  const underEvaluated = data.teams
+    .filter((team) => team.evaluations.length < minEvaluations)
+    .map((team) => ({ teamId: team.teamId, teamName: team.name, count: team.evaluations.length }));
+
+  return { judges, criteria, underEvaluated };
+}
+
 // Reúne todo lo necesario para resultados y exportaciones. Solo cuentan las
 // evaluaciones enviadas y siempre con la rúbrica actual (pesos vigentes).
 export async function loadResults(

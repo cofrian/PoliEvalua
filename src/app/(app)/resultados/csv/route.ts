@@ -12,8 +12,38 @@ export async function GET(request: Request) {
   const challengeName = (id: string | null) =>
     challenges.find((c) => c.id === id)?.name ?? "";
 
+  const tipo = new URL(request.url).searchParams.get("tipo");
+
+  // ?tipo=acta → una fila por estudiante con la nota de su grupo sobre 10,
+  // lista para pasar a la hoja de calificaciones (p. ej. PoliformaT).
+  if (tipo === "acta") {
+    if (!isAdmin) return new NextResponse("No autorizado", { status: 403 });
+    const { data: members } = await supabase
+      .from("team_members")
+      .select("team_id, full_name, email")
+      .eq("event_id", event.id)
+      .order("full_name");
+    const byTeam = new Map(teams.map((team) => [team.teamId, team]));
+    const rows = (members ?? []).map((member) => {
+      const team = byTeam.get(member.team_id);
+      return {
+        correo: member.email ?? "",
+        nombre: member.full_name,
+        grupo: team?.name ?? "",
+        nota_sobre_10: team?.average !== null && team?.average !== undefined ? (team.average / 10).toFixed(2) : "",
+        evaluaciones: team?.evaluations.length ?? 0,
+      };
+    });
+    return new NextResponse("﻿" + Papa.unparse(rows), {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${event.slug}-acta.csv"`,
+      },
+    });
+  }
+
   // ?tipo=ranking → una fila por equipo; por defecto, una fila por juez y equipo.
-  const ranking = new URL(request.url).searchParams.get("tipo") === "ranking";
+  const ranking = tipo === "ranking";
 
   const rows: Record<string, string | number>[] = ranking
     ? teams.map((team) => ({

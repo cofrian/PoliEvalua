@@ -119,6 +119,10 @@ export default async function AdminPage() {
               <input defaultChecked={words.studentsSeeRubric} name="showRubric" type="checkbox" />
               Mostrar la rúbrica al alumnado antes de su {words.presentation}
             </label>
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input defaultChecked={words.resultsPublished} name="publishResults" type="checkbox" />
+              Publicar a cada {words.unitLower} su nota y su feedback
+            </label>
             <Button className="h-9" type="submit" variant="outline">
               Guardar
             </Button>

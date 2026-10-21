@@ -2,6 +2,7 @@ import { CalendarClock, ClipboardList, Mic2, Users } from "lucide-react";
 import Link from "next/link";
 
 import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
+import { TeamFeedbackView, type TeamFeedback } from "@/components/app/team-feedback-view";
 import { TeamLinks, type TeamLink } from "@/components/app/team-links";
 import { scheduleRoom, slotStatusLabels, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
@@ -46,7 +47,13 @@ export default async function MyGroupPage() {
   }
 
   const links = [...team.team_links].sort((a, b) => a.created_at.localeCompare(b.created_at));
-  const agenda = await loadAgenda(supabase, event.id);
+  const [agenda, feedbackResult] = await Promise.all([
+    loadAgenda(supabase, event.id),
+    words.resultsPublished
+      ? supabase.rpc("team_feedback", { target_team: team.id })
+      : Promise.resolve({ data: null }),
+  ]);
+  const feedback = (feedbackResult.data ?? null) as TeamFeedback | null;
   const mySlot = agenda.find((slot) => slot.team_id === team.id);
   const myScheduled = mySlot
     ? scheduleRoom(agenda.filter((slot) => slot.room === mySlot.room)).find((slot) => slot.id === mySlot.id)
@@ -116,6 +123,13 @@ export default async function MyGroupPage() {
           />
         </section>
       </div>
+
+      {feedback ? (
+        <section className={cardClass}>
+          <h2 className="mb-4 font-display text-2xl">Resultados y feedback</h2>
+          <TeamFeedbackView feedback={feedback} />
+        </section>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {words.studentsSeeRubric && words.hasModule("rubric") ? (

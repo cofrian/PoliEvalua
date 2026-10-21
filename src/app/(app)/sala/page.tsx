@@ -119,6 +119,7 @@ export default async function RoomPage({
       {evaluation.ok ? (
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <EvaluationForm
+            canShareWithTeam={evaluation.hasStudents}
             criteria={evaluation.criteria}
             eventId={event.id}
             initial={evaluation.initial}
