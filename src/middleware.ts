@@ -16,6 +16,16 @@ function copyResponseCookies(source: NextResponse, target: NextResponse) {
 }
 
 export async function middleware(request: NextRequest) {
+  // Transcriptores, el pulso de pg_cron y la sonda de salud no tienen sesión:
+  // usan su propio token.
+  if (
+    request.nextUrl.pathname.startsWith("/api/worker/") ||
+    request.nextUrl.pathname.startsWith("/api/jobs/") ||
+    request.nextUrl.pathname.startsWith("/api/health/")
+  ) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

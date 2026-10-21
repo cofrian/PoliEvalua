@@ -160,6 +160,44 @@ try {
   const criteria = configuredRubric?.rubric_criteria ?? [];
   check("La propuesta queda como borrador con el cálculo solicitado", configuredPage?.status === "draft" && configuredPage?.aggregation_method === "hybrid" && configuredPage?.min_evaluations === 2);
   check("La nueva rúbrica conserva criterios, pesos y niveles", criteria.length === 2 && criteria.reduce((sum, item) => sum + Number(item.weight), 0) === 100 && criteria.every((item) => item.rubric_levels.length === 5));
+
+  // Exposiciones: el informe del jurado no debe llegar a quien no evalúa.
+  const viewer = await createUser("viewer");
+  await admin.from("event_members").insert({
+    event_id: eventId,
+    user_id: viewer.id,
+    role: "viewer",
+    status: "active",
+  });
+  const recordingId = crypto.randomUUID();
+  const { error: recordingError } = await admin.from("presentation_recordings").insert({
+    id: recordingId,
+    event_id: eventId,
+    team_id: teams[0].id,
+    created_by: owner.id,
+    title: "Exposición de prueba",
+    storage_path: `events/${eventId}/presentations/${teams[0].id}/${recordingId}/`,
+    visibility: "event",
+    status: "ready",
+    transcript: "Texto de prueba de la exposición.",
+  });
+  await admin.from("presentation_jury_reports").insert({
+    recording_id: recordingId,
+    event_id: eventId,
+    team_id: teams[0].id,
+    questions: ["¿Cómo validasteis el prototipo?"],
+  });
+  const [{ data: viewerRecording }, { data: viewerReport }, { data: judgeReport }, { data: viewerJobs }] =
+    await Promise.all([
+      viewer.client.from("presentation_recordings").select("id").eq("id", recordingId),
+      viewer.client.from("presentation_jury_reports").select("recording_id").eq("recording_id", recordingId),
+      judge.client.from("presentation_jury_reports").select("recording_id").eq("recording_id", recordingId),
+      viewer.client.from("processing_jobs").select("id"),
+    ]);
+  check("Una exposición compartida es visible para el espacio", !recordingError && viewerRecording?.length === 1, recordingError?.message);
+  check("El jurado ve el informe de la exposición", judgeReport?.length === 1);
+  check("Un perfil de consulta no ve el informe del jurado", !viewerReport?.length);
+  check("Nadie sin service_role lee la cola de procesamiento", !viewerJobs?.length);
 } catch (error) {
   console.error("Error durante la prueba de funciones:", error.message ?? error);
   failures += 1;

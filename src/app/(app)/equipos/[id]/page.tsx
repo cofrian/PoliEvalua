@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mic2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -87,17 +87,24 @@ export default async function TeamPage({
             />
           </div>
         </div>
-        {canVote && canVoteThisTeam ? (
-          <Button asChild className="h-11 px-5 font-bold">
-            <Link href={`/equipos/${team.id}/evaluar`}>
-              {evaluation?.status === "submitted"
-                ? "Ver mi evaluación"
-                : evaluation
-                  ? "Continuar evaluación"
-                  : "Evaluar equipo"}
+        <div className="flex flex-wrap gap-2">
+          <Button asChild className="h-11 px-5 font-bold" variant="outline">
+            <Link href={`/equipos/${team.id}/presentaciones`}>
+              <Mic2 className="size-4" /> Exposiciones
             </Link>
           </Button>
-        ) : null}
+          {canVote && canVoteThisTeam ? (
+            <Button asChild className="h-11 px-5 font-bold">
+              <Link href={`/equipos/${team.id}/evaluar`}>
+                {evaluation?.status === "submitted"
+                  ? "Ver mi evaluación"
+                  : evaluation
+                    ? "Continuar evaluación"
+                    : "Evaluar equipo"}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">

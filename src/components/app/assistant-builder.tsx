@@ -136,7 +136,7 @@ export function AssistantBuilder({
         </div>
         {!configured ? (
           <p className="mb-4 rounded-lg border border-orange-500/50 bg-orange-500/10 p-3 text-sm">
-            Falta configurar <code>NVIDIA_API_KEY</code> y <code>NVIDIA_MODEL</code> en Vercel. La interfaz y la seguridad ya están preparadas.
+            Falta configurar <code>NVIDIA_API_KEY</code> en Vercel. La interfaz y la seguridad ya están preparadas.
           </p>
         ) : null}
         <Textarea

@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import { useActionState, useState } from "react";
 
 import { createSpaceAction, type CreateSpaceState } from "@/app/(app)/espacios/actions";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { EvaluationProposal } from "@/lib/ai/evaluation-proposal";
 import { selectClass } from "@/lib/app/ui";
 
 const initialState: CreateSpaceState = {};
@@ -105,6 +107,53 @@ export function CreateSpaceForm() {
   const [roles, setRoles] = useState<string[]>(templates.hackathon.roles);
   const [joinRoles, setJoinRoles] = useState<string[]>(templates.hackathon.joinRoles);
   const [modules, setModules] = useState<string[]>(templates.hackathon.modules);
+  const [prompt, setPrompt] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [draftReply, setDraftReply] = useState<string | null>(null);
+  const [draftVersion, setDraftVersion] = useState(0);
+  const [identity, setIdentity] = useState({ name: "", description: "" });
+  const [draftAcademic, setDraftAcademic] = useState<EvaluationProposal["academic"]>(null);
+  const [proposal, setProposal] = useState<EvaluationProposal | null>(null);
+  const [draftModel, setDraftModel] = useState<string | null>(null);
+
+  async function generateDraft() {
+    if (prompt.trim().length < 3 || drafting) return;
+    setDrafting(true);
+    setDraftError(null);
+    try {
+      const response = await fetch("/api/space-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body?.space) {
+        setDraftError(body?.error ?? "No se ha podido preparar el espacio.");
+        return;
+      }
+      const space = body.space;
+      const nextProposal: EvaluationProposal | null = body.proposal ?? null;
+      setKind(space.kind);
+      setParticipantMode(space.participantMode);
+      setEvaluationMode(space.evaluationMode);
+      setModules(space.modules);
+      setRoles(space.enabledRoles);
+      setJoinRoles(space.joinRoles);
+      setAcademic(Boolean(nextProposal?.academic) || space.kind === "class");
+      setDraftAcademic(nextProposal?.academic ?? null);
+      setIdentity({ name: space.name, description: space.description ?? "" });
+      if (!slugEdited) setSlug(slugify(space.name));
+      setProposal(nextProposal);
+      setDraftModel(typeof body.model === "string" ? body.model : null);
+      setDraftReply(body.reply);
+      setDraftVersion((version) => version + 1);
+    } catch {
+      setDraftError("No se ha podido conectar con el asistente.");
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   function chooseTemplate(nextKind: SpaceKind) {
     const template = templates[nextKind];
@@ -126,7 +175,39 @@ export function CreateSpaceForm() {
   }
 
   return (
-    <form action={action} className="space-y-8">
+    <form action={action} className="space-y-8" key={draftVersion}>
+      <section className="space-y-3 rounded-xl border border-primary/40 bg-primary/5 p-4">
+        <h2 className="flex items-center gap-2 font-heading text-xl font-semibold">
+          <Sparkles aria-hidden="true" className="size-5" /> Descríbelo y lo preparo
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Cuenta qué quieres evaluar, quién participa y cómo será la rúbrica. Rellenaré el formulario y dejaré la evaluación como borrador para que la revises.
+        </p>
+        <Textarea
+          aria-label="Descripción del espacio para el asistente"
+          defaultValue={prompt}
+          maxLength={4000}
+          onChange={(event) => setPrompt(event.target.value)}
+          placeholder="Asignatura de Ingeniería del Software, 3.º de GII en la ETSINF, curso 2026–2027. Grupos de 4 estudiantes presentan su proyecto y el profesorado puntúa de 0 a 10: análisis 30 %, diseño 30 %, presentación 20 %, trabajo en equipo 20 %."
+          rows={4}
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <Button disabled={drafting || prompt.trim().length < 3} onClick={() => void generateDraft()} type="button" variant="secondary">
+            {drafting ? "Preparando…" : "Preparar con IA"}
+          </Button>
+          {proposal ? (
+            <span className="text-sm text-muted-foreground">
+              Rúbrica «{proposal.evaluation.rubricName}» con {proposal.evaluation.criteria.length} criterios lista como borrador.
+            </span>
+          ) : null}
+        </div>
+        {draftError ? <p className="text-sm text-destructive" role="alert">{draftError}</p> : null}
+        {draftReply ? <p className="text-sm">{draftReply} Revisa los campos y pulsa «Crear espacio».</p> : null}
+      </section>
+      {proposal ? <input name="assistantProposal" type="hidden" value={JSON.stringify(proposal)} /> : null}
+      {proposal ? <input name="assistantPrompt" type="hidden" value={prompt} /> : null}
+      {proposal && draftModel ? <input name="assistantModel" type="hidden" value={draftModel} /> : null}
+
       {state.error ? (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm" role="alert">
           {state.error}
@@ -164,6 +245,7 @@ export function CreateSpaceForm() {
         <div className="space-y-2">
           <Label htmlFor="name">Nombre del espacio</Label>
           <Input
+            defaultValue={identity.name}
             id="name"
             name="name"
             onChange={(event) => {
@@ -190,7 +272,7 @@ export function CreateSpaceForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="description">Descripción</Label>
-          <Textarea id="description" maxLength={500} name="description" placeholder="Qué se va a evaluar y quién participa." />
+          <Textarea defaultValue={identity.description} id="description" maxLength={500} name="description" placeholder="Qué se va a evaluar y quién participa." />
         </div>
       </fieldset>
 
@@ -240,13 +322,13 @@ export function CreateSpaceForm() {
         </label>
         {academic ? (
           <div className="grid gap-4 rounded-xl border border-line p-4 sm:grid-cols-2 dark:border-[#383C3D]">
-            <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span className="block">Universidad o institución</span><Input defaultValue="Universitat Politècnica de València" name="institution" required /></label>
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Centro o escuela</span><Input name="school" placeholder="ETSINF" /></label>
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Titulación</span><Input name="degree" placeholder="Grado en Ingeniería Informática" /></label>
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Asignatura</span><Input name="subjectName" required /></label>
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Código de asignatura</span><Input name="subjectCode" /></label>
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Curso académico</span><Input name="academicYear" placeholder="2026–2027" /></label>
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Semestre</span><Input name="term" placeholder="Primer semestre" /></label>
+            <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span className="block">Universidad o institución</span><Input defaultValue={draftAcademic?.institution ?? "Universitat Politècnica de València"} name="institution" required /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Centro o escuela</span><Input defaultValue={draftAcademic?.school ?? ""} name="school" placeholder="ETSINF" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Titulación</span><Input defaultValue={draftAcademic?.degree ?? ""} name="degree" placeholder="Grado en Ingeniería Informática" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Asignatura</span><Input defaultValue={draftAcademic?.subjectName ?? ""} name="subjectName" required /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Código de asignatura</span><Input defaultValue={draftAcademic?.subjectCode ?? ""} name="subjectCode" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Curso académico</span><Input defaultValue={draftAcademic?.academicYear ?? ""} name="academicYear" placeholder="2026–2027" /></label>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">Semestre</span><Input defaultValue={draftAcademic?.term ?? ""} name="term" placeholder="Primer semestre" /></label>
           </div>
         ) : null}
       </fieldset>

@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import {
+  evaluationProposalSchema,
+  normalizeEvaluationProposal,
+} from "@/lib/ai/evaluation-proposal";
 import { clearAttempts, clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
 import { getAccount } from "@/lib/app/session";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -178,7 +182,7 @@ export async function createSpaceAction(
     };
   }
 
-  const { supabase } = await getAccount();
+  const { supabase, user } = await getAccount();
   const { data, error } = await supabase.rpc("create_event_space", {
     p_name: parsed.data.name,
     p_slug: parsed.data.slug,
@@ -216,5 +220,30 @@ export async function createSpaceAction(
   }
 
   await setActiveSpace(data);
+
+  const proposal = parseAssistantProposal(formData.get("assistantProposal"));
+  if (proposal) {
+    const { error: proposalError } = await supabase.from("assistant_proposals").insert({
+      event_id: data,
+      user_id: user.id,
+      prompt: String(formData.get("assistantPrompt") ?? "").slice(0, 4000) || "Creación guiada",
+      reply: "Propuesta generada al crear el espacio.",
+      proposal: normalizeEvaluationProposal(proposal),
+      status: "pending",
+      model: String(formData.get("assistantModel") ?? "").slice(0, 120) || null,
+    });
+    if (!proposalError) redirect("/admin/asistente");
+  }
+
   redirect("/admin");
+}
+
+function parseAssistantProposal(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value) return null;
+  try {
+    const parsed = evaluationProposalSchema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }

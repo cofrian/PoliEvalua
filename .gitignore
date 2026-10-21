@@ -49,3 +49,8 @@ next-env.d.ts
 
 /test-results
 /playwright-report
+
+# Trabajador de transcripción
+worker/.venv/
+worker/*.log
+worker/__pycache__/
