@@ -6,7 +6,7 @@ worker.py dentro y lo sube con la CLI oficial (``kaggle kernels push``), que
 lo ejecuta en una GPU gratuita. El trabajador termina solo cuando la cola se
 vacía (EXIT_AFTER_IDLE_SECONDS), así no gasta horas de GPU.
 
-Variables: KAGGLE_USERNAME, KAGGLE_KEY (las usa la CLI), APP_URL,
+Variables: KAGGLE_USERNAME, KAGGLE_API_TOKEN (lo usa la CLI), APP_URL,
 WORKER_TOKEN y opcionalmente KAGGLE_KERNEL_SLUG.
 """
 

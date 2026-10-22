@@ -38,9 +38,9 @@ una GPU gratuita de Kaggle con `kaggle_launch.py`, y este se apaga tras 10 min
 sin trabajo. Kaggle da unas 30 h de GPU a la semana.
 
 1. En kaggle.com verifica tu teléfono (sin eso no hay internet en los notebooks).
-2. **Settings → API → Create New Token**: descarga `kaggle.json`.
+2. **Settings → API → Create New Token**: copia el `KAGGLE_API_TOKEN`.
 3. En GitHub → **Settings → Secrets and variables → Actions** crea
-   `KAGGLE_USERNAME`, `KAGGLE_KEY` (de `kaggle.json`) y
+   `KAGGLE_USERNAME` (tu usuario de Kaggle), `KAGGLE_API_TOKEN` y
    `TRANSCRIPTION_WORKER_TOKEN` (el mismo valor que en Vercel).
 4. Opcional, para que arranque al instante en vez de en ≤10 min: un token
    *fine-grained* de GitHub con permiso **Actions: Read and write** en este
