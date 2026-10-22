@@ -2,8 +2,11 @@ import "server-only";
 
 import { spawn } from "node:child_process";
 
-const DEFAULT_NVIDIA_ASR_URL =
-  "https://a9eeee8f-b509-4712-b19d-194361fa5f31.invocation.api.nvcf.nvidia.com/v1/audio/transcriptions";
+// Whisper alojado en Groq (API compatible con OpenAI, plan gratuito con cupo
+// por hora y por día). Si no está configurado o se agota, el trozo pasa al
+// trabajador Whisper propio (Kaggle, Colab o PC).
+const GROQ_ASR_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
+const GROQ_ASR_MODEL = process.env.GROQ_ASR_MODEL || "whisper-large-v3-turbo";
 
 /** Error del proveedor con la información necesaria para decidir el reintento. */
 export class TranscriptionError extends Error {
@@ -11,6 +14,8 @@ export class TranscriptionError extends Error {
     message: string,
     public readonly retryable: boolean,
     public readonly unsupportedFormat = false,
+    /** Segundos que pide esperar el proveedor antes de repetir (cupo lleno). */
+    public readonly retryAfterSeconds?: number,
   ) {
     super(message);
   }
@@ -60,15 +65,17 @@ export async function convertToWav(audio: Blob): Promise<Blob> {
   return new Blob([new Uint8Array(output)], { type: "audio/wav" });
 }
 
-async function requestTranscription(audio: Blob, fileName: string, apiKey: string) {
+async function requestTranscription(audio: Blob, fileName: string, apiKey: string, language: string) {
   const form = new FormData();
-  form.append("language", process.env.NVIDIA_ASR_LANGUAGE || "es-US");
+  form.append("model", GROQ_ASR_MODEL);
+  form.append("language", language);
   form.append("response_format", "json");
+  form.append("temperature", "0");
   form.append("file", audio, fileName);
 
   let response: Response;
   try {
-    response = await fetch(process.env.NVIDIA_ASR_URL || DEFAULT_NVIDIA_ASR_URL, {
+    response = await fetch(process.env.GROQ_ASR_URL || GROQ_ASR_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}` },
       body: form,
@@ -76,7 +83,7 @@ async function requestTranscription(audio: Blob, fileName: string, apiKey: strin
     });
   } catch (error) {
     throw new TranscriptionError(
-      error instanceof Error ? `NVIDIA no responde: ${error.message}` : "NVIDIA no responde.",
+      error instanceof Error ? `Groq no responde: ${error.message}` : "Groq no responde.",
       true,
     );
   }
@@ -88,7 +95,13 @@ async function requestTranscription(audio: Blob, fileName: string, apiKey: strin
     const unsupportedFormat =
       [400, 415, 422].includes(response.status) &&
       /format|codec|decode|unsupported|wav|audio/i.test(detail);
-    throw new TranscriptionError(`NVIDIA: ${detail}`, retryable, unsupportedFormat);
+    const retryAfter = Number(response.headers.get("retry-after"));
+    throw new TranscriptionError(
+      `Groq: ${detail}`,
+      retryable,
+      unsupportedFormat,
+      response.status === 429 && Number.isFinite(retryAfter) ? retryAfter : undefined,
+    );
   }
 
   if (
@@ -97,36 +110,39 @@ async function requestTranscription(audio: Blob, fileName: string, apiKey: strin
     !("text" in payload) ||
     typeof payload.text !== "string"
   ) {
-    throw new TranscriptionError("NVIDIA no devolvió una transcripción válida.", true);
+    throw new TranscriptionError("Groq no devolvió una transcripción válida.", true);
   }
   return payload.text.trim();
 }
 
+export function groqConfigured() {
+  return Boolean(process.env.GROQ_API_KEY);
+}
+
 /**
- * Transcribe con NVIDIA. Si el servicio rechaza el formato (p. ej. Opus),
- * convierte a WAV y repite una sola vez.
+ * Transcribe con Whisper en Groq. Si rechaza el formato, convierte a WAV y
+ * repite una sola vez.
  */
-export async function transcribeWithNvidia({
+export async function transcribeWithGroq({
   audio,
   fileName,
+  language,
 }: {
   audio: Blob;
   fileName: string;
+  language: string;
 }) {
-  const apiKey = process.env.NVIDIA_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    throw new TranscriptionError("Falta configurar NVIDIA_API_KEY en el servidor.", false);
+    throw new TranscriptionError("Falta configurar GROQ_API_KEY en el servidor.", false);
   }
 
   const alreadyWav = audio.type === "audio/wav" || fileName.endsWith(".wav");
-  if (process.env.NVIDIA_ASR_FORCE_WAV === "true" && !alreadyWav) {
-    return requestTranscription(await convertToWav(audio), `${fileName}.wav`, apiKey);
-  }
   try {
-    return await requestTranscription(audio, fileName, apiKey);
+    return await requestTranscription(audio, fileName, apiKey, language);
   } catch (error) {
     if (error instanceof TranscriptionError && error.unsupportedFormat && !alreadyWav) {
-      return requestTranscription(await convertToWav(audio), `${fileName}.wav`, apiKey);
+      return requestTranscription(await convertToWav(audio), `${fileName}.wav`, apiKey, language);
     }
     throw error;
   }

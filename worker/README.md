@@ -15,7 +15,7 @@ trabajo a la app, descarga el audio temporal, lo transcribe con
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) y devuelve el
 texto. La app borra el audio en cuanto recibe la transcripción.
 
-Puedes arrancar tantos trabajadores como quieras; la cola reparte las
+El trabajador solo entra cuando Groq no puede transcribir. Puedes arrancar tantos trabajadores como quieras; la cola reparte las
 grabaciones y nunca entrega la misma a dos a la vez.
 
 ## Variables
@@ -28,18 +28,31 @@ grabaciones y nunca entrega la misma a dos a la vez.
 | `WHISPER_MODEL` | No | `small` (por defecto, CPU), `medium`, `large-v3-turbo` (GPU) |
 | `WHISPER_DEVICE` | No | `auto`, `cpu` o `cuda` |
 | `WHISPER_COMPUTE_TYPE` | No | `int8` en CPU, `float16` en GPU |
+| `EXIT_AFTER_IDLE_SECONDS` | No | Termina tras ese tiempo sin trabajo (0 = nunca) |
 
-## Opción A: Space gratuito de Hugging Face
+## Opción A: Kaggle automático (recomendado)
 
-1. En huggingface.co → **New Space** → SDK **Docker**, hardware **CPU basic (free)**.
-2. Sube los archivos de esta carpeta (`README.md`, `Dockerfile`, `app.py`, `requirements.txt`).
-3. En **Settings → Variables and secrets** añade `APP_URL`, `WORKER_TOKEN` (como *secret*) y `WORKER_ID`.
-4. Añade la URL del Space (`https://USUARIO-NOMBRE.hf.space`) a
-   `TRANSCRIPTION_WORKER_URLS` en la app. Así la app lo despierta al encolar.
-5. Repite con 2–3 Spaces para procesar en paralelo.
+La app transcribe primero con Groq. Cuando un trozo no se puede procesar allí,
+GitHub Actions (`.github/workflows/kaggle-worker.yml`) lanza este trabajador en
+una GPU gratuita de Kaggle con `kaggle_launch.py`, y este se apaga tras 10 min
+sin trabajo. Kaggle da unas 30 h de GPU a la semana.
 
-Si el Space es privado, define `HF_TOKEN` (token de lectura) en la app para
-poder despertarlo.
+1. En kaggle.com verifica tu teléfono (sin eso no hay internet en los notebooks).
+2. **Settings → API → Create New Token**: descarga `kaggle.json`.
+3. En GitHub → **Settings → Secrets and variables → Actions** crea
+   `KAGGLE_USERNAME`, `KAGGLE_KEY` (de `kaggle.json`) y
+   `TRANSCRIPTION_WORKER_TOKEN` (el mismo valor que en Vercel).
+4. Opcional, para que arranque al instante en vez de en ≤10 min: un token
+   *fine-grained* de GitHub con permiso **Actions: Read and write** en este
+   repositorio, guardado en Vercel como `GITHUB_DISPATCH_TOKEN`.
+
+El notebook que se crea (`transcriptor-upv`) es privado y lleva dentro el token
+del trabajador, que solo permite recoger y devolver trozos de la cola.
+
+## Opción A2: Kaggle o Colab a mano
+
+Abre `kaggle_worker.ipynb` o `colab_worker.ipynb`, sigue los pasos del
+principio y pulsa **Run All**. Útil si GitHub Actions no está disponible.
 
 ## Opción B: tu PC o una máquina de la UPV
 
