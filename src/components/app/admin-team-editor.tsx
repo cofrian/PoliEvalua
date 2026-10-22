@@ -5,6 +5,7 @@ import {
   renameMemberAction,
   saveTeamAction,
 } from "@/app/(app)/admin/actions";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,9 +127,13 @@ export function AdminTeamEditor({
           {allowDelete ? (
             <form action={deleteTeamAction}>
               <input name="id" type="hidden" value={team.id} />
-              <Button className="h-9 text-destructive" type="submit" variant="ghost">
-                Borrar equipo (solo si no tiene evaluaciones)
-              </Button>
+              <ConfirmSubmit
+                confirmLabel="Borrar"
+                description="Solo se puede si nadie lo ha evaluado todavía. No se puede deshacer."
+                title={`¿Borrar «${team.name}»?`}
+              >
+                Borrar equipo
+              </ConfirmSubmit>
             </form>
           ) : null}
         </>

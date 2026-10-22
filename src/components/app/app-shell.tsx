@@ -70,7 +70,7 @@ const icons: Record<NavIcon, LucideIcon> = {
   group: UsersRound,
 };
 
-type Profile = { name: string; avatarUrl: string | null; roleLabel: string };
+export type Profile = { name: string; avatarUrl: string | null; roleLabel: string };
 
 function isActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
@@ -135,7 +135,7 @@ function Avatar({ profile, className }: { profile: Profile; className?: string }
   );
 }
 
-function UserMenu({ profile }: { profile: Profile }) {
+export function UserMenu({ profile }: { profile: Profile }) {
   const { setTheme, theme } = useTheme();
   return (
     <DropdownMenu>

@@ -1,5 +1,6 @@
 import { deleteSponsorAction, saveSponsorAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession } from "@/lib/app/session";
@@ -111,9 +112,9 @@ export default async function AdminSponsorsPage() {
           <SponsorForm sponsor={sponsor} />
           <form action={deleteSponsorAction} className="mt-2">
             <input name="id" type="hidden" value={sponsor.id} />
-            <Button className="h-8 text-destructive" type="submit" variant="ghost">
+            <ConfirmSubmit confirmLabel="Quitar" title={`¿Quitar a ${sponsor.name}?`}>
               Quitar patrocinador
-            </Button>
+            </ConfirmSubmit>
           </form>
         </section>
       ))}

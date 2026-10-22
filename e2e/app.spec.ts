@@ -542,7 +542,8 @@ test("18. Una cuenta general puede registrarse, salir y volver a entrar", async 
   await expect(page.getByText("Tu cuenta ya está lista")).toBeVisible();
   await rememberUser(people.account.email);
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await page.getByRole("button", { name: "Menú de usuario" }).click();
+  await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
   await page.waitForURL("**/login");
   await page.getByLabel("Correo electrónico").fill(people.account.email);
   await page.getByLabel("Contraseña").fill(testPassword);

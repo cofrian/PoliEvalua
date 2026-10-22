@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { resetPublicVotesAction, updatePublicVoteAction } from "@/app/(app)/admin/actions";
 import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { publicVoteSettings } from "@/lib/app/public-vote";
@@ -66,9 +67,13 @@ export default async function PublicAdminPage() {
           <h2 className="font-display text-xl">Recuento ({counts.total})</h2>
           {counts.total ? (
             <form action={resetPublicVotesAction}>
-              <Button className="h-9 text-destructive" type="submit" variant="ghost">
+              <ConfirmSubmit
+                confirmLabel="Borrar votos"
+                description={`Se eliminan los ${counts.total} votos del público. No se puede deshacer.`}
+                title="¿Borrar todos los votos?"
+              >
                 Borrar todos los votos
-              </Button>
+              </ConfirmSubmit>
             </form>
           ) : null}
         </div>

@@ -1,5 +1,6 @@
 import { deleteChallengeAction, saveChallengeAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession } from "@/lib/app/session";
@@ -57,9 +58,9 @@ export default async function AdminChallengesPage() {
               {count === 0 ? (
                 <form action={deleteChallengeAction}>
                   <input name="id" type="hidden" value={challenge.id} />
-                  <Button className="h-8 text-destructive" type="submit" variant="ghost">
+                  <ConfirmSubmit confirmLabel="Borrar reto" title={`¿Borrar «${challenge.name}»?`}>
                     Borrar reto
-                  </Button>
+                  </ConfirmSubmit>
                 </form>
               ) : null}
             </div>
