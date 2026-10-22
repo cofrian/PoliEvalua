@@ -1,10 +1,9 @@
 import { updateRecordingSettingsAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
-import { Button } from "@/components/ui/button";
+import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_RECORDING_NOTICE, NO_AUDIO_GUARANTEE } from "@/lib/app/recording-notice";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
-import { cardClass } from "@/lib/app/ui";
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
   day: "2-digit",
@@ -43,41 +42,34 @@ export default async function RecordingSettingsPage() {
         description="Transcripción y análisis de cada exposición. El audio nunca se guarda."
         title="Grabaciones"
       />
-    <div className="space-y-8">
-      <section className={cardClass}>
-        <h2 className="mb-2 font-display text-xl">Grabación de exposiciones</h2>
-        <p className="mb-5 text-sm text-muted-foreground">
-          Al activarla, cada persona que entre en el espacio verá el aviso y tendrá que confirmarlo antes de continuar.
-          Si cambias el texto, todos lo volverán a ver.
-        </p>
-        <form action={updateRecordingSettingsAction} className="space-y-5">
-          <label className="flex items-center gap-3 rounded-lg border border-input p-3 text-sm font-semibold">
-            <input defaultChecked={recording.enabled} name="enabled" type="checkbox" />
-            Grabar exposiciones en este espacio
-          </label>
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold" htmlFor="noticeText">
-              Texto del aviso (opcional)
-            </label>
-            <Textarea
-              defaultValue={recording.customText ?? ""}
-              id="noticeText"
-              maxLength={2000}
-              name="noticeText"
-              placeholder={DEFAULT_RECORDING_NOTICE}
-              rows={5}
-            />
-            <p className="text-xs text-muted-foreground">
-              Déjalo vacío para usar el texto por defecto. Si lo personalizas, siempre se añadirá: «{NO_AUDIO_GUARANTEE}»
-            </p>
-          </div>
-          <Button type="submit">Guardar</Button>
-        </form>
-      </section>
+      <SettingsForm
+        action={updateRecordingSettingsAction}
+        description="Al activarla, cada persona que entre verá el aviso y tendrá que confirmarlo. Si cambias el texto, todos lo volverán a ver."
+        title="Grabación de exposiciones"
+      >
+        <SettingRow htmlFor="enabled" label="Grabar exposiciones en este espacio">
+          <SettingSwitch defaultChecked={recording.enabled} id="enabled" name="enabled" />
+        </SettingRow>
+        <SettingRow
+          description={`Déjalo vacío para usar el texto por defecto. Si lo personalizas, siempre se añadirá: «${NO_AUDIO_GUARANTEE}»`}
+          htmlFor="noticeText"
+          label="Texto del aviso (opcional)"
+          stacked
+        >
+          <Textarea
+            defaultValue={recording.customText ?? ""}
+            id="noticeText"
+            maxLength={2000}
+            name="noticeText"
+            placeholder={DEFAULT_RECORDING_NOTICE}
+            rows={5}
+          />
+        </SettingRow>
+      </SettingsForm>
 
       {recording.enabled ? (
         <section>
-          <h2 className="mb-3 font-display text-xl">
+          <h2 className="mb-3 font-display text-lg">
             Confirmaciones ({rows.length - pending}/{rows.length})
           </h2>
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
@@ -106,7 +98,6 @@ export default async function RecordingSettingsPage() {
           </div>
         </section>
       ) : null}
-    </div>
     </div>
   );
 }

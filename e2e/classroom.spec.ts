@@ -147,8 +147,8 @@ test("1. La profesora ve el panel de inicio adaptado a una asignatura", async ({
 test("2. Activa la grabación y el aviso aparece al entrar", async () => {
   const page = pages.teacher!;
   await page.goto("/admin/grabaciones");
-  await page.getByLabel("Grabar exposiciones en este espacio").check();
-  await page.getByRole("button", { name: "Guardar" }).click();
+  await page.getByRole("switch", { name: "Grabar exposiciones en este espacio" }).click();
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
   await acknowledgeNotice(page);
   await expect(page.getByRole("heading", { name: /Confirmaciones/ })).toBeVisible();
 });
@@ -265,9 +265,9 @@ test("8. Al publicar, la estudiante ve su nota y el feedback", async () => {
 test("9. Coevaluación: reparto y revisión de otro grupo", async () => {
   const teacher = pages.teacher!;
   await teacher.goto("/admin/coevaluacion");
-  await teacher.getByLabel("Activar la coevaluación en este espacio").check();
-  await teacher.getByLabel(/Autoevaluación del propio/).check();
-  await teacher.getByRole("button", { name: "Guardar" }).click();
+  await teacher.getByRole("switch", { name: "Activar la coevaluación en este espacio" }).click();
+  await teacher.getByRole("switch", { name: /Autoevaluación del propio/ }).click();
+  await teacher.getByRole("button", { name: "Guardar cambios" }).click();
   await teacher.getByRole("button", { name: "Repartir grupos a evaluar" }).click();
   await expect(teacher.getByText(/Reparto hecho: 2 estudiantes/)).toBeVisible();
 
@@ -284,9 +284,9 @@ test("9. Coevaluación: reparto y revisión de otro grupo", async () => {
 test("10. Voto del público sin cuenta y pantalla del proyector", async ({ browser }) => {
   const teacher = pages.teacher!;
   await teacher.goto("/admin/publico");
-  await teacher.getByLabel("Votación abierta").check();
-  await teacher.getByLabel(/Mostrar el recuento/).check();
-  await teacher.getByRole("button", { name: "Guardar" }).click();
+  await teacher.getByRole("switch", { name: "Votación abierta" }).click();
+  await teacher.getByRole("switch", { name: /Mostrar el recuento/ }).click();
+  await teacher.getByRole("button", { name: "Guardar cambios" }).click();
   // El QR está siempre visible: espera a que el guardado llegue de verdad.
   await expect
     .poll(async () => (await db.from("events").select("settings").eq("id", eventId).single()).data?.settings?.public_vote?.open)

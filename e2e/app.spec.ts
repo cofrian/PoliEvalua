@@ -485,7 +485,7 @@ test("14. El propietario crea otro espacio sin mezclar sus equipos", async () =>
 test("15. Una invitación personal concede solo su rol y espacio", async ({ browser }) => {
   await adminPage.goto("/admin/personas");
   await adminPage.getByLabel("Correo").fill(people.invited.email);
-  await adminPage.getByLabel("Rol").selectOption("mentor");
+  await adminPage.getByLabel("Rol", { exact: true }).selectOption("mentor");
   await adminPage.getByRole("button", { name: "Crear enlace" }).click();
   const inviteLink = await adminPage.getByLabel("Enlace de invitación").inputValue();
 

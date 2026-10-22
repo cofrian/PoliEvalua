@@ -1,7 +1,7 @@
 import { updatePeerReviewSettingsAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { PeerAssignButton } from "@/components/app/peer-assign-button";
-import { Button } from "@/components/ui/button";
+import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { peerReviewSettings } from "@/lib/app/peer-review";
 import { getSession } from "@/lib/app/session";
@@ -45,61 +45,55 @@ export default async function PeerReviewAdminPage() {
         description="Que el alumnado se evalúe entre sí y a sí mismo, con reparto automático."
         title="Coevaluación"
       />
-    <div className="space-y-8">
-      <section className={cardClass}>
-        <h2 className="mb-2 font-display text-xl">Coevaluación y autoevaluación</h2>
-        <p className="mb-5 text-sm text-muted-foreground">
-          El alumnado evalúa con la misma rúbrica a otros {words.unitsLower} y, si lo activas, al suyo. También
-          puede valorar de 1 a 5 lo que ha aportado cada compañero. Nadie ve las respuestas individuales de otros.
-        </p>
-        <form action={updatePeerReviewSettingsAction} className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              ["enabled", "Activar la coevaluación en este espacio", settings.enabled],
-              ["peer", `Evaluar a otros ${words.unitsLower}`, settings.peer],
-              ["self", `Autoevaluación del propio ${words.unitLower}`, settings.self],
-              ["contribution", "Valorar la aportación de cada compañero", settings.contribution],
-              ["anonymous", "Comentarios anónimos para quien los recibe", settings.anonymous],
-            ].map(([name, label, checked]) => (
-              <label className="flex items-center gap-3 rounded-lg border border-input p-3 text-sm font-semibold" key={name as string}>
-                <input defaultChecked={checked as boolean} name={name as string} type="checkbox" />
-                {label as string}
+      <SettingsForm
+        action={updatePeerReviewSettingsAction}
+        description={`El alumnado evalúa con la misma rúbrica a otros ${words.unitsLower} y, si lo activas, al suyo. Nadie ve las respuestas individuales de otros.`}
+        title="Qué se evalúa"
+      >
+        {(
+          [
+            ["enabled", "Activar la coevaluación en este espacio", "Si está desactivada, el alumnado no ve nada de esto.", settings.enabled],
+            ["peer", `Evaluar a otros ${words.unitsLower}`, "Cada estudiante recibe un reparto de trabajos ajenos.", settings.peer],
+            ["self", `Autoevaluación del propio ${words.unitLower}`, "Puntúa su trabajo con la misma rúbrica.", settings.self],
+            ["contribution", "Valorar la aportación de cada compañero", "De 1 a 5, dentro de su propio grupo.", settings.contribution],
+            ["anonymous", "Comentarios anónimos", "Quien los recibe no sabe quién los escribió.", settings.anonymous],
+          ] as const
+        ).map(([name, label, description, checked]) => (
+          <SettingRow description={description} htmlFor={name} key={name} label={label}>
+            <SettingSwitch defaultChecked={checked} id={name} name={name} />
+          </SettingRow>
+        ))}
+        <SettingRow htmlFor="reviewsPerStudent" label={`${words.units} que evalúa cada estudiante`}>
+          <Input className="sm:ml-auto sm:w-24" defaultValue={settings.reviewsPerStudent} id="reviewsPerStudent" max={10} min={1} name="reviewsPerStudent" type="number" />
+        </SettingRow>
+        <SettingRow
+          description={
+            weightSum !== 100
+              ? `Ahora suman ${weightSum} %: se reparten en proporción. Si falta una parte, su peso pasa a las demás.`
+              : "Cuánto cuenta cada parte en la nota final. Deben sumar 100."
+          }
+          label="Peso en la nota final (%)"
+        >
+          <div className="grid grid-cols-3 gap-2 text-left">
+            {(
+              [
+                ["weightTeacher", words.evaluator, settings.weights.teacher],
+                ["weightPeer", "Compañeros", settings.weights.peer],
+                ["weightSelf", "Autoevaluación", settings.weights.self],
+              ] as const
+            ).map(([name, label, value]) => (
+              <label className="space-y-1 text-xs text-muted-foreground" key={name}>
+                <span className="block truncate first-letter:uppercase">{label}</span>
+                <Input defaultValue={value} max={100} min={0} name={name} type="number" />
               </label>
             ))}
           </div>
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="space-y-1 text-sm font-semibold">
-              <span className="block">{words.units} que evalúa cada estudiante</span>
-              <Input className="h-9 w-24" defaultValue={settings.reviewsPerStudent} max={10} min={1} name="reviewsPerStudent" type="number" />
-            </label>
-            <fieldset className="flex flex-wrap items-end gap-3">
-              <legend className="mb-1 text-sm font-semibold">Peso en la nota final (%)</legend>
-              <label className="space-y-1 text-xs">
-                <span className="block">{words.evaluator}</span>
-                <Input className="h-9 w-20" defaultValue={settings.weights.teacher} max={100} min={0} name="weightTeacher" type="number" />
-              </label>
-              <label className="space-y-1 text-xs">
-                <span className="block">compañeros</span>
-                <Input className="h-9 w-20" defaultValue={settings.weights.peer} max={100} min={0} name="weightPeer" type="number" />
-              </label>
-              <label className="space-y-1 text-xs">
-                <span className="block">autoevaluación</span>
-                <Input className="h-9 w-20" defaultValue={settings.weights.self} max={100} min={0} name="weightSelf" type="number" />
-              </label>
-            </fieldset>
-          </div>
-          {weightSum !== 100 ? (
-            <p className="text-sm text-orange-600 dark:text-orange-400">
-              Los pesos suman {weightSum} %: se reparten en proporción. Si falta una parte (nadie se autoevaluó), su peso pasa a las demás.
-            </p>
-          ) : null}
-          <Button type="submit">Guardar</Button>
-        </form>
-      </section>
+        </SettingRow>
+      </SettingsForm>
 
       {settings.enabled && settings.peer ? (
         <section className={cardClass}>
-          <h2 className="mb-2 font-display text-xl">Reparto</h2>
+          <h2 className="mb-2 font-display text-lg">Reparto</h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Asigna a cada estudiante con cuenta {settings.reviewsPerStudent} {words.unitsLower} que no son el suyo, equilibrando cuántas
             revisiones recibe cada uno. Repartir de nuevo no borra lo ya evaluado.
@@ -110,7 +104,7 @@ export default async function PeerReviewAdminPage() {
 
       {settings.enabled ? (
         <section>
-          <h2 className="mb-3 font-display text-xl">Progreso</h2>
+          <h2 className="mb-3 font-display text-lg">Progreso</h2>
           <div className="overflow-x-auto rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
               <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
@@ -140,7 +134,6 @@ export default async function PeerReviewAdminPage() {
           </div>
         </section>
       ) : null}
-    </div>
     </div>
   );
 }
