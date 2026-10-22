@@ -10,23 +10,28 @@ import {
   type Criterion,
 } from "@/lib/ai/agents/presentation-graph";
 import { AiConfigError, AllModelsFailedError, aiConfigured } from "@/lib/ai/models";
-import { TranscriptionError, transcribeWithNvidia } from "@/lib/ai/nvidia-transcription";
+import { TranscriptionError, groqConfigured, transcribeWithGroq } from "@/lib/ai/transcription";
 import { mergeTranscripts } from "@/lib/app/merge-transcripts";
 
 // Cola única de procesamiento de exposiciones:
-//   transcribe_segment (NVIDIA → trabajador externo) → assemble → analyze
+//   transcribe_segment (Groq → trabajador externo) → assemble → analyze
 // Los trabajos internos los ejecuta la propia app (tras cada subida y con el
 // pulso de pg_cron); los externos los recogen Kaggle/Colab/PC por /api/worker.
 
 export const AUDIO_BUCKET = "presentation-audio";
 
 const NVIDIA_PER_MINUTE = Number(process.env.NVIDIA_REQUESTS_PER_MINUTE) || 30;
+/** El plan gratuito de Groq admite 20 peticiones por minuto. */
+const GROQ_PER_MINUTE = Number(process.env.GROQ_REQUESTS_PER_MINUTE) || 18;
+/** Esperas más largas que esto (cupo por hora agotado) van al trabajador externo. */
+const GROQ_MAX_DEFER_SECONDS = 120;
 const MAX_INTERNAL_CONCURRENCY = Number(process.env.MAX_INTERNAL_CONCURRENCY) || 4;
 const INTERNAL_LEASE_SECONDS = 290;
 export const EXTERNAL_LEASE_SECONDS = Number(process.env.TRANSCRIPTION_LEASE_SECONDS) || 15 * 60;
 const SLOT_WAIT_MS = 25_000;
 /** Minutos que se espera a un trabajador externo antes de dar el trozo por fallido. */
-const EXTERNAL_WAIT_MINUTES = Number(process.env.TRANSCRIPTION_EXTERNAL_WAIT_MINUTES) || 30;
+// Incluye el arranque automático de Kaggle (aviso de GitHub Actions + carga del modelo).
+const EXTERNAL_WAIT_MINUTES = Number(process.env.TRANSCRIPTION_EXTERNAL_WAIT_MINUTES) || 60;
 type JobKind = "transcribe_segment" | "assemble" | "analyze";
 
 type Job = {
@@ -45,7 +50,7 @@ type TeamRelation =
   | { name: string; project_title: string | null; challenge_id: string | null }[]
   | null;
 
-/** El trabajo debe esperar sin gastar un intento (p. ej. cupo de NVIDIA lleno). */
+/** El trabajo debe esperar sin gastar un intento (p. ej. cupo del proveedor lleno). */
 class DeferJob extends Error {
   /** withModelFallback no debe tratarlo como fallo del modelo. */
   readonly passthrough = true;
@@ -70,6 +75,16 @@ export function isCronRequest(request: Request) {
   return safeEqual(request.headers.get("authorization"), process.env.JOBS_CRON_SECRET);
 }
 
+/** Trozos esperando a un trabajador externo (para decidir si arrancar Kaggle). */
+export async function externalBacklog(admin: SupabaseClient) {
+  const { count } = await admin
+    .from("processing_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("runner", "external")
+    .in("status", ["queued", "processing"]);
+  return count ?? 0;
+}
+
 export function workerUrls() {
   return (process.env.TRANSCRIPTION_WORKER_URLS ?? "")
     .split(",")
@@ -77,8 +92,44 @@ export function workerUrls() {
     .filter(Boolean);
 }
 
+/**
+ * Pide a GitHub Actions que arranque el transcriptor en Kaggle
+ * (.github/workflows/kaggle-worker.yml). Como mucho un aviso por minuto; el
+ * flujo comprueba si ya hay uno en marcha.
+ */
+async function dispatchKaggleWorker(admin: SupabaseClient) {
+  const token = process.env.GITHUB_DISPATCH_TOKEN;
+  const repo = process.env.GITHUB_REPOSITORY || "cofrian/valencia-hack-jurado";
+  if (!token) return;
+  const { data: allowed } = await admin.rpc("take_provider_slot", {
+    p_provider: "kaggle-dispatch",
+    p_limit: 1,
+  });
+  if (allowed !== true) return;
+  const response = await fetch(
+    `https://api.github.com/repos/${repo}/actions/workflows/kaggle-worker.yml/dispatches`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({ ref: "main" }),
+      signal: AbortSignal.timeout(8_000),
+    },
+  ).catch((error: unknown) => error);
+  if (!(response instanceof Response) || !response.ok) {
+    console.error(
+      "No se pudo avisar al transcriptor de Kaggle:",
+      response instanceof Response ? `HTTP ${response.status}` : String(response),
+    );
+  }
+}
+
 /** Despierta a los trabajadores con URL pública; los demás consultan solos. */
-export async function wakeWorkers() {
+export async function wakeWorkers(admin?: SupabaseClient) {
+  if (admin) await dispatchKaggleWorker(admin);
   const headers: HeadersInit = process.env.HF_TOKEN
     ? { Authorization: `Bearer ${process.env.HF_TOKEN}` }
     : {};
@@ -208,7 +259,7 @@ export async function handleJobFailure(
     return;
   }
 
-  // NVIDIA agotado: el respaldo (Whisper en Kaggle/Colab/PC) lo intenta.
+  // Groq agotado o sin configurar: el respaldo (Whisper en Kaggle/Colab/PC) lo intenta.
   if (job.kind === "transcribe_segment" && job.runner === "internal") {
     await admin
       .from("processing_jobs")
@@ -231,10 +282,10 @@ export async function handleJobFailure(
       .from("presentation_recordings")
       .update({
         error_message:
-          "NVIDIA no ha podido transcribir una parte. Esperando al transcriptor de respaldo.",
+          "Transcribiendo con el servidor de respaldo; puede tardar unos minutos.",
       })
       .eq("id", job.recording_id);
-    await wakeWorkers();
+    await wakeWorkers(admin);
     return;
   }
 
@@ -269,7 +320,7 @@ export async function handleJobFailure(
 
 /** Mensaje para la persona usuaria; el detalle técnico queda en last_error. */
 export function friendlyError(message: string) {
-  if (/NVIDIA_API_KEY|clave/i.test(message)) return "la IA no está configurada en el servidor.";
+  if (/NVIDIA_API_KEY|GROQ_API_KEY|clave/i.test(message)) return "la IA no está configurada en el servidor.";
   if (/ninguno de los modelos/i.test(message)) return "los modelos de IA no están disponibles ahora mismo.";
   if (/no se detectó voz/i.test(message)) return "no se detectó voz en la grabación.";
   if (/trabajador de respaldo|transcriptor de respaldo/i.test(message)) return message;
@@ -279,13 +330,13 @@ export function friendlyError(message: string) {
   return "el servicio de IA ha fallado.";
 }
 
-/** Espera turno en el limitador global de NVIDIA o aplaza el trabajo. */
-async function acquireNvidiaSlot(admin: SupabaseClient) {
+/** Espera turno en el limitador global del proveedor o aplaza el trabajo. */
+async function acquireSlot(admin: SupabaseClient, provider: "nvidia" | "groq") {
   const deadline = Date.now() + SLOT_WAIT_MS;
   while (Date.now() < deadline) {
     const { data } = await admin.rpc("take_provider_slot", {
-      p_provider: "nvidia",
-      p_limit: NVIDIA_PER_MINUTE,
+      p_provider: provider,
+      p_limit: provider === "groq" ? GROQ_PER_MINUTE : NVIDIA_PER_MINUTE,
     });
     if (data === true) return;
     await new Promise((resolve) => setTimeout(resolve, 3_000));
@@ -293,12 +344,12 @@ async function acquireNvidiaSlot(admin: SupabaseClient) {
   throw new DeferJob(20);
 }
 
-/** Guarda el texto de un segmento (venga de NVIDIA o del trabajador externo). */
+/** Guarda el texto de un segmento (venga de Groq o del trabajador externo). */
 export async function completeSegment(
   admin: SupabaseClient,
   segmentId: string,
   transcript: string,
-  provider: "nvidia" | "external",
+  provider: "groq" | "external",
 ) {
   const { data: segment } = await admin
     .from("presentation_segments")
@@ -340,9 +391,11 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
     .from("presentation_segments")
     .update({ status: "transcribing" })
     .eq("id", job.segment_id)
-    .select("id, seq, recording_id, storage_path, mime_type")
+    .select("id, seq, recording_id, storage_path, mime_type, recording:presentation_recordings(language)")
     .maybeSingle();
   if (!segment) throw new TranscriptionError("El segmento ya no existe.", false);
+  // Sin Groq no se gastan intentos: directamente al trabajador externo.
+  if (!groqConfigured()) throw new TranscriptionError("Groq no está configurado.", false);
 
   await admin
     .from("presentation_recordings")
@@ -355,12 +408,27 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
     .download(segment.storage_path);
   if (error || !audio) throw new TranscriptionError("No se pudo leer el audio temporal.", true);
 
-  await acquireNvidiaSlot(admin);
-  const text = await transcribeWithNvidia({
-    audio: new Blob([audio], { type: segment.mime_type }),
-    fileName: segment.storage_path.split("/").at(-1) ?? `${segment.seq}.webm`,
-  });
-  await completeSegment(admin, segment.id, text, "nvidia");
+  await acquireSlot(admin, "groq");
+  const recording = segment.recording as unknown as { language: string | null } | null;
+  let text: string;
+  try {
+    text = await transcribeWithGroq({
+      audio: new Blob([audio], { type: segment.mime_type }),
+      fileName: segment.storage_path.split("/").at(-1) ?? `${segment.seq}.webm`,
+      language: (recording?.language || process.env.TRANSCRIPTION_LANGUAGE || "es").split("-")[0],
+    });
+  } catch (error) {
+    // Cupo por minuto lleno: esperar sin gastar intento. Cupo por hora o día
+    // agotado: no tiene sentido reintentar, pasa al respaldo.
+    if (error instanceof TranscriptionError && error.retryAfterSeconds !== undefined) {
+      if (error.retryAfterSeconds <= GROQ_MAX_DEFER_SECONDS) {
+        throw new DeferJob(Math.max(5, Math.ceil(error.retryAfterSeconds)));
+      }
+      throw new TranscriptionError(error.message, false);
+    }
+    throw error;
+  }
+  await completeSegment(admin, segment.id, text, "groq");
 }
 
 async function runAssemble(admin: SupabaseClient, job: Job) {
@@ -434,7 +502,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     criteria: await rubricCriteria(admin, recording.event_id),
     previous: state,
     deps: {
-      acquireSlot: () => acquireNvidiaSlot(admin),
+      acquireSlot: () => acquireSlot(admin, "nvidia"),
       deadlineMs,
       saveNode: async (node, value) => {
         state[node] = value as never;
@@ -502,7 +570,7 @@ export async function sweepQueue(admin: SupabaseClient) {
     await handleJobFailure(
       admin,
       { ...job, attempts: job.max_attempts },
-      "NVIDIA no pudo transcribir y no hay ningún transcriptor de respaldo conectado.",
+      "Groq no pudo transcribir y el transcriptor de respaldo no llegó a conectarse.",
       false,
     );
   }

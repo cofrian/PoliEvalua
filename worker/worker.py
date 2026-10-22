@@ -29,6 +29,9 @@ WHISPER_DEVICE = os.environ.get("WHISPER_DEVICE", "auto")
 WHISPER_COMPUTE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")
 IDLE_MIN_SECONDS = 5
 IDLE_MAX_SECONDS = int(os.environ.get("IDLE_MAX_SECONDS", "60"))
+# Si se define, el trabajador termina tras ese tiempo sin trabajo (Kaggle
+# arrancado automáticamente: no gasta horas de GPU esperando).
+EXIT_AFTER_IDLE_SECONDS = int(os.environ.get("EXIT_AFTER_IDLE_SECONDS", "0"))
 MAX_AUDIO_BYTES = 60 * 1024 * 1024
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -104,6 +107,7 @@ def loop() -> None:
     log.info("Modelo listo. Trabajador %s consultando %s", WORKER_ID, APP_URL)
 
     idle = IDLE_MIN_SECONDS
+    last_job_at = time.monotonic()
     while True:
         job = None
         try:
@@ -118,6 +122,9 @@ def loop() -> None:
             log.warning("Cola no disponible: %s", error)
 
         if not job:
+            if EXIT_AFTER_IDLE_SECONDS and time.monotonic() - last_job_at > EXIT_AFTER_IDLE_SECONDS:
+                log.info("Sin trabajo desde hace %ss: el trabajador termina.", EXIT_AFTER_IDLE_SECONDS)
+                return
             # Sin trabajo: espera cada vez más (hasta IDLE_MAX_SECONDS) para no
             # gastar invocaciones gratuitas de Vercel, salvo que nos despierten.
             woken = wake_event.wait(idle)
@@ -127,6 +134,7 @@ def loop() -> None:
 
         idle = IDLE_MIN_SECONDS
         state["busy"] = True
+        last_job_at = time.monotonic()
         try:
             process_job(model, job)
             state["last_error"] = None
@@ -136,6 +144,7 @@ def loop() -> None:
             report_failure(job["jobId"], f"Error del transcriptor: {error}", retryable=True)
         finally:
             state["busy"] = False
+            last_job_at = time.monotonic()
 
 
 if __name__ == "__main__":

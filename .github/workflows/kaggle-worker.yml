@@ -1,0 +1,52 @@
+name: Transcriptor en Kaggle
+
+# Arranca el transcriptor Whisper de respaldo en una GPU gratuita de Kaggle
+# cuando hay audio esperando (Groq agotado o caído). La app lo avisa al
+# instante (GITHUB_DISPATCH_TOKEN) y además se comprueba cada 10 minutos.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kaggle-worker
+  cancel-in-progress: false
+
+jobs:
+  launch:
+    name: Lanzar si hay audio en cola
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      APP_URL: ${{ secrets.PRODUCTION_URL }}
+      WORKER_TOKEN: ${{ secrets.TRANSCRIPTION_WORKER_TOKEN }}
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      # Token nuevo de Kaggle (Settings → API → Create New Token).
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - name: ¿Hay audio esperando?
+        id: backlog
+        run: |
+          if [ -z "$KAGGLE_API_TOKEN" ] || [ -z "$KAGGLE_USERNAME" ] || [ -z "$WORKER_TOKEN" ]; then
+            echo "Faltan los secretos de Kaggle o del trabajador."; echo "pending=0" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          pending=$(curl -fsS -H "Authorization: Bearer $WORKER_TOKEN" "${APP_URL%/}/api/worker/backlog" | jq -r .pending)
+          echo "Trozos en cola: $pending"
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+      - name: Checkout
+        if: steps.backlog.outputs.pending != '0'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Lanzar en Kaggle si no está ya en marcha
+        if: steps.backlog.outputs.pending != '0'
+        run: |
+          pip install -q --upgrade kaggle
+          status=$(kaggle kernels status "$KAGGLE_USERNAME/transcriptor-upv" 2>&1 || true)
+          echo "$status"
+          if echo "$status" | grep -qiE "running|queued"; then
+            echo "Ya hay un transcriptor en marcha."; exit 0
+          fi
+          python worker/kaggle_launch.py

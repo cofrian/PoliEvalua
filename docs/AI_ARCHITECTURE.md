@@ -52,11 +52,15 @@ antes de uso productivo se deben revisar sus condiciones y capacidad.
    reclaman trabajos con `claim_processing_job` (`FOR UPDATE SKIP LOCKED`).
    Hay reintentos con espera creciente (15 s, 30 s, 60 s) y un límite global de
    trabajos internos simultáneos (`MAX_INTERNAL_CONCURRENCY`).
-3. **Transcripción**: NVIDIA Parakeet primero, con un limitador global en la
-   base de datos (`take_provider_slot`, `NVIDIA_REQUESTS_PER_MINUTE`). Si NVIDIA
-   rechaza el formato se convierte a WAV con ffmpeg. Si agota los intentos, el
-   trabajo pasa a `runner = external` y lo recoge un trabajador Whisper
-   (Kaggle, Colab o PC) por `/api/worker/*`.
+3. **Transcripción**: Whisper `large-v3-turbo` en Groq (plan gratuito: unas
+   2 h de audio por hora y 8 h al día), con un limitador global en la base de
+   datos (`take_provider_slot`, `GROQ_REQUESTS_PER_MINUTE`). Si el cupo por
+   minuto está lleno, el trabajo espera sin gastar intento; si se agota el cupo
+   por hora o día, Groq falla o no hay `GROQ_API_KEY`, el trabajo pasa a
+   `runner = external`. Entonces la app avisa a GitHub Actions
+   (`kaggle-worker.yml`), que arranca el trabajador Whisper en una GPU gratuita
+   de Kaggle; este vacía la cola por `/api/worker/*` y se apaga tras 10 min sin
+   trabajo. Colab o un PC siguen sirviendo como respaldo manual.
 4. **Unión** (`assemble`): con todos los segmentos listos se unen los textos
    eliminando las palabras repetidas del solape (`merge-transcripts.ts`), se
    guarda la transcripción completa y se borra todo el audio.
@@ -77,7 +81,8 @@ antes de uso productivo se deben revisar sus condiciones y capacidad.
 
 ## Privacidad
 
-El audio solo existe mientras se transcribe. A NVIDIA llegan el audio de cada
-segmento y después el texto; a los trabajadores externos, solo los segmentos
-que NVIDIA no pudo procesar. El informe del jurado está en
+El audio solo existe mientras se transcribe: cada trozo se borra en cuanto
+tiene texto, y lo que quede se borra al unir la transcripción o tras un fallo
+definitivo. A Groq llega el audio de cada segmento; a NVIDIA, solo el texto
+para los agentes; a Kaggle, solo los segmentos que Groq no pudo procesar. El informe del jurado está en
 `presentation_jury_reports` y la RLS solo lo muestra a quien puede evaluar.

@@ -1,0 +1,39 @@
+name: Vigilancia
+
+# Cada 15 minutos comprueba la app en producción. Si algo falla, el workflow
+# falla y GitHub avisa por correo (Settings → Notifications → Actions).
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    name: Producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      APP_URL: ${{ secrets.PRODUCTION_URL }}
+      JOBS_CRON_SECRET: ${{ secrets.JOBS_CRON_SECRET }}
+    steps:
+      - name: La web responde
+        run: |
+          if [ -z "$APP_URL" ]; then echo "::warning::Falta PRODUCTION_URL."; exit 0; fi
+          status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${APP_URL%/}/login")
+          echo "/login → HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::La web de producción no responde (HTTP $status)."; exit 1
+          fi
+      - name: Cola de grabaciones
+        run: |
+          if [ -z "$JOBS_CRON_SECRET" ]; then echo "::warning::Falta JOBS_CRON_SECRET."; exit 0; fi
+          status=$(curl -sS -o body.json -w '%{http_code}' --max-time 60 \
+            -H "Authorization: Bearer $JOBS_CRON_SECRET" "${APP_URL%/}/api/health/queue")
+          cat body.json; echo
+          if [ "$status" != "200" ]; then
+            echo "::error::Hay grabaciones fallidas o trabajos atascados (HTTP $status). Detalle arriba."; exit 1
+          fi

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { aiConfigured, modelHealth } from "@/lib/ai/models";
+import { groqConfigured } from "@/lib/ai/transcription";
 import { isCronRequest } from "@/lib/app/processing-queue";
 
 export const runtime = "nodejs";
@@ -20,7 +21,16 @@ export async function GET(request: Request) {
     const tasks = await modelHealth();
     const ok = aiConfigured() && tasks.every((task) => task.ok);
     return NextResponse.json(
-      { ok, keyConfigured: aiConfigured(), tasks },
+      {
+        ok,
+        keyConfigured: aiConfigured(),
+        tasks,
+        // Informativo: sin Groq todo el audio va al respaldo de Kaggle.
+        transcription: {
+          groq: groqConfigured(),
+          kaggleDispatch: Boolean(process.env.GITHUB_DISPATCH_TOKEN),
+        },
+      },
       { status: ok ? 200 : 503 },
     );
   } catch (error) {
