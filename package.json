@@ -21,6 +21,7 @@
     "test:security": "npm run test:rls && npm run test:tenants && npm run test:features && npm run test:students",
     "test:ci": "npm run lint && npm run typecheck && npm run build",
     "test:models": "node scripts/check-nvidia-models.mjs",
+    "smoke:audio": "node scripts/smoke-audio.mjs",
     "lock:fix": "node scripts/fix-lock-optional-deps.mjs",
     "bench:models": "node scripts/benchmark-nvidia-models.mjs",
     "test:all": "npm run test:ci && npm run test:security && npm run test:e2e"
