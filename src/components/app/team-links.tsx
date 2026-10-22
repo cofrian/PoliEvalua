@@ -121,7 +121,7 @@ export function TeamLinks({
           {initialLinks.map((link) => (
             <li className="flex items-center gap-2" key={link.id}>
               <a
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-line px-3 py-2 hover:bg-muted dark:border-[#262838]"
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border px-3 py-2 hover:bg-muted"
                 href={link.url}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -152,7 +152,7 @@ export function TeamLinks({
       )}
 
       {canEdit ? (
-        <div className="space-y-2 rounded-lg border border-dashed border-line p-3 dark:border-[#262838]">
+        <div className="space-y-2 rounded-lg border border-dashed border-border p-3">
           <Input
             aria-label="Enlace"
             inputMode="url"

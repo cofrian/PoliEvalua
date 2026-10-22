@@ -241,7 +241,7 @@ export function NotesPanel({
       <form className="space-y-3" onSubmit={addNote}>
         <Textarea
           aria-label="Nueva nota"
-          className="min-h-24 bg-white dark:bg-[#151621]"
+          className="min-h-24 bg-card"
           onChange={(event) => setBody(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -258,7 +258,7 @@ export function NotesPanel({
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold",
               shared
                 ? "border-sky-400/60 bg-sky-400/15"
-                : "border-line dark:border-[#262838]",
+                : "border-border",
             )}
             onClick={() => setShared((value) => !value)}
             type="button"
@@ -329,7 +329,7 @@ export function NotesPanel({
             const mine = note.author_id === userId;
             return (
               <li
-                className="rounded-xl border border-line bg-white p-3 dark:border-[#262838] dark:bg-[#151621]"
+                className="rounded-xl border border-border bg-white p-3 dark:bg-card"
                 key={note.id}
               >
                 <div className="mb-1.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">

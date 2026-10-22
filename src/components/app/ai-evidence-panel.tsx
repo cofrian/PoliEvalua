@@ -55,7 +55,7 @@ export function AiEvidencePanel({
             Basado en «{evidence.recordingTitle}». Citas literales de la transcripción; la IA no puntúa.
           </p>
           {evidence.criteria.map((item) => (
-            <details className="rounded-lg border border-line p-3 dark:border-[#262838]" key={item.criterion}>
+            <details className="rounded-lg border border-border p-3" key={item.criterion}>
               <summary className="flex cursor-pointer items-center justify-between gap-2 font-semibold">
                 <span>{item.criterion}</span>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${coverageStyles[item.coverage]}`}>

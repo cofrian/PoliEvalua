@@ -669,7 +669,7 @@ export function PresentationStudio({
         </section>
       ) : null}
 
-      <section className="relative overflow-hidden rounded-3xl bg-upv-900 p-5 text-white shadow-xl sm:p-8 dark:bg-[#1b1d1e]">
+      <section className="relative overflow-hidden rounded-3xl bg-upv-900 p-5 text-white shadow-xl sm:p-8 dark:bg-card">
         <div className="pointer-events-none absolute -right-14 -top-14 size-52 rounded-full bg-upv-yellow/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-1/4 size-56 rounded-full bg-upv-blue/20 blur-3xl" />
         <div className="relative grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
@@ -677,7 +677,7 @@ export function PresentationStudio({
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold">
               <Sparkles className="size-4 text-upv-yellow" /> Estudio de exposición
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl">De la voz a las ideas</h2>
+            <h2 className="font-display text-2xl tracking-tight sm:text-3xl">De la voz a las ideas</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
               El audio se sube por partes mientras grabas y se transcribe a la vez.
               Al terminar, unos agentes crean resumen, esquema, mapa mental y un
@@ -822,7 +822,7 @@ export function PresentationStudio({
             <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground uppercase">
               Biblioteca del proyecto
             </p>
-            <h2 className="font-display text-2xl">Exposiciones</h2>
+            <h2 className="font-display text-xl">Exposiciones</h2>
           </div>
           <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">
             {initialRecords.length}

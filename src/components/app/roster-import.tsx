@@ -117,7 +117,7 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
           </p>
           <div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
             {groups.map(([name, members]) => (
-              <div className="rounded-lg border border-line p-3 text-sm dark:border-[#262838]" key={name}>
+              <div className="rounded-lg border border-border p-3 text-sm" key={name}>
                 <p className="font-semibold">{name} · {members.length}</p>
                 <p className="text-muted-foreground">{members.join(", ")}</p>
               </div>

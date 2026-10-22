@@ -1,10 +1,12 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { EmptyState } from "@/components/app/empty-state";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +27,7 @@ const statusStyles = {
   submitted: "border-leaf-500/50 bg-leaf-500/15",
   draft: "border-orange-500/50 bg-orange-500/15",
   incomplete: "border-coral-400/60 bg-coral-400/15",
-  pending: "border-line bg-transparent dark:border-[#262838]",
+  pending: "border-border bg-transparent",
 } as const;
 
 const statusLabels = {
@@ -40,12 +42,15 @@ export function TeamsBrowser({
   teams,
   canVote,
   title = "Equipos",
+  isAdmin = false,
 }: {
   challenges: { id: string; name: string }[];
   teams: TeamSummary[];
   canVote: boolean;
   /** Nombre de la unidad en plural según el tipo de espacio. */
   title?: string;
+  /** Quien gestiona ve cómo crear la lista cuando aún está vacía. */
+  isAdmin?: boolean;
 }) {
   const [challenge, setChallenge] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -68,9 +73,9 @@ export function TeamsBrowser({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl">{title}</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {teams.length} equipos ·{" "}
+            {teams.length} {title.toLowerCase()} ·{" "}
             {canVote
               ? `${teams.filter((t) => t.status === "submitted").length} evaluados por ti`
               : "como mentor puedes tomar notas, no votar"}
@@ -91,6 +96,7 @@ export function TeamsBrowser({
         </div>
       </div>
 
+      {challenges.length ? (
       <div className="flex flex-wrap gap-2" role="tablist">
         {tabs.map((tab) => (
           <button
@@ -99,7 +105,7 @@ export function TeamsBrowser({
               "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
               challenge === tab.id
                 ? "border-navy-900 bg-navy-900 text-white dark:border-orange-100 dark:bg-orange-100 dark:text-navy-900"
-                : "border-line hover:bg-navy-900/5 dark:border-[#262838] dark:hover:bg-white/10",
+                : "border-border hover:bg-navy-900/5 dark:hover:bg-white/10",
             )}
             key={tab.id}
             onClick={() => setChallenge(tab.id)}
@@ -110,17 +116,35 @@ export function TeamsBrowser({
           </button>
         ))}
       </div>
+      ) : null}
 
-      {filtered.length === 0 ? (
+      {teams.length === 0 ? (
+        <EmptyState
+          action={
+            isAdmin ? (
+              <Button asChild>
+                <Link href="/admin/equipos">Crear o importar {title.toLowerCase()}</Link>
+              </Button>
+            ) : null
+          }
+          description={
+            isAdmin
+              ? "Crea la lista a mano o impórtala desde una hoja de cálculo. Aparecerán aquí para evaluarlos."
+              : "Cuando la organización los cree, aparecerán aquí."
+          }
+          icon={<UsersRound aria-hidden="true" />}
+          title={`Todavía no hay ${title.toLowerCase()}`}
+        />
+      ) : filtered.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">
-          No hay equipos que coincidan.
+          Nada coincide con «{query}».
         </p>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((team) => (
             <li key={team.id}>
               <Link
-                className="flex h-full flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-warm transition hover:-translate-y-0.5 dark:border-[#262838] dark:bg-[#151621]"
+                className="flex h-full flex-col gap-3 rounded-xl border border-border bg-white p-4 shadow-warm transition hover:-translate-y-0.5 dark:bg-card"
                 href={`/equipos/${team.id}`}
               >
                 <div className="flex items-start justify-between gap-3">

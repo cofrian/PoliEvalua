@@ -1,4 +1,5 @@
 import { saveAcademicContextAction } from "@/app/(app)/admin/evaluacion/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession } from "@/lib/app/session";
@@ -13,8 +14,13 @@ export default async function AcademicPage() {
     .maybeSingle();
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Titulación, asignatura y curso para que el espacio encaje con la UPV."
+        title="Datos académicos"
+      />
     <section className={cardClass}>
-      <h2 className="font-display text-2xl">Vinculación académica</h2>
+      <h2 className="font-display text-xl">Vinculación académica</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Relaciona este espacio con una asignatura, titulación y centro. Los datos pertenecen únicamente a este espacio.
       </p>
@@ -29,6 +35,7 @@ export default async function AcademicPage() {
         <div className="sm:col-span-2"><Button type="submit">Guardar vinculación</Button></div>
       </form>
     </section>
+    </div>
   );
 }
 

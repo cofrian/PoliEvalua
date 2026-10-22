@@ -301,9 +301,9 @@ export function EvaluationForm({
       ) : null}
 
       {page ? (
-        <section className="space-y-5 rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+        <section className="space-y-5 rounded-xl border border-border bg-white p-4 dark:bg-card">
           <div>
-            <h2 className="font-display text-2xl">{page.title}</h2>
+            <h2 className="font-display text-xl">{page.title}</h2>
             {page.description ? (
               <p className="mt-1 text-sm text-muted-foreground">{page.description}</p>
             ) : null}
@@ -317,7 +317,7 @@ export function EvaluationForm({
               <legend className="font-display text-lg">Comprobación de requisitos</legend>
               {page.requirements.map((requirement) => (
                 <label
-                  className="flex gap-3 rounded-lg border border-line p-3 text-sm dark:border-[#383C3D]"
+                  className="flex gap-3 rounded-lg border border-border p-3 text-sm"
                   key={requirement.key}
                 >
                   <input
@@ -408,7 +408,7 @@ export function EvaluationForm({
           );
           return (
             <li
-              className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]"
+              className="rounded-xl border border-border bg-white p-4 dark:bg-card"
               key={criterion.id}
             >
               <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -431,7 +431,7 @@ export function EvaluationForm({
                       "flex min-h-14 flex-col items-center justify-center rounded-lg border px-1 py-2 text-center transition-colors disabled:opacity-60",
                       current?.score === level.score
                         ? "border-navy-900 bg-navy-900 text-white dark:border-orange-100 dark:bg-orange-100 dark:text-navy-900"
-                        : "border-line hover:bg-navy-900/5 dark:border-[#262838] dark:hover:bg-white/10",
+                        : "border-border hover:bg-navy-900/5 dark:hover:bg-white/10",
                     )}
                     disabled={locked}
                     key={level.score}
@@ -511,7 +511,7 @@ export function EvaluationForm({
         ) : null}
       </div>
 
-      <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-4 border-t border-line bg-paper-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border dark:border-[#262838] dark:bg-ink-950/95">
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:bottom-0 -mx-4 flex items-center justify-between gap-4 border-t border-border bg-muted/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border dark:bg-ink-950/95">
         <div>
           <p className="font-display text-3xl leading-none">
             {total.toFixed(1)}

@@ -302,7 +302,7 @@ function SortableCriterion({
   return (
     <li
       className={cn(
-        "rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]",
+        "rounded-xl border border-border bg-white p-4 dark:bg-card",
         isDragging && "relative z-10 shadow-lg",
       )}
       ref={setNodeRef}

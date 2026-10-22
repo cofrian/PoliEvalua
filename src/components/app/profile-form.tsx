@@ -39,7 +39,7 @@ export function ProfileForm({
             src={preview}
           />
         ) : (
-          <span className="flex size-20 items-center justify-center rounded-full bg-sky-400 font-display text-2xl text-white">
+          <span className="flex size-20 items-center justify-center rounded-full bg-sky-400 font-display text-xl text-white">
             {fullName.slice(0, 1).toUpperCase()}
           </span>
         )}
@@ -93,7 +93,7 @@ export function ProfileForm({
                 "rounded-full border px-4 py-1.5 text-sm font-semibold",
                 mounted && theme === value
                   ? "border-navy-900 bg-navy-900 text-white dark:border-orange-100 dark:bg-orange-100 dark:text-navy-900"
-                  : "border-line dark:border-[#262838]",
+                  : "border-border",
               )}
               key={value}
               onClick={() => setTheme(value)}

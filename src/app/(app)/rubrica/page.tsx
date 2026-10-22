@@ -64,7 +64,7 @@ export default async function RubricPage() {
       <RubricLiveUpdates rubricId={rubric.id} userId={user.id} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl">Rúbrica</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Rúbrica</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {rubric.name} · versión {rubric.version} · escala{" "}
             {rubric.scale_min}–{rubric.scale_max}
@@ -82,7 +82,7 @@ export default async function RubricPage() {
       </div>
 
       {!canEdit ? (
-        <p className="rounded-lg border border-line bg-white px-3 py-2.5 text-sm dark:border-[#262838] dark:bg-[#151621]">
+        <p className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm dark:bg-card">
           {isStudent
             ? `Así te evaluará el ${words.evaluator}: revisa cada criterio y lo que se espera en cada nivel antes de tu ${words.presentation}.`
             : "Solo las personas propietarias y gestoras pueden cambiar la estructura de la rúbrica."}
@@ -99,9 +99,9 @@ export default async function RubricPage() {
       />
 
       {isStudent ? null : <section>
-        <h2 className="mb-3 font-display text-2xl">Historial de cambios</h2>
+        <h2 className="mb-3 font-display text-xl">Historial de cambios</h2>
         {changes?.length ? (
-          <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm dark:divide-[#262838] dark:border-[#262838] dark:bg-[#151621]">
+          <ul className="divide-y divide-border rounded-xl border border-border bg-white text-sm dark:bg-card">
             {changes.map((change) => (
               <li className="flex flex-wrap justify-between gap-2 px-3 py-2" key={change.id}>
                 <span>

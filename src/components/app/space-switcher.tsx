@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export type SpaceOption = { id: string; name: string };
 
@@ -20,9 +21,11 @@ export type SpaceOption = { id: string; name: string };
 export function SpaceSwitcher({
   current,
   spaces,
+  className,
 }: {
   current: SpaceOption;
   spaces: SpaceOption[];
+  className?: string;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -37,10 +40,10 @@ export function SpaceSwitcher({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Espacio actual: ${current.name}. Cambiar de espacio`}
-        className="flex max-w-40 items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-upv-700 hover:bg-upv-100 sm:max-w-56 dark:border-[#383C3D] dark:text-upv-200 dark:hover:bg-white/10"
+        className={cn("flex max-w-40 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted sm:max-w-56", className)}
         disabled={pending}
       >
-        <span className="truncate">{current.name}</span>
+        <span className="flex-1 truncate text-left">{current.name}</span>
         <ChevronsUpDown aria-hidden="true" className="size-3.5 shrink-0 opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">

@@ -30,8 +30,8 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-svh bg-paper-50 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
-      <header className="border-b border-line bg-white dark:bg-[#1B1D1E]">
+    <main className="min-h-svh bg-muted text-upv-ink dark:bg-ink-950 dark:text-upv-100">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <UpvBrand />
           <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden border-b border-line bg-upv-900 text-white">
+      <section className="relative overflow-hidden border-b border-border bg-upv-900 text-white">
         <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-2/5 bg-upv-yellow [clip-path:polygon(34%_0,100%_0,100%_100%,0_100%)] lg:block" />
         <div aria-hidden="true" className="absolute bottom-0 right-[24%] hidden h-2/3 w-1/4 bg-upv-blue [clip-path:polygon(45%_0,100%_0,55%_100%,0_100%)] lg:block" />
         <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)] lg:px-8 lg:py-28">
@@ -89,9 +89,9 @@ export default function Home() {
             El gestor decide quién participa, qué se pregunta, cómo se calcula el resultado y qué información puede ver cada rol.
           </p>
         </div>
-        <div className="mt-9 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4 dark:border-[#383C3D] dark:bg-[#383C3D]">
+        <div className="mt-9 grid gap-px overflow-hidden rounded-xl border border-border bg-line sm:grid-cols-2 lg:grid-cols-4 dark:bg-[#383C3D]">
           {modes.map(({ icon: Icon, title, description }) => (
-            <article className="bg-white p-6 dark:bg-[#1B1D1E]" key={title}>
+            <article className="bg-white p-6 dark:bg-card" key={title}>
               <span className="mb-5 flex size-11 items-center justify-center rounded-md bg-upv-blue/25 text-upv-900 dark:bg-upv-blue/20 dark:text-upv-blue">
                 <Icon aria-hidden="true" className="size-5" />
               </span>
@@ -102,7 +102,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-line bg-upv-900 text-white dark:border-[#383C3D]">
+      <footer className="border-t border-border bg-upv-900 text-white">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-7 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="font-heading font-semibold">Evalúa · Universitat Politècnica de València</p>
           <p className="text-white/70">Accesible · Responsive · Datos protegidos por RLS</p>

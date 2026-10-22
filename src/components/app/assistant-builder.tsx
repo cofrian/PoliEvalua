@@ -23,7 +23,7 @@ export type AssistantProposalItem = {
 
 function ProposalPreview({ proposal }: { proposal: EvaluationProposal }) {
   return (
-    <div className="mt-4 grid gap-4 rounded-xl border border-line bg-paper-50 p-4 text-sm dark:border-[#383C3D] dark:bg-ink-950">
+    <div className="mt-4 grid gap-4 rounded-xl border border-border bg-muted p-4 text-sm dark:bg-ink-950">
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Página propuesta
@@ -128,7 +128,7 @@ export function AssistantBuilder({
         <div className="mb-4 flex items-start gap-3">
           <span className="rounded-full bg-primary/10 p-2"><Bot className="size-5" /></span>
           <div>
-            <h2 className="font-display text-2xl">Asistente de evaluación</h2>
+            <h2 className="font-display text-xl">Asistente de evaluación</h2>
             <p className="text-sm text-muted-foreground">
               Describe la evaluación, la asignatura, los requisitos y cómo quieres organizar el jurado.
             </p>
@@ -157,7 +157,7 @@ export function AssistantBuilder({
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-display text-2xl">Historial de propuestas</h2>
+        <h2 className="font-display text-xl">Historial de propuestas</h2>
         {items.length ? items.map((item) => (
           <article className={cardClass} key={item.id}>
             <p className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString("es-ES")}</p>

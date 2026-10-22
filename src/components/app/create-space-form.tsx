@@ -326,7 +326,7 @@ export function CreateSpaceForm() {
           Vincular este espacio a una asignatura y una titulación
         </label>
         {academic ? (
-          <div className="grid gap-4 rounded-xl border border-line p-4 sm:grid-cols-2 dark:border-[#383C3D]">
+          <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
             <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span className="block">Universidad o institución</span><Input defaultValue={draftAcademic?.institution ?? "Universitat Politècnica de València"} name="institution" required /></label>
             <label className="space-y-1 text-sm font-semibold"><span className="block">Centro o escuela</span><Input defaultValue={draftAcademic?.school ?? ""} name="school" placeholder="ETSINF" /></label>
             <label className="space-y-1 text-sm font-semibold"><span className="block">Titulación</span><Input defaultValue={draftAcademic?.degree ?? ""} name="degree" placeholder="Grado en Ingeniería Informática" /></label>

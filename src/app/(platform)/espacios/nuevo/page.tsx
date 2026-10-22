@@ -8,7 +8,7 @@ export default function NewSpacePage() {
       <p className="mt-3 text-muted-foreground">
         Elige la plantilla, quién participa, cómo se evaluará y qué funciones necesitas. Podrás cambiarlo después.
       </p>
-      <div className="mt-8 rounded-xl border border-line bg-white p-5 sm:p-7 dark:border-[#383C3D] dark:bg-[#1B1D1E]">
+      <div className="mt-8 rounded-xl border border-border bg-white p-5 sm:p-7 dark:bg-card">
         <CreateSpaceForm />
       </div>
     </div>

@@ -29,7 +29,7 @@ export default async function TeamFeedbackPage({ params }: { params: Promise<{ i
       </div>
       <header>
         <p className="text-sm font-bold text-muted-foreground">{event.name}</p>
-        <h1 className="font-display text-3xl sm:text-4xl">
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
           {words.unit} #{feedback.team.number} · {feedback.team.name}
         </h1>
       </header>

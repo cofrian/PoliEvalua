@@ -36,7 +36,7 @@ export default async function ResultsPage() {
     <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl">Resultados</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Resultados</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Media de las evaluaciones enviadas, sobre 100, con la rúbrica actual.
             {!eventClosed ? " Solo visible para admin hasta el cierre." : ""}
@@ -88,7 +88,7 @@ export default async function ResultsPage() {
 
         return (
           <section className="space-y-4 break-inside-avoid-page" key={challenge.id}>
-            <h2 className="font-display text-2xl">{challenge.name}</h2>
+            <h2 className="font-display text-xl">{challenge.name}</h2>
 
             <ResultsChart
               data={ranking
@@ -100,9 +100,9 @@ export default async function ResultsPage() {
                 }))}
             />
 
-            <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-sm">
-                <thead className="border-b border-line text-left text-xs text-muted-foreground uppercase dark:border-[#262838]">
+                <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
                   <tr>
                     <th className={cell}>#</th>
                     <th className={cell}>{words.unit}</th>
@@ -134,7 +134,7 @@ export default async function ResultsPage() {
                     if (team.average !== null) position++;
                     return (
                       <tr
-                        className="border-b border-line last:border-0 dark:border-[#262838]"
+                        className="border-b border-border last:border-0"
                         key={team.teamId}
                       >
                         <td className={`${cell} font-bold`}>
@@ -196,7 +196,7 @@ export default async function ResultsPage() {
                 .filter((t) => t.evaluations.length)
                 .map((team) => (
                   <details
-                    className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]"
+                    className="rounded-xl border border-border bg-white p-4 dark:bg-card"
                     key={team.teamId}
                   >
                     <summary className="cursor-pointer font-semibold">

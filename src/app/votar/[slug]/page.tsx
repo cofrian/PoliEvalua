@@ -35,7 +35,7 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
     : { data: null };
 
   return (
-    <main className="mx-auto min-h-svh max-w-xl bg-paper-50 px-4 py-6 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
+    <main className="mx-auto min-h-svh max-w-xl bg-background px-4 py-6 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
       <UpvBrand className="mb-6" href="/" />
       <p className="text-sm font-semibold text-muted-foreground">{event.name}</p>
       <h1 className="font-display text-3xl">{settings.title}</h1>
@@ -47,7 +47,7 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
           <PublicVoteForm currentTeamId={current?.team_id ?? null} slug={slug} teams={teams ?? []} />
         </>
       ) : (
-        <p className="mt-6 rounded-xl border border-line bg-white p-6 text-center dark:border-[#383C3D] dark:bg-[#1B1D1E]">
+        <p className="mt-6 rounded-xl border border-border bg-white p-6 text-center dark:bg-card">
           La votación está cerrada en este momento.
         </p>
       )}
