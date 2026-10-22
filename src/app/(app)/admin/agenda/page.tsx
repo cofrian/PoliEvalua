@@ -1,4 +1,7 @@
+import { CalendarDays } from "lucide-react";
+
 import { clearAgendaAction } from "@/app/(app)/admin/actions";
+import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
 import { AgendaBoard } from "@/components/app/agenda-board";
 import { AgendaGenerator } from "@/components/app/agenda-generator";
@@ -24,9 +27,8 @@ export default async function AdminAgendaPage() {
         description="Turnos de exposición, salas y orden. El jurado y el alumnado la ven al momento."
         title="Organizar agenda"
       />
-    <div className="space-y-8">
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-xl">Agenda de {words.presentation === "exposición" ? "exposiciones" : "defensas"}</h2>
+        <h2 className="mb-2 font-display text-lg">{slots.length ? "Rehacer la agenda" : "Generar la agenda"}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
           Reparte los {words.unitsLower} entre las salas y calcula la hora de cada turno. Todo el espacio
           ve la agenda; el alumnado ve resaltado su turno y los retrasos se recalculan solos.
@@ -37,7 +39,7 @@ export default async function AdminAgendaPage() {
       {slots.length ? (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl">Turnos</h2>
+            <h2 className="font-display text-lg">Turnos ({slots.length})</h2>
             <form action={clearAgendaAction}>
               <ConfirmSubmit
                 confirmLabel="Borrar agenda"
@@ -50,8 +52,13 @@ export default async function AdminAgendaPage() {
           </div>
           <AgendaBoard canReorder canRunRoom slots={slots} />
         </section>
-      ) : null}
-    </div>
+      ) : (
+        <EmptyState
+          description={`Elige salas, duración y hora de inicio arriba y se repartirán los ${words.unitsLower} en turnos. Después podrás reordenarlos arrastrando.`}
+          icon={<CalendarDays aria-hidden="true" />}
+          title="Aún no hay turnos"
+        />
+      )}
     </div>
   );
 }

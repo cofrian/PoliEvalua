@@ -85,7 +85,7 @@ export default async function TeamPage({
         className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground"
         href="/equipos"
       >
-        <ArrowLeft className="size-4" /> Equipos
+        <ArrowLeft className="size-4" /> {words.units}
       </Link>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -123,7 +123,7 @@ export default async function TeamPage({
                   ? "Ver mi evaluación"
                   : evaluation
                     ? "Continuar evaluación"
-                    : "Evaluar equipo"}
+                    : `Evaluar ${words.unitLower}`}
               </Link>
             </Button>
           ) : null}

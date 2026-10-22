@@ -1,3 +1,4 @@
+import { Layers } from "lucide-react";
 import {
   autoAssignPanelsAction,
   deactivatePanelAction,
@@ -5,6 +6,7 @@ import {
   updatePanelMembersAction,
   updatePanelTeamsAction,
 } from "@/app/(app)/admin/paneles/actions";
+import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
@@ -49,11 +51,10 @@ export default async function PanelsPage() {
         description="Reparte qué personas evalúan a qué grupos."
         title={`Paneles de ${words.evaluator}`}
       />
-    <div className="space-y-6">
       <section className={cardClass}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-display text-xl">Paneles de jurado</h2>
+            <h2 className="font-display text-lg">Reparto automático</h2>
             <p className="text-sm text-muted-foreground">
               Cada juez solo podrá votar los proyectos asignados a alguno de sus paneles. Propietarios y gestores mantienen acceso de supervisión.
             </p>
@@ -65,6 +66,13 @@ export default async function PanelsPage() {
         </div>
       </section>
 
+      {activePanels.length === 0 ? (
+        <EmptyState
+          description="Sin paneles, cualquier persona evaluadora puede puntuar a todos. Crea paneles abajo si queréis repartir el trabajo por salas o especialidades."
+          icon={<Layers aria-hidden="true" />}
+          title="Todavía no hay paneles"
+        />
+      ) : null}
       {activePanels.map((panel) => {
         const selectedMembers = new Set((panelMembers ?? []).filter((item) => item.panel_id === panel.id).map((item) => item.user_id));
         const selectedTeams = new Set((assignments ?? []).filter((item) => item.panel_id === panel.id && item.round === currentRound).map((item) => item.team_id));
@@ -130,15 +138,14 @@ export default async function PanelsPage() {
       })}
 
       <section className={cardClass}>
-        <h2 className="font-display text-xl">Nuevo panel</h2>
+        <h2 className="font-display text-lg">Nuevo panel</h2>
         <form action={savePanelAction} className="mt-3 grid gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
-          <Input name="name" placeholder="Panel A" required />
-          <Input name="description" placeholder="Sala o especialidad" />
+          <Input aria-label="Nombre del nuevo panel" name="name" placeholder="Panel A" required />
+          <Input aria-label="Descripción del nuevo panel" name="description" placeholder="Sala o especialidad" />
           <Input aria-label="Orden" defaultValue={activePanels.length + 1} min={0} name="order" type="number" />
           <Button type="submit">Crear panel</Button>
         </form>
       </section>
-    </div>
     </div>
   );
 }

@@ -1,9 +1,8 @@
 import { saveAcademicContextAction } from "@/app/(app)/admin/evaluacion/actions";
 import { PageHeader } from "@/components/app/page-header";
-import { Button } from "@/components/ui/button";
+import { SettingRow, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { getSession } from "@/lib/app/session";
-import { cardClass } from "@/lib/app/ui";
 
 export default async function AcademicPage() {
   const { supabase, event } = await getSession();
@@ -19,23 +18,33 @@ export default async function AcademicPage() {
         description="Titulación, asignatura y curso para que el espacio encaje con la UPV."
         title="Datos académicos"
       />
-    <section className={cardClass}>
-      <h2 className="font-display text-xl">Vinculación académica</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Relaciona este espacio con una asignatura, titulación y centro. Los datos pertenecen únicamente a este espacio.
-      </p>
-      <form action={saveAcademicContextAction} className="mt-5 grid gap-4 sm:grid-cols-2">
-        <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span className="block">Universidad o institución</span><Input defaultValue={academic?.institution ?? "Universitat Politècnica de València"} name="institution" required /></label>
-        <label className="space-y-1 text-sm font-semibold"><span className="block">Centro o escuela</span><Input defaultValue={academic?.school ?? ""} name="school" placeholder="ETSINF" /></label>
-        <label className="space-y-1 text-sm font-semibold"><span className="block">Titulación</span><Input defaultValue={academic?.degree ?? ""} name="degree" placeholder="Grado en Ingeniería Informática" /></label>
-        <label className="space-y-1 text-sm font-semibold"><span className="block">Asignatura</span><Input defaultValue={academic?.subject_name ?? ""} name="subjectName" required /></label>
-        <label className="space-y-1 text-sm font-semibold"><span className="block">Código de asignatura</span><Input defaultValue={academic?.subject_code ?? ""} name="subjectCode" /></label>
-        <label className="space-y-1 text-sm font-semibold"><span className="block">Curso académico</span><Input defaultValue={academic?.academic_year ?? ""} name="academicYear" placeholder="2026–2027" /></label>
-        <label className="space-y-1 text-sm font-semibold"><span className="block">Semestre o convocatoria</span><Input defaultValue={academic?.term ?? ""} name="term" placeholder="Primer semestre" /></label>
-        <div className="sm:col-span-2"><Button type="submit">Guardar vinculación</Button></div>
-      </form>
-    </section>
+      <SettingsForm
+        action={saveAcademicContextAction}
+        description="Relaciona el espacio con una asignatura, titulación y centro. Solo afecta a este espacio."
+        title="Vinculación académica"
+      >
+        <SettingRow htmlFor="institution" label="Universidad o institución">
+          <Input defaultValue={academic?.institution ?? "Universitat Politècnica de València"} id="institution" name="institution" required />
+        </SettingRow>
+        <SettingRow htmlFor="school" label="Centro o escuela">
+          <Input defaultValue={academic?.school ?? ""} id="school" name="school" placeholder="ETSINF" />
+        </SettingRow>
+        <SettingRow htmlFor="degree" label="Titulación">
+          <Input defaultValue={academic?.degree ?? ""} id="degree" name="degree" placeholder="Grado en Ingeniería Informática" />
+        </SettingRow>
+        <SettingRow htmlFor="subjectName" label="Asignatura">
+          <Input defaultValue={academic?.subject_name ?? ""} id="subjectName" name="subjectName" required />
+        </SettingRow>
+        <SettingRow htmlFor="subjectCode" label="Código de asignatura">
+          <Input defaultValue={academic?.subject_code ?? ""} id="subjectCode" name="subjectCode" />
+        </SettingRow>
+        <SettingRow htmlFor="academicYear" label="Curso académico">
+          <Input defaultValue={academic?.academic_year ?? ""} id="academicYear" name="academicYear" placeholder="2026–2027" />
+        </SettingRow>
+        <SettingRow htmlFor="term" label="Semestre o convocatoria">
+          <Input defaultValue={academic?.term ?? ""} id="term" name="term" placeholder="Primer semestre" />
+        </SettingRow>
+      </SettingsForm>
     </div>
   );
 }
-

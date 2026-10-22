@@ -100,7 +100,7 @@ export async function AdminOverview({ session }: { session: Session }) {
     {
       label: words.evaluator.charAt(0).toUpperCase() + words.evaluator.slice(1),
       done: evaluators.length > 0,
-      detail: `${evaluators.length} personas · ${panelCount ?? 0} paneles`,
+      detail: `${evaluators.length} ${evaluators.length === 1 ? "persona" : "personas"} · ${panelCount ?? 0} ${panelCount === 1 ? "panel" : "paneles"}`,
       href: "/admin/personas",
     },
     {
@@ -115,7 +115,7 @@ export async function AdminOverview({ session }: { session: Session }) {
       done: recording.enabled && pendingNotice === 0,
       detail: recording.enabled
         ? pendingNotice
-          ? `${pendingNotice} personas aún no lo han confirmado`
+          ? `${pendingNotice} ${pendingNotice === 1 ? "persona aún no lo ha" : "personas aún no lo han"} confirmado`
           : "Todos lo han confirmado"
         : "Grabación desactivada",
       href: "/admin/grabaciones",

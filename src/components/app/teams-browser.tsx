@@ -150,8 +150,9 @@ export function TeamsBrowser({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold text-muted-foreground">
-                      {challenges.find((c) => c.id === team.challengeId)?.name}{" "}
-                      · #{team.number}
+                      {[challenges.find((c) => c.id === team.challengeId)?.name, `#${team.number}`]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                     <h2 className="font-display text-xl leading-tight">
                       {team.name}
@@ -172,8 +173,9 @@ export function TeamsBrowser({
                   ) : null}
                 </div>
                 <p className="mt-auto text-xs text-muted-foreground">
-                  {team.memberCount} integrantes · {team.myNotes} notas mías ·{" "}
-                  {team.sharedNotes} compartidas
+                  {team.memberCount} {team.memberCount === 1 ? "integrante" : "integrantes"}
+                  {team.myNotes ? ` · ${team.myNotes} ${team.myNotes === 1 ? "nota tuya" : "notas tuyas"}` : ""}
+                  {team.sharedNotes ? ` · ${team.sharedNotes} ${team.sharedNotes === 1 ? "compartida" : "compartidas"}` : ""}
                 </p>
                 {canVote && !team.canEvaluate ? (
                   <p className="text-xs font-semibold text-orange-700 dark:text-orange-300">
