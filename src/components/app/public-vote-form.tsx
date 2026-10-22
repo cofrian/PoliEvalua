@@ -26,7 +26,7 @@ export function PublicVoteForm({
         <legend className="sr-only">Proyectos</legend>
         {teams.map((team) => (
           <label
-            className="flex cursor-pointer items-center gap-3 rounded-xl border border-input bg-white p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/10 dark:bg-[#1B1D1E]"
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-input bg-white p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/10 dark:bg-card"
             key={team.id}
           >
             <input

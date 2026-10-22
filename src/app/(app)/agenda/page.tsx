@@ -22,7 +22,7 @@ export default async function AgendaPage() {
     <div className="space-y-6">
       <AgendaLiveRefresh eventId={event.id} />
       <div>
-        <h1 className="font-display text-3xl sm:text-4xl">Agenda</h1>
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Agenda</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Horas previstas con los retrasos actualizados en directo.
           {myTeam ? ` Tu ${words.unitLower} aparece resaltado.` : ""}

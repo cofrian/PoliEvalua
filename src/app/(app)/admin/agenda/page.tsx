@@ -1,4 +1,5 @@
 import { clearAgendaAction } from "@/app/(app)/admin/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { AgendaBoard } from "@/components/app/agenda-board";
 import { AgendaGenerator } from "@/components/app/agenda-generator";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,14 @@ export default async function AdminAgendaPage() {
   const slots = await loadAgenda(supabase, event.id);
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Turnos de exposición, salas y orden. El jurado y el alumnado la ven al momento."
+        title="Organizar agenda"
+      />
     <div className="space-y-8">
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-2xl">Agenda de {words.presentation === "exposición" ? "exposiciones" : "defensas"}</h2>
+        <h2 className="mb-2 font-display text-xl">Agenda de {words.presentation === "exposición" ? "exposiciones" : "defensas"}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
           Reparte los {words.unitsLower} entre las salas y calcula la hora de cada turno. Todo el espacio
           ve la agenda; el alumnado ve resaltado su turno y los retrasos se recalculan solos.
@@ -31,7 +37,7 @@ export default async function AdminAgendaPage() {
       {slots.length ? (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-2xl">Turnos</h2>
+            <h2 className="font-display text-xl">Turnos</h2>
             <form action={clearAgendaAction}>
               <Button className="h-9 text-destructive" type="submit" variant="ghost">
                 Borrar agenda
@@ -41,6 +47,7 @@ export default async function AdminAgendaPage() {
           <AgendaBoard canReorder canRunRoom slots={slots} />
         </section>
       ) : null}
+    </div>
     </div>
   );
 }

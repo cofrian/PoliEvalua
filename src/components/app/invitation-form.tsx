@@ -51,7 +51,7 @@ export function InvitationForm() {
       </div>
       {state.error ? <p className="text-sm text-destructive" role="alert">{state.error}</p> : null}
       {state.link ? (
-        <div className="rounded-md bg-paper-50 p-3 dark:bg-ink-950">
+        <div className="rounded-md bg-muted p-3 dark:bg-ink-950">
           <p className="mb-1 text-xs font-semibold">Enlace privado (solo se muestra ahora)</p>
           <input aria-label="Enlace de invitación" className="w-full bg-transparent font-mono text-xs" readOnly value={state.link} />
         </div>

@@ -118,7 +118,7 @@ export function TeamFeedbackView({ feedback }: { feedback: TeamFeedback }) {
         {feedback.criteria.map((criterion) => {
           const percent = criterion.average === null ? 0 : (criterion.average / feedback.scaleMax) * 100;
           return (
-            <li className="break-inside-avoid rounded-lg border border-line p-4 dark:border-[#262838]" key={criterion.title}>
+            <li className="break-inside-avoid rounded-lg border border-border p-4" key={criterion.title}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-semibold">
                   {criterion.title} <span className="font-normal text-muted-foreground">· {criterion.weight} %</span>
@@ -129,7 +129,7 @@ export function TeamFeedbackView({ feedback }: { feedback: TeamFeedback }) {
               </div>
               <div
                 aria-hidden="true"
-                className="mt-2 h-2 overflow-hidden rounded-full bg-muted print:border print:border-line"
+                className="mt-2 h-2 overflow-hidden rounded-full bg-muted print:border print:border-border"
               >
                 <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
               </div>

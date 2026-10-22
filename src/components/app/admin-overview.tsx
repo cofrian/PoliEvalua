@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Circle } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 import type { getSession } from "@/lib/app/session";
@@ -101,7 +101,7 @@ export async function AdminOverview({ session }: { session: Session }) {
       label: words.evaluator.charAt(0).toUpperCase() + words.evaluator.slice(1),
       done: evaluators.length > 0,
       detail: `${evaluators.length} personas · ${panelCount ?? 0} paneles`,
-      href: "/admin",
+      href: "/admin/personas",
     },
     {
       label: "Agenda",
@@ -122,6 +122,12 @@ export async function AdminOverview({ session }: { session: Session }) {
       optional: true,
     },
   ];
+
+  const required = steps.filter((step) => !step.optional);
+  const progress = required.length
+    ? Math.round((required.filter((step) => step.done).length / required.length) * 100)
+    : 100;
+  const next = required.find((step) => !step.done);
 
   const submitted = (evaluations ?? []).filter((evaluation) => evaluation.status === "submitted");
   const minimum = page?.min_evaluations ?? 1;
@@ -147,32 +153,72 @@ export async function AdminOverview({ session }: { session: Session }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <section className={cardClass}>
-        <h2 className="mb-3 font-display text-2xl">Preparación</h2>
-        <ul className="space-y-2">
-          {steps.map((step) => (
+      <section className={`${cardClass} lg:row-span-2`}>
+        <div className="mb-4 flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-xl">Preparación</h2>
+          <span className="text-sm text-muted-foreground">
+            {required.filter((step) => step.done).length} de {required.length} pasos
+          </span>
+        </div>
+        <div
+          aria-label="Progreso de la preparación"
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={progress}
+          className="mb-5 h-2 overflow-hidden rounded-full bg-muted"
+          role="progressbar"
+        >
+          <div className="h-full rounded-full bg-leaf-500 transition-all" style={{ width: `${progress}%` }} />
+        </div>
+        {next ? (
+          <Link
+            className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-upv-yellow/60 bg-upv-yellow/15 p-4 transition-colors hover:bg-upv-yellow/25"
+            href={next.href}
+          >
+            <span>
+              <span className="block text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Siguiente paso
+              </span>
+              <strong className="block">{next.label}</strong>
+              <span className="text-sm text-muted-foreground">{next.detail}</span>
+            </span>
+            <ArrowRight aria-hidden="true" className="size-5 shrink-0" />
+          </Link>
+        ) : (
+          <p className="mb-5 rounded-xl bg-leaf-500/10 p-4 text-sm font-medium">
+            Todo listo. Cuando empiecen las {words.presentation === "exposición" ? "exposiciones" : "defensas"}, sigue el progreso aquí.
+          </p>
+        )}
+        <ol className="space-y-1">
+          {steps.map((step, index) => (
             <li key={step.label}>
-              <Link className="flex items-start gap-3 rounded-lg p-2 hover:bg-muted" href={step.href}>
+              <Link className="flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted" href={step.href}>
                 {step.done ? (
                   <CheckCircle2 aria-label="Hecho" className="mt-0.5 size-5 shrink-0 text-leaf-500" />
                 ) : (
-                  <Circle aria-label="Pendiente" className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+                  <span
+                    aria-label="Pendiente"
+                    className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-border text-[10px] font-bold text-muted-foreground"
+                  >
+                    {index + 1}
+                  </span>
                 )}
-                <span>
-                  <strong className="block text-sm">
+                <span className="min-w-0 flex-1">
+                  <strong className={step.done ? "block text-sm text-muted-foreground" : "block text-sm"}>
                     {step.label}
                     {step.optional ? <span className="font-normal text-muted-foreground"> · opcional</span> : null}
                   </strong>
                   <span className="text-sm text-muted-foreground">{step.detail}</span>
                 </span>
+                <ChevronRight aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               </Link>
             </li>
           ))}
-        </ul>
+        </ol>
       </section>
 
       <section className={`${cardClass} space-y-4`}>
-        <h2 className="font-display text-2xl">Evaluación</h2>
+        <h2 className="font-display text-xl">Evaluación</h2>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="rounded-lg bg-muted p-3">
             <p className="text-2xl font-bold">{submitted.length}</p>
@@ -193,7 +239,7 @@ export async function AdminOverview({ session }: { session: Session }) {
             <ul className="flex flex-wrap gap-2 text-sm">
               {behind.slice(0, 24).map((team) => (
                 <li key={team.id}>
-                  <Link className="rounded-full border border-line px-2.5 py-0.5 hover:bg-muted dark:border-[#262838]" href={`/equipos/${team.id}`}>
+                  <Link className="rounded-full border border-border px-2.5 py-0.5 hover:bg-muted" href={`/equipos/${team.id}`}>
                     #{team.number} {team.name} · {team.submitted}/{minimum}
                     {team.drafts ? ` (+${team.drafts} borrador)` : ""}
                   </Link>

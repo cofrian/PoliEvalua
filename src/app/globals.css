@@ -71,9 +71,9 @@
   --coral-400: var(--upv-red);
   --peach-200: var(--upv-100);
   --ink-950: var(--upv-ink);
-  --paper-50: #f8f8f7;
+  --paper-50: #f6f6f3;
   --slate-500: var(--upv-500);
-  --line: #d9dada;
+  --line: #e4e4e0;
   --background: var(--paper-50);
   --foreground: var(--navy-900);
   --card: #ffffff;
@@ -98,7 +98,7 @@
   --chart-3: var(--sun-300);
   --chart-4: var(--sky-400);
   --chart-5: var(--leaf-500);
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --sidebar: #ffffff;
   --sidebar-foreground: var(--navy-900);
   --sidebar-primary: var(--upv-900);
@@ -110,9 +110,9 @@
 }
 
 .dark {
-  --background: #111111;
+  --background: #0f1011;
   --foreground: #f1f1f1;
-  --card: #1b1d1e;
+  --card: #18191b;
   --card-foreground: #f1f1f1;
   --popover: #1b1d1e;
   --popover-foreground: #f1f1f1;
@@ -126,7 +126,7 @@
   --accent-foreground: #ffffff;
   --destructive: #f06a65;
   --destructive-foreground: var(--upv-ink);
-  --border: #383c3d;
+  --border: #2c2f31;
   --input: #4b5052;
   --ring: var(--upv-yellow);
   --sidebar: #1b1d1e;

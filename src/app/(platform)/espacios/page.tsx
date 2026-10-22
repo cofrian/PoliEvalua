@@ -75,7 +75,7 @@ export default async function SpacesPage() {
             if (!space) return null;
             const active = space.id === activeEventId;
             return (
-              <article className="rounded-xl border border-line bg-white p-5 dark:border-[#383C3D] dark:bg-[#1B1D1E]" key={space.id}>
+              <article className="rounded-xl border border-border bg-white p-5 dark:bg-card" key={space.id}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-upv-500 dark:text-upv-300">{kindLabels[space.kind]}</p>
@@ -103,7 +103,7 @@ export default async function SpacesPage() {
           })}
         </div>
       ) : (
-        <section className="rounded-xl border border-dashed border-line bg-white p-8 text-center dark:border-[#383C3D] dark:bg-[#1B1D1E]">
+        <section className="rounded-xl border border-dashed border-border bg-white p-8 text-center dark:bg-card">
           <h2 className="font-heading text-2xl font-semibold">Tu cuenta ya está lista</h2>
           <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
             Crea tu primer espacio o introduce el código que te haya facilitado una organización.
@@ -114,7 +114,7 @@ export default async function SpacesPage() {
         </section>
       )}
 
-      <section className="rounded-xl border border-line bg-white p-5 sm:p-6 dark:border-[#383C3D] dark:bg-[#1B1D1E]">
+      <section className="rounded-xl border border-border bg-white p-5 sm:p-6 dark:bg-card">
         <h2 className="font-heading text-xl font-semibold">Entrar con un código de espacio</h2>
         <p className="mb-5 mt-1 text-sm text-muted-foreground">
           Este código solo sirve para añadir un espacio a tu cuenta; nunca se pide para entrar en la plataforma.

@@ -34,7 +34,7 @@ export default async function RoomPage({
   if (!rooms.length) {
     return (
       <div className={`${cardClass} mx-auto max-w-xl space-y-2`}>
-        <h1 className="font-display text-2xl">No hay agenda</h1>
+        <h1 className="font-display text-xl">No hay agenda</h1>
         <p className="text-sm text-muted-foreground">
           {isAdmin ? (
             <>Crea la agenda en <Link className="underline" href="/admin/agenda">Admin → Agenda</Link>.</>
@@ -68,7 +68,7 @@ export default async function RoomPage({
         {rooms.map((name) => (
           <Link
             className={`rounded-full border px-3 py-1 text-sm font-semibold ${
-              name === room ? "border-primary bg-primary/10" : "border-line dark:border-[#262838]"
+              name === room ? "border-primary bg-primary/10" : "border-border"
             }`}
             href={`/sala?room=${encodeURIComponent(name)}`}
             key={name}
@@ -85,7 +85,7 @@ export default async function RoomPage({
               {room} · {slotStatusLabels[current.status]}
               {current.expectedStart ? ` · previsto a las ${timeFormat.format(current.expectedStart)}` : ""}
             </p>
-            <h1 className="font-display text-3xl sm:text-4xl">
+            <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
               {words.unit} #{current.team.number} · {current.team.name}
             </h1>
           </div>
@@ -140,7 +140,7 @@ export default async function RoomPage({
               />
             </div>
             <div>
-              <h2 className="mb-3 font-display text-2xl">Notas</h2>
+              <h2 className="mb-3 font-display text-xl">Notas</h2>
               <NotesPanel
                 eventId={event.id}
                 initialNotes={evaluation.notes}

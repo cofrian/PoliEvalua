@@ -1,4 +1,5 @@
 import { AssistantBuilder, type AssistantProposalItem } from "@/components/app/assistant-builder";
+import { PageHeader } from "@/components/app/page-header";
 import { evaluationProposalSchema } from "@/lib/ai/evaluation-proposal";
 import { aiConfigured } from "@/lib/ai/models";
 import { getSession } from "@/lib/app/session";
@@ -25,10 +26,16 @@ export default async function AssistantPage() {
   });
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Describe lo que necesitas y la IA prepara rúbrica, grupos y ajustes para que los revises."
+        title="Asistente IA"
+      />
     <AssistantBuilder
       configured={aiConfigured()}
       initialItems={items}
     />
+    </div>
   );
 }
 

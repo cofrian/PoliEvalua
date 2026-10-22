@@ -1,4 +1,5 @@
 import { deleteChallengeAction, saveChallengeAction } from "@/app/(app)/admin/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession } from "@/lib/app/session";
@@ -40,6 +41,11 @@ export default async function AdminChallengesPage() {
   ]);
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Las categorías en las que compiten los equipos."
+        title="Retos"
+      />
     <div className="space-y-4">
       {(challenges ?? []).map((challenge) => {
         const count = (teams ?? []).filter((t) => t.challenge_id === challenge.id).length;
@@ -64,6 +70,7 @@ export default async function AdminChallengesPage() {
         <h2 className="mb-3 font-display text-xl">Nuevo reto</h2>
         <ChallengeForm challenge={null} />
       </section>
+    </div>
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default async function EvaluatePage({
           className={
             context.tone === "warning"
               ? "rounded-xl border border-orange-500/50 bg-orange-500/10 p-6"
-              : "rounded-xl border border-line bg-white p-6 dark:border-[#262838] dark:bg-[#151621]"
+              : "rounded-xl border border-border bg-white p-6 dark:bg-card"
           }
         >
           {context.message}
@@ -66,12 +66,12 @@ export default async function EvaluatePage({
         <p className="text-sm font-bold text-muted-foreground">
           {context.page?.title ?? context.rubric.name}
         </p>
-        <h1 className="font-display text-3xl sm:text-4xl">
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
           Evaluar · {team.name}
         </h1>
       </div>
 
-      <details className="rounded-xl border border-line bg-white p-4 lg:hidden dark:border-[#262838] dark:bg-[#151621]">
+      <details className="rounded-xl border border-border bg-white p-4 lg:hidden dark:bg-card">
         <summary className="cursor-pointer font-semibold">Apoyo de la IA</summary>
         <div className="mt-3">{aiPanel}</div>
       </details>
@@ -90,10 +90,10 @@ export default async function EvaluatePage({
           userId={user.id}
         />
         <aside className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto">
-          <div className="mb-6 rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+          <div className="mb-6 rounded-xl border border-border bg-white p-4 dark:bg-card">
             {aiPanel}
           </div>
-          <h2 className="mb-3 font-display text-2xl">Notas</h2>
+          <h2 className="mb-3 font-display text-xl">Notas</h2>
           <NotesPanel
             eventId={event.id}
             initialNotes={context.notes}

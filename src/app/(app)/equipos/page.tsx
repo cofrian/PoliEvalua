@@ -85,6 +85,7 @@ export default async function TeamsPage() {
     <TeamsBrowser
       canVote={canVote}
       challenges={challenges ?? []}
+      isAdmin={isAdmin}
       teams={summaries}
       title={words.units}
     />

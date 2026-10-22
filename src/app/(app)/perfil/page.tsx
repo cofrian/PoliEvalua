@@ -7,7 +7,7 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl sm:text-4xl">Perfil</h1>
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Perfil</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Rol: {roleLabels[profile.role]}
         </p>

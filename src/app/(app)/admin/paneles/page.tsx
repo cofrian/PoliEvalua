@@ -5,6 +5,7 @@ import {
   updatePanelMembersAction,
   updatePanelTeamsAction,
 } from "@/app/(app)/admin/paneles/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
@@ -22,7 +23,7 @@ function profileOf(value: Membership["profile"]) {
 }
 
 export default async function PanelsPage() {
-  const { supabase, event } = await getSession();
+  const { supabase, event, words } = await getSession();
   const [{ data: panels }, { data: memberships }, { data: teams }, { data: panelMembers }, { data: assignments }, { data: evaluationPage }] =
     await Promise.all([
       supabase.from("jury_panels").select("id, name, description, order, active").eq("event_id", event.id).order("order"),
@@ -43,10 +44,15 @@ export default async function PanelsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        description="Reparte qué personas evalúan a qué grupos."
+        title={`Paneles de ${words.evaluator}`}
+      />
+    <div className="space-y-6">
       <section className={cardClass}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-display text-2xl">Paneles de jurado</h2>
+            <h2 className="font-display text-xl">Paneles de jurado</h2>
             <p className="text-sm text-muted-foreground">
               Cada juez solo podrá votar los proyectos asignados a alguno de sus paneles. Propietarios y gestores mantienen acceso de supervisión.
             </p>
@@ -81,7 +87,7 @@ export default async function PanelsPage() {
               <form action={updatePanelMembersAction}>
                 <input name="panelId" type="hidden" value={panel.id} />
                 <h3 className="font-display text-lg">Personas del panel</h3>
-                <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-line p-3 dark:border-[#383C3D]">
+                <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-border p-3">
                   {eligible.map((membership) => {
                     const profile = profileOf(membership.profile);
                     return (
@@ -101,7 +107,7 @@ export default async function PanelsPage() {
                   <h3 className="font-display text-lg">Proyectos asignados</h3>
                   <label className="space-y-1 text-xs font-semibold"><span className="block">Ronda</span><Input className="w-20" defaultValue={currentRound} max={20} min={1} name="round" type="number" /></label>
                 </div>
-                <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-line p-3 dark:border-[#383C3D]">
+                <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-border p-3">
                   {(teams ?? []).map((team) => (
                     <label className="flex items-center gap-2 text-sm" key={team.id}>
                       <input defaultChecked={selectedTeams.has(team.id)} name="teams" type="checkbox" value={team.id} />
@@ -125,6 +131,7 @@ export default async function PanelsPage() {
           <Button type="submit">Crear panel</Button>
         </form>
       </section>
+    </div>
     </div>
   );
 }

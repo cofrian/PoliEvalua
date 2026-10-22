@@ -48,7 +48,7 @@ export function RecordingNoticeDialog({
         aria-describedby="recording-notice-text"
         aria-labelledby="recording-notice-title"
         aria-modal="true"
-        className="w-full max-w-lg rounded-xl border border-line bg-white p-6 shadow-xl dark:border-[#383C3D] dark:bg-[#1B1D1E]"
+        className="w-full max-w-lg rounded-xl border border-border bg-white p-6 shadow-xl dark:bg-card"
         role="dialog"
       >
         <div className="flex items-center gap-3">

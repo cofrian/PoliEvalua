@@ -229,7 +229,7 @@ test("4. El juez entra y ve los equipos", async ({ browser }) => {
   ).toHaveCount(0);
   await judgePage.getByLabel("Buscar equipo").fill("");
   // Sin acceso de admin
-  await expect(judgePage.getByRole("link", { name: "Admin" })).toHaveCount(0);
+  await expect(judgePage.getByRole("link", { name: "Resumen" })).toHaveCount(0);
 });
 
 test("5. El juez crea una nota privada y otra compartida", async () => {
@@ -425,16 +425,17 @@ test("13. El admin puede editar la rúbrica y gestionar todo", async () => {
     adminPage.getByRole("button", { name: "Editar" }).first(),
   ).toBeVisible();
 
-  await adminPage.goto("/admin");
+  await adminPage.goto("/admin/ajustes");
   await expect(
-    adminPage.getByRole("heading", { name: "Evento" }),
+    adminPage.getByRole("heading", { name: "General" }),
   ).toBeVisible();
+  await adminPage.goto("/admin/personas");
   await expect(adminPage.getByText(people.judge.name)).toBeVisible();
   await expect(adminPage.getByText(people.mentor.name)).toBeVisible();
 
   await adminPage.goto("/admin/equipos");
   await expect(
-    adminPage.getByRole("heading", { name: "Importar equipos" }),
+    adminPage.getByText(/Importar equipos/),
   ).toBeVisible();
   await expect(adminPage.getByText(team.name).first()).toBeVisible();
 
@@ -482,7 +483,7 @@ test("14. El propietario crea otro espacio sin mezclar sus equipos", async () =>
 });
 
 test("15. Una invitación personal concede solo su rol y espacio", async ({ browser }) => {
-  await adminPage.goto("/admin");
+  await adminPage.goto("/admin/personas");
   await adminPage.getByLabel("Correo").fill(people.invited.email);
   await adminPage.getByLabel("Rol").selectOption("mentor");
   await adminPage.getByRole("button", { name: "Crear enlace" }).click();

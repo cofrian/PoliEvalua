@@ -1,4 +1,5 @@
 import { updatePeerReviewSettingsAction } from "@/app/(app)/admin/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { PeerAssignButton } from "@/components/app/peer-assign-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,9 +40,14 @@ export default async function PeerReviewAdminPage() {
   const weightSum = settings.weights.teacher + settings.weights.peer + settings.weights.self;
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Que el alumnado se evalúe entre sí y a sí mismo, con reparto automático."
+        title="Coevaluación"
+      />
     <div className="space-y-8">
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-2xl">Coevaluación y autoevaluación</h2>
+        <h2 className="mb-2 font-display text-xl">Coevaluación y autoevaluación</h2>
         <p className="mb-5 text-sm text-muted-foreground">
           El alumnado evalúa con la misma rúbrica a otros {words.unitsLower} y, si lo activas, al suyo. También
           puede valorar de 1 a 5 lo que ha aportado cada compañero. Nadie ve las respuestas individuales de otros.
@@ -93,7 +99,7 @@ export default async function PeerReviewAdminPage() {
 
       {settings.enabled && settings.peer ? (
         <section className={cardClass}>
-          <h2 className="mb-2 font-display text-2xl">Reparto</h2>
+          <h2 className="mb-2 font-display text-xl">Reparto</h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Asigna a cada estudiante con cuenta {settings.reviewsPerStudent} {words.unitsLower} que no son el suyo, equilibrando cuántas
             revisiones recibe cada uno. Repartir de nuevo no borra lo ya evaluado.
@@ -104,10 +110,10 @@ export default async function PeerReviewAdminPage() {
 
       {settings.enabled ? (
         <section>
-          <h2 className="mb-3 font-display text-2xl">Progreso</h2>
-          <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
+          <h2 className="mb-3 font-display text-xl">Progreso</h2>
+          <div className="overflow-x-auto rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
-              <thead className="border-b border-line text-left text-xs uppercase text-muted-foreground dark:border-[#262838]">
+              <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2">Estudiante</th>
                   <th className="px-3 py-2">{words.unit}</th>
@@ -118,7 +124,7 @@ export default async function PeerReviewAdminPage() {
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr className="border-b border-line last:border-0 dark:border-[#262838]" key={row.id}>
+                  <tr className="border-b border-border last:border-0" key={row.id}>
                     <td className="px-3 py-2 font-semibold">
                       {row.name}
                       {!row.linked ? <span className="block text-xs font-normal text-muted-foreground">Aún no ha entrado</span> : null}
@@ -134,6 +140,7 @@ export default async function PeerReviewAdminPage() {
           </div>
         </section>
       ) : null}
+    </div>
     </div>
   );
 }

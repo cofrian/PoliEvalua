@@ -11,8 +11,8 @@ export default async function PlatformLayout({ children }: Readonly<{ children: 
   await supabase.rpc("touch_last_seen");
 
   return (
-    <div className="min-h-svh bg-paper-50 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
-      <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur dark:border-[#383C3D] dark:bg-[#1B1E1E]/95">
+    <div className="min-h-svh bg-muted text-upv-ink dark:bg-ink-950 dark:text-upv-100">
+      <header className="sticky top-0 z-30 border-b border-border bg-white/95 backdrop-blur dark:bg-[#1B1E1E]/95">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <UpvBrand href="/espacios" />
           <div className="flex items-center gap-2">

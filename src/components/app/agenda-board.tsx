@@ -13,10 +13,10 @@ import {
 export type BoardSlot = AgendaSlot & { team: { name: string; number: number | null } };
 
 const statusStyles = {
-  pending: "border-line dark:border-[#262838]",
+  pending: "border-border",
   live: "border-destructive bg-destructive/5",
-  done: "border-line opacity-60 dark:border-[#262838]",
-  skipped: "border-line opacity-50 line-through dark:border-[#262838]",
+  done: "border-border opacity-60",
+  skipped: "border-border opacity-50 line-through",
 } as const;
 
 /**
@@ -66,7 +66,7 @@ export function AgendaBoard({
             <ol className="space-y-2">
               {scheduled.map((slot, index) => (
                 <li
-                  className={`flex items-center gap-3 rounded-lg border bg-white p-3 text-sm dark:bg-[#151621] ${statusStyles[slot.status]} ${
+                  className={`flex items-center gap-3 rounded-lg border bg-white p-3 text-sm dark:bg-card ${statusStyles[slot.status]} ${
                     highlightTeamId === slot.team_id ? "ring-2 ring-primary" : ""
                   }`}
                   key={slot.id}

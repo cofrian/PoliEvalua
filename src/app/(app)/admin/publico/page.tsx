@@ -1,4 +1,5 @@
 import { MonitorPlay } from "lucide-react";
+import { PageHeader } from "@/components/app/page-header";
 import Link from "next/link";
 
 import { resetPublicVotesAction, updatePublicVoteAction } from "@/app/(app)/admin/actions";
@@ -16,9 +17,14 @@ export default async function PublicAdminPage() {
   const [svg, counts] = await Promise.all([qrSvg(url), publicVoteCounts(supabase, event.id)]);
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Un QR para que el público vote y una pantalla con el recuento en directo."
+        title="Voto del público"
+      />
     <div className="space-y-8">
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-2xl">Voto del público</h2>
+        <h2 className="mb-2 font-display text-xl">Voto del público</h2>
         <p className="mb-5 text-sm text-muted-foreground">
           Cualquiera con el enlace o el QR vota sin crear cuenta: un voto por dispositivo, que puede cambiar mientras
           esté abierta. Es independiente de la evaluación del jurado.
@@ -64,7 +70,7 @@ export default async function PublicAdminPage() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-2xl">Recuento ({counts.total})</h2>
+          <h2 className="font-display text-xl">Recuento ({counts.total})</h2>
           {counts.total ? (
             <form action={resetPublicVotesAction}>
               <Button className="h-9 text-destructive" type="submit" variant="ghost">
@@ -88,6 +94,7 @@ export default async function PublicAdminPage() {
           ))}
         </ol>
       </section>
+    </div>
     </div>
   );
 }

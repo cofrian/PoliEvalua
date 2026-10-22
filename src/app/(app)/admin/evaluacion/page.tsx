@@ -1,4 +1,5 @@
 import { saveEvaluationSettingsAction } from "@/app/(app)/admin/evaluacion/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +32,11 @@ export default async function EvaluationSettingsPage({
   const questions = (page?.questions ?? []) as Question[];
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Cuándo se abre la evaluación, cuántas opiniones hacen falta y cómo se calcula la nota."
+        title="Evaluación"
+      />
     <div className="space-y-5">
       {applied ? (
         <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 p-3 text-sm">
@@ -39,7 +45,7 @@ export default async function EvaluationSettingsPage({
       ) : null}
       <section className={cardClass}>
         <div className="mb-5">
-          <h2 className="font-display text-2xl">Página de evaluación</h2>
+          <h2 className="font-display text-xl">Página de evaluación</h2>
           <p className="text-sm text-muted-foreground">Define lo que verá el jurado antes y durante la puntuación.</p>
         </div>
         <form action={saveEvaluationSettingsAction} className="grid gap-5 sm:grid-cols-2">
@@ -102,6 +108,7 @@ export default async function EvaluationSettingsPage({
           </div>
         </form>
       </section>
+    </div>
     </div>
   );
 }

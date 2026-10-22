@@ -36,7 +36,7 @@ export function NotesDrawer({
       </SheetTrigger>
       <SheetContent className="h-[85svh] overflow-y-auto px-4 pb-6" side="bottom">
         <SheetHeader className="px-0">
-          <SheetTitle className="font-display text-2xl">Notas del equipo</SheetTitle>
+          <SheetTitle className="font-display text-xl">Notas del equipo</SheetTitle>
         </SheetHeader>
         <NotesPanel eventId={eventId} initialNotes={initialNotes} teamId={teamId} userId={userId} />
       </SheetContent>

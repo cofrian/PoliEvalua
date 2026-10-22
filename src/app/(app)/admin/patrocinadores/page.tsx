@@ -1,4 +1,5 @@
 import { deleteSponsorAction, saveSponsorAction } from "@/app/(app)/admin/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession } from "@/lib/app/session";
@@ -82,6 +83,11 @@ export default async function AdminSponsorsPage() {
     .order("order");
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Logos y enlaces que aparecen en el pie y en la pantalla del proyector."
+        title="Patrocinadores"
+      />
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         Estos logos salen en el pie de la pantalla de acceso, en el orden indicado.
@@ -115,6 +121,7 @@ export default async function AdminSponsorsPage() {
         <h2 className="mb-3 font-display text-xl">Nuevo patrocinador</h2>
         <SponsorForm sponsor={null} />
       </section>
+    </div>
     </div>
   );
 }

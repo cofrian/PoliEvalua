@@ -43,7 +43,7 @@ export default async function MyGroupPage() {
   if (!team) {
     return (
       <div className={`${cardClass} mx-auto max-w-xl space-y-2`}>
-        <h1 className="font-display text-2xl">Todavía no tienes {words.unitLower}</h1>
+        <h1 className="font-display text-xl">Todavía no tienes {words.unitLower}</h1>
         <p className="text-sm text-muted-foreground">
           Cuando la gestión del espacio te añada con tu correo, aparecerá aquí. Si ya lo ha hecho,
           comprueba que has entrado con ese mismo correo.
@@ -86,7 +86,7 @@ export default async function MyGroupPage() {
         <p className="text-sm font-bold text-muted-foreground">
           Mi {words.unitLower} · #{team.number}
         </p>
-        <h1 className="font-display text-3xl sm:text-4xl">{team.name}</h1>
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{team.name}</h1>
         {team.project_title ? <p className="mt-1 text-lg">{team.project_title}</p> : null}
       </header>
 
@@ -146,14 +146,14 @@ export default async function MyGroupPage() {
 
       {feedback ? (
         <section className={cardClass}>
-          <h2 className="mb-4 font-display text-2xl">Resultados y feedback</h2>
+          <h2 className="mb-4 font-display text-xl">Resultados y feedback</h2>
           <TeamFeedbackView feedback={feedback} />
         </section>
       ) : null}
 
       {peerSummary ? (
         <section className={cardClass}>
-          <h2 className="mb-4 font-display text-2xl">Coevaluación</h2>
+          <h2 className="mb-4 font-display text-xl">Coevaluación</h2>
           <PeerSummaryView criteria={rubricCriteria} scaleMax={rubric?.scale_max ?? 10} summary={peerSummary} />
         </section>
       ) : null}

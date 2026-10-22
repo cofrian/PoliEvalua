@@ -67,14 +67,14 @@ export async function LiveVotes({
 
   return (
     <section className="space-y-3">
-      <h2 className="font-display text-2xl">Votaciones en directo</h2>
+      <h2 className="font-display text-xl">Votaciones en directo</h2>
       <p className="text-sm text-muted-foreground">
         {rows.length} evaluaciones · {submitted} enviadas · {rows.length - submitted} en
         borrador. Se actualiza solo cada vez que un juez puntúa.
       </p>
-      <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
-          <thead className="border-b border-line text-left text-xs text-muted-foreground uppercase dark:border-[#262838]">
+          <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
             <tr>
               <th className={cell}>Hora</th>
               <th className={cell}>Juez</th>
@@ -91,7 +91,7 @@ export async function LiveVotes({
           <tbody>
             {rows.length ? (
               rows.map((row) => (
-                <tr className="border-b border-line last:border-0 dark:border-[#262838]" key={row.id}>
+                <tr className="border-b border-border last:border-0" key={row.id}>
                   <td className={`${cell} whitespace-nowrap text-muted-foreground`}>
                     {timeFormat.format(new Date(row.updatedAt))}
                   </td>

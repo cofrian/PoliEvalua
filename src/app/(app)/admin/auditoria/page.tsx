@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/app/page-header";
 import { getSession } from "@/lib/app/session";
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
@@ -57,9 +58,14 @@ export default async function AuditPage() {
   ].sort((a, b) => b.at.localeCompare(a.at));
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
+    <div className="space-y-6">
+      <PageHeader
+        description="Registro de todo lo que ha cambiado en el espacio y quién lo hizo."
+        title="Auditoría"
+      />
+    <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full text-sm">
-        <thead className="border-b border-line text-left text-xs text-muted-foreground uppercase dark:border-[#262838]">
+        <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
           <tr>
             <th className="px-3 py-2">Cuándo</th>
             <th className="px-3 py-2">Quién</th>
@@ -70,7 +76,7 @@ export default async function AuditPage() {
         <tbody>
           {rows.length ? (
             rows.map((row) => (
-              <tr className="border-b border-line align-top last:border-0 dark:border-[#262838]" key={row.key}>
+              <tr className="border-b border-border align-top last:border-0" key={row.key}>
                 <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
                   {dateFormat.format(new Date(row.at))}
                 </td>
@@ -90,6 +96,7 @@ export default async function AuditPage() {
           )}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }

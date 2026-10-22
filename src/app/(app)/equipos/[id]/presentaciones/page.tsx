@@ -40,7 +40,7 @@ export default async function TeamPresentationsPage({
           <p className="text-sm font-bold text-muted-foreground">
             {words.unit} #{team.number} · {team.name}
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl">
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
             Exposiciones y materiales
           </h1>
           {team.project_title ? (

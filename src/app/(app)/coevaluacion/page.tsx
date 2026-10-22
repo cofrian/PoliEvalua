@@ -71,7 +71,7 @@ export default async function PeerReviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl sm:text-4xl">Coevaluación</h1>
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Coevaluación</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Usa la misma rúbrica que el {words.evaluator}.{" "}
           {settings.anonymous ? "Los comentarios llegan a cada grupo sin tu nombre." : ""} Puedes corregir lo enviado hasta el cierre.
@@ -84,7 +84,7 @@ export default async function PeerReviewPage() {
 
       {settings.peer ? (
         <section className="space-y-4">
-          <h2 className="font-display text-2xl">{words.units} que te tocan</h2>
+          <h2 className="font-display text-xl">{words.units} que te tocan</h2>
           {assigned.length ? (
             assigned.map((team) => (
               <details className={cardClass} key={team.id} open={reviewFor(team.id, "peer")?.status !== "submitted"}>
@@ -112,7 +112,7 @@ export default async function PeerReviewPage() {
 
       {settings.self && ownTeam ? (
         <section className="space-y-4">
-          <h2 className="font-display text-2xl">Autoevaluación de {ownTeam.name}</h2>
+          <h2 className="font-display text-xl">Autoevaluación de {ownTeam.name}</h2>
           <div className={cardClass}>
             <PeerReviewForm
               criteria={criteria}
@@ -128,7 +128,7 @@ export default async function PeerReviewPage() {
 
       {settings.contribution && ownTeam ? (
         <section className="space-y-4">
-          <h2 className="font-display text-2xl">Aportación de tus compañeros</h2>
+          <h2 className="font-display text-xl">Aportación de tus compañeros</h2>
           <div className={cardClass}>
             <ContributionForm
               eventId={event.id}

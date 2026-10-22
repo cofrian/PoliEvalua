@@ -94,7 +94,7 @@ export default async function TeamPage({
             {challenge?.name ? `${challenge.name} · ` : ""}{words.unit} #{team.number}
             {team.table_location ? ` · Mesa ${team.table_location}` : ""}
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl">{team.name}</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{team.name}</h1>
           {liveRecordings ? (
             <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive" role="status">
               <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> Grabando la exposición
@@ -132,7 +132,7 @@ export default async function TeamPage({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <aside className="space-y-4">
-          <div className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+          <div className="rounded-xl border border-border bg-white p-4 dark:bg-card">
             <h2 className="mb-2 font-display text-lg">Integrantes</h2>
             {members.length ? (
               <ul className="space-y-1 text-sm">
@@ -145,7 +145,7 @@ export default async function TeamPage({
             )}
           </div>
           {isAdmin ? (
-            <details className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+            <details className="rounded-xl border border-border bg-white p-4 dark:bg-card">
               <summary className="cursor-pointer font-display text-lg">
                 Editar equipo (admin)
               </summary>
@@ -158,7 +158,7 @@ export default async function TeamPage({
               </div>
             </details>
           ) : null}
-          <div className="rounded-xl border border-line bg-white p-4 dark:border-[#262838] dark:bg-[#151621]">
+          <div className="rounded-xl border border-border bg-white p-4 dark:bg-card">
             <h2 className="mb-2 font-display text-lg">Entregas</h2>
             <TeamLinks
               canEdit={isAdmin || (isMyTeam && !eventClosed)}
@@ -170,7 +170,7 @@ export default async function TeamPage({
             />
           </div>
           {team.description ? (
-            <div className="rounded-xl border border-line bg-white p-4 text-sm leading-6 dark:border-[#262838] dark:bg-[#151621]">
+            <div className="rounded-xl border border-border bg-white p-4 text-sm leading-6 dark:bg-card">
               <h2 className="mb-2 font-display text-lg">Proyecto</h2>
               {team.description}
             </div>
@@ -178,7 +178,7 @@ export default async function TeamPage({
         </aside>
 
         <div>
-          <h2 className="mb-3 font-display text-2xl">Notas</h2>
+          <h2 className="mb-3 font-display text-xl">Notas</h2>
           <NotesPanel
             eventId={event.id}
             initialNotes={(notes ?? []) as unknown as Note[]}

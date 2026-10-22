@@ -35,7 +35,7 @@ export function DiscrepanciesPanel({
           <ul className="mt-1 flex flex-wrap gap-2 text-sm">
             {underEvaluated.map((team) => (
               <li key={team.teamId}>
-                <Link className="rounded-full border border-line px-2.5 py-0.5 hover:bg-muted dark:border-[#262838]" href={`/equipos/${team.teamId}`}>
+                <Link className="rounded-full border border-border px-2.5 py-0.5 hover:bg-muted" href={`/equipos/${team.teamId}`}>
                   {team.teamName} · {team.count}
                 </Link>
               </li>

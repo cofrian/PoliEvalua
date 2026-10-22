@@ -1,4 +1,5 @@
 import { updateRecordingSettingsAction } from "@/app/(app)/admin/actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_RECORDING_NOTICE, NO_AUDIO_GUARANTEE } from "@/lib/app/recording-notice";
@@ -37,9 +38,14 @@ export default async function RecordingSettingsPage() {
   const pending = rows.filter((row) => !row.acknowledged).length;
 
   return (
+    <div className="space-y-6">
+      <PageHeader
+        description="Transcripción y análisis de cada exposición. El audio nunca se guarda."
+        title="Grabaciones"
+      />
     <div className="space-y-8">
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-2xl">Grabación de exposiciones</h2>
+        <h2 className="mb-2 font-display text-xl">Grabación de exposiciones</h2>
         <p className="mb-5 text-sm text-muted-foreground">
           Al activarla, cada persona que entre en el espacio verá el aviso y tendrá que confirmarlo antes de continuar.
           Si cambias el texto, todos lo volverán a ver.
@@ -71,12 +77,12 @@ export default async function RecordingSettingsPage() {
 
       {recording.enabled ? (
         <section>
-          <h2 className="mb-3 font-display text-2xl">
+          <h2 className="mb-3 font-display text-xl">
             Confirmaciones ({rows.length - pending}/{rows.length})
           </h2>
-          <div className="overflow-x-auto rounded-xl border border-line bg-white dark:border-[#262838] dark:bg-[#151621]">
+          <div className="overflow-x-auto rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
-              <thead className="border-b border-line text-left text-xs uppercase text-muted-foreground dark:border-[#262838]">
+              <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2">Nombre</th>
                   <th className="px-3 py-2">Rol</th>
@@ -85,7 +91,7 @@ export default async function RecordingSettingsPage() {
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr className="border-b border-line last:border-0 dark:border-[#262838]" key={row.id}>
+                  <tr className="border-b border-border last:border-0" key={row.id}>
                     <td className="px-3 py-2 font-semibold">{row.name}</td>
                     <td className="px-3 py-2">{roleLabels[row.role]}</td>
                     <td className="px-3 py-2 text-right">
@@ -100,6 +106,7 @@ export default async function RecordingSettingsPage() {
           </div>
         </section>
       ) : null}
+    </div>
     </div>
   );
 }
