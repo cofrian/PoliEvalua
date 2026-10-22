@@ -6,6 +6,7 @@ import {
   updatePanelTeamsAction,
 } from "@/app/(app)/admin/paneles/actions";
 import { PageHeader } from "@/components/app/page-header";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
@@ -79,7 +80,13 @@ export default async function PanelsPage() {
               </form>
               <form action={deactivatePanelAction}>
                 <input name="id" type="hidden" value={panel.id} />
-                <Button className="text-destructive" type="submit" variant="ghost">Desactivar</Button>
+                <ConfirmSubmit
+                  confirmLabel="Desactivar"
+                  description="Deja de usarse para repartir. Sus evaluaciones se conservan."
+                  title={`¿Desactivar «${panel.name}»?`}
+                >
+                  Desactivar
+                </ConfirmSubmit>
               </form>
             </div>
 

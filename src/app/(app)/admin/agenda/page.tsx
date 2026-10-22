@@ -2,7 +2,7 @@ import { clearAgendaAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { AgendaBoard } from "@/components/app/agenda-board";
 import { AgendaGenerator } from "@/components/app/agenda-generator";
-import { Button } from "@/components/ui/button";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { loadAgenda } from "@/lib/app/agenda-data";
 import { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
@@ -39,9 +39,13 @@ export default async function AdminAgendaPage() {
           <div className="flex items-center justify-between">
             <h2 className="font-display text-xl">Turnos</h2>
             <form action={clearAgendaAction}>
-              <Button className="h-9 text-destructive" type="submit" variant="ghost">
+              <ConfirmSubmit
+                confirmLabel="Borrar agenda"
+                description="Se eliminan todos los turnos. Las evaluaciones y grabaciones no se tocan."
+                title="¿Borrar toda la agenda?"
+              >
                 Borrar agenda
-              </Button>
+              </ConfirmSubmit>
             </form>
           </div>
           <AgendaBoard canReorder canRunRoom slots={slots} />

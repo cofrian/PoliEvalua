@@ -7,6 +7,7 @@ import { CopyButton } from "@/components/app/copy-button";
 import { InvitationForm } from "@/components/app/invitation-form";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
 
@@ -17,7 +18,12 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", {
   minute: "2-digit",
 });
 
-export default async function AdminPeoplePage() {
+export default async function AdminPeoplePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; rol?: string }>;
+}) {
+  const { q = "", rol = "" } = await searchParams;
   const { supabase, user, event } = await getSession();
   const settings = (event.settings ?? {}) as { join_roles?: string[] };
   const joinRoles = (settings.join_roles ?? ["judge", "mentor"])
@@ -41,6 +47,16 @@ export default async function AdminPeoplePage() {
         .limit(30),
     ]);
 
+  const query = q.trim().toLowerCase();
+  const members = (memberships ?? []).filter((membership) => {
+    const relation = membership.profile as unknown as { full_name: string; organization: string | null } | { full_name: string; organization: string | null }[] | null;
+    const profile = Array.isArray(relation) ? relation[0] : relation;
+    if (rol && membership.role !== rol) return false;
+    if (!query) return true;
+    return [profile?.full_name, profile?.organization].some((value) => value?.toLowerCase().includes(query));
+  });
+  const presentRoles = [...new Set((memberships ?? []).map((membership) => membership.role as SpaceRole))];
+
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   const loginUrl = `${siteUrl || "https://valencia-hack-jurado.vercel.app"}/login`;
 
@@ -48,7 +64,7 @@ export default async function AdminPeoplePage() {
     <div className="space-y-6">
       <PageHeader description="Cómo entra la gente, invitaciones y quién participa." title="Personas" />
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-xl">Acceso por código</h2>
+        <h2 className="mb-2 font-display text-lg">Acceso por código</h2>
         <p className="text-sm text-muted-foreground">
           Comparte el enlace y el código. Cada persona entra con su nombre, su correo y su rol
           {joinRoles.length ? ` (${joinRoles.join(", ")})` : ""}.
@@ -66,7 +82,7 @@ export default async function AdminPeoplePage() {
       </section>
 
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-xl">Invitaciones individuales</h2>
+        <h2 className="mb-2 font-display text-lg">Invitaciones individuales</h2>
         <p className="mb-4 text-sm text-muted-foreground">
           El enlace queda vinculado al correo y al rol elegido. No necesita correo automático: puedes copiarlo y enviarlo por el canal que prefieras.
         </p>
@@ -98,7 +114,25 @@ export default async function AdminPeoplePage() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-xl">Miembros ({memberships?.length ?? 0})</h2>
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="font-display text-lg">
+            Miembros ({members.length === (memberships?.length ?? 0) ? members.length : `${members.length} de ${memberships?.length ?? 0}`})
+          </h2>
+          <form className="flex flex-wrap gap-2" role="search">
+            <Input aria-label="Buscar miembros" className="h-9 w-full sm:w-56" defaultValue={q} name="q" placeholder="Buscar por nombre u organización" />
+            <select aria-label="Filtrar por rol" className={selectClass} defaultValue={rol} name="rol">
+              <option value="">Todos los roles</option>
+              {presentRoles.map((role) => (
+                <option key={role} value={role}>
+                  {roleLabels[role]}
+                </option>
+              ))}
+            </select>
+            <Button className="h-9" type="submit" variant="outline">
+              Filtrar
+            </Button>
+          </form>
+        </div>
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
@@ -111,7 +145,14 @@ export default async function AdminPeoplePage() {
               </tr>
             </thead>
             <tbody>
-              {(memberships ?? []).map((membership) => {
+              {members.length === 0 ? (
+                <tr>
+                  <td className="px-3 py-8 text-center text-muted-foreground" colSpan={5}>
+                    Nadie coincide con el filtro.
+                  </td>
+                </tr>
+              ) : null}
+              {members.map((membership) => {
                 const relation = membership.profile as unknown as
                   | { id: string; full_name: string; organization: string | null; last_seen_at: string | null }
                   | { id: string; full_name: string; organization: string | null; last_seen_at: string | null }[]

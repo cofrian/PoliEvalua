@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/app/page-header";
 import Link from "next/link";
 
 import { resetPublicVotesAction, updatePublicVoteAction } from "@/app/(app)/admin/actions";
+import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { publicVoteSettings } from "@/lib/app/public-vote";
@@ -22,29 +24,21 @@ export default async function PublicAdminPage() {
         description="Un QR para que el público vote y una pantalla con el recuento en directo."
         title="Voto del público"
       />
-    <div className="space-y-8">
-      <section className={cardClass}>
-        <h2 className="mb-2 font-display text-xl">Voto del público</h2>
-        <p className="mb-5 text-sm text-muted-foreground">
-          Cualquiera con el enlace o el QR vota sin crear cuenta: un voto por dispositivo, que puede cambiar mientras
-          esté abierta. Es independiente de la evaluación del jurado.
-        </p>
-        <form action={updatePublicVoteAction} className="space-y-4">
-          <label className="block space-y-1 text-sm font-semibold">
-            <span className="block">Título</span>
-            <Input defaultValue={settings.title} maxLength={120} name="title" />
-          </label>
-          <label className="flex items-center gap-3 text-sm font-semibold">
-            <input defaultChecked={settings.open} name="open" type="checkbox" />
-            Votación abierta
-          </label>
-          <label className="flex items-center gap-3 text-sm font-semibold">
-            <input defaultChecked={settings.showResults} name="showResults" type="checkbox" />
-            Mostrar el recuento en la pantalla del proyector
-          </label>
-          <Button type="submit">Guardar</Button>
-        </form>
-      </section>
+      <SettingsForm
+        action={updatePublicVoteAction}
+        description="Cualquiera con el enlace o el QR vota sin crear cuenta: un voto por dispositivo, que puede cambiar mientras esté abierta. No cuenta en la evaluación del jurado."
+        title="Votación"
+      >
+        <SettingRow htmlFor="title" label="Título" description="Lo que verá el público al abrir el enlace.">
+          <Input defaultValue={settings.title} id="title" maxLength={120} name="title" />
+        </SettingRow>
+        <SettingRow htmlFor="open" label="Votación abierta" description="Mientras esté cerrada, el enlace solo muestra un aviso.">
+          <SettingSwitch defaultChecked={settings.open} id="open" name="open" />
+        </SettingRow>
+        <SettingRow htmlFor="showResults" label="Mostrar el recuento en el proyector" description="Si no, la pantalla solo muestra el QR.">
+          <SettingSwitch defaultChecked={settings.showResults} id="showResults" name="showResults" />
+        </SettingRow>
+      </SettingsForm>
 
       <section className={`${cardClass} grid gap-6 sm:grid-cols-[200px_1fr]`}>
         <div
@@ -68,14 +62,18 @@ export default async function PublicAdminPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className={`${cardClass} space-y-3`}>
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl">Recuento ({counts.total})</h2>
           {counts.total ? (
             <form action={resetPublicVotesAction}>
-              <Button className="h-9 text-destructive" type="submit" variant="ghost">
+              <ConfirmSubmit
+                confirmLabel="Borrar votos"
+                description={`Se eliminan los ${counts.total} votos del público. No se puede deshacer.`}
+                title="¿Borrar todos los votos?"
+              >
                 Borrar todos los votos
-              </Button>
+              </ConfirmSubmit>
             </form>
           ) : null}
         </div>
@@ -94,7 +92,6 @@ export default async function PublicAdminPage() {
           ))}
         </ol>
       </section>
-    </div>
     </div>
   );
 }

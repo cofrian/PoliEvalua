@@ -1,10 +1,10 @@
 import { saveEvaluationSettingsAction } from "@/app/(app)/admin/evaluacion/actions";
 import { PageHeader } from "@/components/app/page-header";
-import { Button } from "@/components/ui/button";
+import { SettingRow, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getSession } from "@/lib/app/session";
-import { cardClass, selectClass } from "@/lib/app/ui";
+import { selectClass } from "@/lib/app/ui";
 
 type Requirement = { label?: string };
 type Question = { label?: string };
@@ -37,79 +37,63 @@ export default async function EvaluationSettingsPage({
         description="Cuándo se abre la evaluación, cuántas opiniones hacen falta y cómo se calcula la nota."
         title="Evaluación"
       />
-    <div className="space-y-5">
       {applied ? (
         <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 p-3 text-sm">
           La propuesta se ha aplicado como borrador. Revísala y publícala cuando esté lista.
         </p>
       ) : null}
-      <section className={cardClass}>
-        <div className="mb-5">
-          <h2 className="font-display text-xl">Página de evaluación</h2>
-          <p className="text-sm text-muted-foreground">Define lo que verá el jurado antes y durante la puntuación.</p>
-        </div>
-        <form action={saveEvaluationSettingsAction} className="grid gap-5 sm:grid-cols-2">
-          <label className="space-y-1 text-sm font-semibold sm:col-span-2">
-            <span className="block">Nombre</span>
-            <Input defaultValue={page?.title ?? `Evaluación · ${event.name}`} name="title" required />
-          </label>
-          <label className="space-y-1 text-sm font-semibold sm:col-span-2">
-            <span className="block">Descripción</span>
-            <Textarea defaultValue={page?.description ?? ""} maxLength={2000} name="description" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold sm:col-span-2">
-            <span className="block">Instrucciones para evaluar</span>
-            <Textarea className="min-h-28" defaultValue={page?.instructions ?? ""} maxLength={4000} name="instructions" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Estado</span>
-            <select className={`${selectClass} w-full`} defaultValue={page?.status ?? "draft"} name="status">
-              <option value="draft">Borrador</option>
-              <option value="published">Publicada</option>
-              <option value="closed">Cerrada</option>
-            </select>
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Cálculo del panel</span>
-            <select className={`${selectClass} w-full`} defaultValue={page?.aggregation_method ?? "average"} name="aggregationMethod">
-              <option value="average">Media individual</option>
-              <option value="consensus">Media por panel (cada panel pesa igual)</option>
-              <option value="hybrid">Media individual + media por panel</option>
-              <option value="trimmed_mean">Media sin extremos</option>
-            </select>
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Evaluaciones mínimas por proyecto</span>
-            <Input defaultValue={page?.min_evaluations ?? 1} max={20} min={1} name="minEvaluations" type="number" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Ronda activa</span>
-            <Input defaultValue={page?.current_round ?? 1} max={20} min={1} name="currentRound" type="number" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Apertura</span>
-            <Input defaultValue={localDateTime(page?.opens_at)} name="opensAt" type="datetime-local" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Cierre</span>
-            <Input defaultValue={localDateTime(page?.closes_at)} name="closesAt" type="datetime-local" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Requisitos obligatorios, uno por línea</span>
-            <Textarea className="min-h-32" defaultValue={requirements.map((item) => item.label).filter(Boolean).join("\n")} name="requirements" />
-          </label>
-          <label className="space-y-1 text-sm font-semibold">
-            <span className="block">Preguntas adicionales, una por línea</span>
-            <Textarea className="min-h-32" defaultValue={questions.map((item) => item.label).filter(Boolean).join("\n")} name="questions" />
-          </label>
-          <div className="flex items-center justify-between gap-3 sm:col-span-2">
-            <span className="text-xs text-muted-foreground">Versión {page?.version ?? 1}</span>
-            <Button type="submit">Guardar configuración</Button>
+      <SettingsForm
+        action={saveEvaluationSettingsAction}
+        description={`Versión ${page?.version ?? 1}. Mientras esté en borrador, nadie puede evaluar.`}
+        title="Página de evaluación"
+      >
+        <SettingRow
+          description="Publícala para que el jurado pueda puntuar. Al cerrarla, nadie puede modificar evaluaciones."
+          htmlFor="status"
+          label="Estado"
+        >
+          <select className={`${selectClass} w-full`} defaultValue={page?.status ?? "draft"} id="status" name="status">
+            <option value="draft">Borrador</option>
+            <option value="published">Publicada</option>
+            <option value="closed">Cerrada</option>
+          </select>
+        </SettingRow>
+        <SettingRow description="Opcional. Se abre y se cierra sola en estas fechas." label="Apertura y cierre">
+          <div className="grid gap-2">
+            <Input aria-label="Apertura" defaultValue={localDateTime(page?.opens_at)} name="opensAt" type="datetime-local" />
+            <Input aria-label="Cierre" defaultValue={localDateTime(page?.closes_at)} name="closesAt" type="datetime-local" />
           </div>
-        </form>
-      </section>
-    </div>
+        </SettingRow>
+        <SettingRow description="Las rondas sirven para repartir paneles en varias tandas." htmlFor="currentRound" label="Ronda activa">
+          <Input className="sm:ml-auto sm:w-24" defaultValue={page?.current_round ?? 1} id="currentRound" max={20} min={1} name="currentRound" type="number" />
+        </SettingRow>
+        <SettingRow description="Cómo se combinan las puntuaciones de varias personas." htmlFor="aggregationMethod" label="Cálculo de la nota">
+          <select className={`${selectClass} w-full`} defaultValue={page?.aggregation_method ?? "average"} id="aggregationMethod" name="aggregationMethod">
+            <option value="average">Media individual</option>
+            <option value="consensus">Media por panel (cada panel pesa igual)</option>
+            <option value="hybrid">Media individual + media por panel</option>
+            <option value="trimmed_mean">Media sin extremos</option>
+          </select>
+        </SettingRow>
+        <SettingRow description="Por debajo de este número, el Resumen lo marca como pendiente." htmlFor="minEvaluations" label="Evaluaciones mínimas por proyecto">
+          <Input className="sm:ml-auto sm:w-24" defaultValue={page?.min_evaluations ?? 1} id="minEvaluations" max={20} min={1} name="minEvaluations" type="number" />
+        </SettingRow>
+        <SettingRow htmlFor="title" label="Nombre" stacked>
+          <Input defaultValue={page?.title ?? `Evaluación · ${event.name}`} id="title" name="title" required />
+        </SettingRow>
+        <SettingRow htmlFor="description" label="Descripción" stacked>
+          <Textarea defaultValue={page?.description ?? ""} id="description" maxLength={2000} name="description" />
+        </SettingRow>
+        <SettingRow htmlFor="instructions" label="Instrucciones para evaluar" stacked>
+          <Textarea className="min-h-28" defaultValue={page?.instructions ?? ""} id="instructions" maxLength={4000} name="instructions" />
+        </SettingRow>
+        <SettingRow description="Uno por línea. El jurado debe marcarlos antes de enviar." htmlFor="requirements" label="Requisitos obligatorios" stacked>
+          <Textarea className="min-h-28" defaultValue={requirements.map((item) => item.label).filter(Boolean).join("\n")} id="requirements" name="requirements" />
+        </SettingRow>
+        <SettingRow description="Una por línea. Se responden con texto libre." htmlFor="questions" label="Preguntas adicionales" stacked>
+          <Textarea className="min-h-28" defaultValue={questions.map((item) => item.label).filter(Boolean).join("\n")} id="questions" name="questions" />
+        </SettingRow>
+      </SettingsForm>
     </div>
   );
 }
-
