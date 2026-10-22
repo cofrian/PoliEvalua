@@ -141,6 +141,14 @@ export async function loadEvaluationContext(
       rubric_levels: [...criterion.rubric_levels].sort((a, b) => a.score - b.score),
     }));
 
+  if (!criteria.length) {
+    return {
+      ok: false,
+      tone: "info",
+      message: "La rúbrica todavía no tiene criterios. Podrás evaluar en cuanto la organización los añada.",
+    };
+  }
+
   const page = evaluationPage
     ? ({
         title: evaluationPage.title,

@@ -248,7 +248,7 @@ export function NotesPanel({
               void addNote(event);
             }
           }}
-          placeholder="Escribe una nota sobre el equipo…"
+          placeholder="Escribe una nota…"
           value={body}
         />
         <div className="flex items-center justify-between gap-3">
@@ -284,7 +284,7 @@ export function NotesPanel({
           [
             ["all", "Todas"],
             ["mine", "Mías"],
-            ["shared", "Del jurado"],
+            ["shared", "De otros"],
           ] as const
         ).map(([key, label]) => (
           <button

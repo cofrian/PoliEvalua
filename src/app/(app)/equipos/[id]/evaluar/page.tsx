@@ -62,14 +62,7 @@ export default async function EvaluatePage({
   return (
     <div className="space-y-6">
       {back}
-      <div>
-        <p className="text-sm font-bold text-muted-foreground">
-          {context.page?.title ?? context.rubric.name}
-        </p>
-        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
-          Evaluar · {team.name}
-        </h1>
-      </div>
+      <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Evaluar · {team.name}</h1>
 
       <details className="rounded-xl border border-border bg-white p-4 lg:hidden dark:bg-card">
         <summary className="cursor-pointer font-semibold">Apoyo de la IA</summary>
