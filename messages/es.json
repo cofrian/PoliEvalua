@@ -1363,5 +1363,9 @@
   },
   "meta": {
     "description": "Plataforma para crear y gestionar evaluaciones de proyectos, asignaturas, premios y hackathones."
+  },
+  "spaceDefaults": {
+    "rubric": "Rúbrica principal",
+    "evaluationPage": "Evaluación · {space}"
   }
 }

@@ -222,8 +222,20 @@ export async function createSpaceAction(
   }
 
   await setActiveSpace(data);
-  // El espacio nace en el idioma con el que se ha creado (IA, votación pública…).
-  await supabase.from("events").update({ locale: await getLocale() }).eq("id", data);
+  // El espacio nace en el idioma con el que se ha creado (IA, votación pública…),
+  // y la base de datos pone en castellano la rúbrica y la página de evaluación.
+  const locale = await getLocale();
+  await supabase.from("events").update({ locale }).eq("id", data);
+  if (locale !== "es") {
+    const tDefaults = await getTranslations("spaceDefaults");
+    await Promise.all([
+      supabase.from("rubrics").update({ name: tDefaults("rubric") }).eq("event_id", data),
+      supabase
+        .from("evaluation_pages")
+        .update({ title: tDefaults("evaluationPage", { space: parsed.data.name }) })
+        .eq("event_id", data),
+    ]);
+  }
 
   const proposal = parseAssistantProposal(formData.get("assistantProposal"));
   if (proposal) {

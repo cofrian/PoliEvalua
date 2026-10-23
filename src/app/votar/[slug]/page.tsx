@@ -9,6 +9,7 @@ import { PublicVoteForm } from "@/components/app/public-vote-form";
 import { LocaleSwitcher } from "@/components/app/locale-switcher";
 import { UpvBrand } from "@/components/brand/upv-brand";
 import { publicVoteSettings } from "@/lib/app/public-vote";
+import { pickClientMessages } from "@/i18n/client-messages";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -49,7 +50,7 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
     : { data: null };
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={pickClientMessages(messages)}>
     <main lang={locale} className="mx-auto min-h-svh max-w-xl bg-background px-4 py-6 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
       <div className="mb-6 flex items-center justify-between gap-3">
         <UpvBrand href="/" />

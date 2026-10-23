@@ -1,6 +1,8 @@
 // Capturas de las pantallas principales en local (escritorio y móvil) para
 // cada rol, con un espacio y unas personas temporales que se borran al terminar.
 // Uso: node scripts/ux-shots.mjs <carpeta> [roles separados por comas]
+// Con SHOTS_LOCALE=ca|en las cuentas y el espacio usan ese idioma y se guarda
+// también el texto visible de cada pantalla (.txt) para revisar la traducción.
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "@playwright/test";
 import { loadTestEnv } from "./load-test-env.mjs";
@@ -12,6 +14,7 @@ const wanted = (process.argv[3] ?? "teacher,judge,student,public").split(",");
 const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const stamp = Date.now();
 const slug = `ux-${stamp}`;
+const locale = process.env.SHOTS_LOCALE || "es";
 
 const people = {
   teacher: { name: "Profesora Demo", pages: ["/espacios", "/admin", "/admin/ajustes", "/admin/personas", "/admin/evaluacion", "/admin/agenda", "/equipos", "/resultados"] },
@@ -26,7 +29,7 @@ async function createPerson(key) {
   const password = `Prueba-${stamp}!`;
   const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: people[key].name } });
   if (error) throw error;
-  await db.from("profiles").update({ disabled: false, full_name: people[key].name }).eq("id", data.user.id);
+  await db.from("profiles").update({ disabled: false, full_name: people[key].name, locale }).eq("id", data.user.id);
   ids[key] = { id: data.user.id, email, password };
 }
 
@@ -41,6 +44,7 @@ try {
   });
   if (error) throw error;
   eventId = created;
+  await db.from("events").update({ locale }).eq("id", eventId);
 
   await db.from("event_members").insert([
     { event_id: eventId, user_id: ids.judge.id, role: "judge", status: "active" },
@@ -62,7 +66,8 @@ try {
   const browser = await chromium.launch();
   for (const [size, viewport] of [["desk", { width: 1440, height: 900 }], ["mob", { width: 390, height: 844 }]]) {
     for (const key of wanted.filter((role) => people[role])) {
-      const context = await browser.newContext({ viewport });
+      // Se entra con la pantalla en castellano; tras entrar manda el idioma del perfil.
+      const context = await browser.newContext({ viewport, locale: "es-ES" });
       const page = await context.newPage();
       await page.goto(`${base}/login`);
       await page.getByLabel("Correo electrónico").fill(ids[key].email);
@@ -70,21 +75,26 @@ try {
       await page.getByRole("button", { name: "Entrar en la plataforma" }).click();
       await page.waitForURL(/\/(espacios|equipos|admin|mi-grupo)/);
       if (page.url().includes("/espacios")) {
-        await page.locator("article", { hasText: "Proyectos de Ingeniería 2026" }).getByRole("button", { name: "Entrar al espacio" }).click();
+        await page.locator("article", { hasText: "Proyectos de Ingeniería 2026" }).locator("form button").first().click();
         await page.waitForURL(/\/(equipos|admin|mi-grupo)/);
       }
       for (const path of people[key].pages) {
         const url = path.replace("{team}", team);
         await page.goto(`${base}${url}`);
         await page.waitForLoadState("networkidle");
-        const dialog = page.getByRole("button", { name: /Entendido|Acepto/ });
+        const dialog = page.getByRole("button", { name: /Entendido|Acepto|Entesos|Got it/ });
         if (await dialog.isVisible().catch(() => false)) await dialog.click();
-        await page.screenshot({ path: `${out}/${size}-${key}${path.replaceAll("/", "-").replace("{team}", "grupo")}.png`, fullPage: size === "desk" });
+        const name = `${out}/${size}-${key}${path.replaceAll("/", "-").replace("{team}", "grupo")}`;
+        await page.screenshot({ path: `${name}.png`, fullPage: size === "desk" });
+        if (locale !== "es" && size === "desk") {
+          const { writeFileSync } = await import("node:fs");
+          writeFileSync(`${name}.txt`, await page.locator("body").innerText());
+        }
       }
       await context.close();
     }
     if (wanted.includes("public")) {
-      const page = await (await browser.newContext({ viewport })).newPage();
+      const page = await (await browser.newContext({ viewport, locale: locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES" })).newPage();
       await page.goto(`${base}/votar/${slug}`);
       await page.screenshot({ path: `${out}/${size}-public-votar.png`, fullPage: true });
       await page.goto(`${base}/login`);

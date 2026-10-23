@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { pickClientMessages } from "@/i18n/client-messages";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -48,7 +49,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -61,7 +62,7 @@ export default async function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          <NextIntlClientProvider>
+          <NextIntlClientProvider messages={pickClientMessages(messages)}>
             <TooltipProvider>{children}</TooltipProvider>
           </NextIntlClientProvider>
           <Toaster richColors />

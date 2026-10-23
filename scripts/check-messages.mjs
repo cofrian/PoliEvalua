@@ -18,5 +18,24 @@ for (const locale of ["ca", "en"]) {
     console.error(`${locale}: faltan [${missing.join(", ")}]; sobran [${extra.join(", ")}]`);
   }
 }
+// Todo grupo usado con useTranslations tiene que viajar al navegador.
+const clientList = readFileSync(new URL("../src/i18n/client-messages.ts", import.meta.url), "utf8");
+const clientNamespaces = new Set([...clientList.matchAll(/^\s+"([a-zA-Z]+)",$/gm)].map((m) => m[1]));
+const { readdirSync, statSync } = await import("node:fs");
+const { join } = await import("node:path");
+const walk = (dir) =>
+  readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    return statSync(path).isDirectory() ? walk(path) : /\.tsx?$/.test(name) ? [path] : [];
+  });
+const srcDir = new URL("../src", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+for (const file of walk(decodeURIComponent(srcDir))) {
+  for (const match of readFileSync(file, "utf8").matchAll(/useTranslations\(\s*"([^".]+)/g)) {
+    if (!clientNamespaces.has(match[1])) {
+      failed = true;
+      console.error(`${file}: useTranslations("${match[1]}") no está en CLIENT_NAMESPACES (src/i18n/client-messages.ts).`);
+    }
+  }
+}
 if (failed) process.exit(1);
 console.log(`Traducciones coherentes (${base.size} claves en es, ca y en).`);
