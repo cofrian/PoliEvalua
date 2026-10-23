@@ -144,6 +144,20 @@ test("1. La profesora ve el panel de inicio adaptado a una asignatura", async ({
   await expect(page.getByRole("link", { name: "Patrocinadores" })).toHaveCount(0);
 });
 
+test("1b. Cambia el logo y el color del espacio y salen en la portada", async () => {
+  const page = pages.teacher!;
+  await page.goto("/admin/ajustes");
+  const form = page.locator("form", { has: page.getByLabel("Color") });
+  await form.getByLabel("Logo").setInputFiles("public/icons/icon-192.png");
+  await form.getByLabel("Color").fill("#0f6e8c");
+  await form.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page.getByText("Cambios guardados")).toBeVisible();
+  await page.goto("/admin");
+  const cover = page.locator("section", { has: page.getByRole("heading", { level: 1 }) }).first();
+  await expect(cover.locator("img")).toBeVisible();
+  await expect(cover).toHaveCSS("background-color", "rgb(15, 110, 140)");
+});
+
 test("2. Activa la grabación y el aviso aparece al entrar", async () => {
   const page = pages.teacher!;
   await page.goto("/admin/grabaciones");
@@ -157,6 +171,7 @@ test("2. Activa la grabación y el aviso aparece al entrar", async () => {
 test("3. Importa el alumnado con su grupo y la entrega común", async () => {
   const page = pages.teacher!;
   await page.goto("/admin/equipos");
+  await page.getByRole("button", { name: "Importar lista" }).first().click();
   await page.getByLabel("Lista de alumnado", { exact: true }).fill(
     `Nombre;Correo;Grupo\nAna;${people.ana.email};Grupo A\nLuis;${people.luis.email};Grupo B`,
   );

@@ -177,7 +177,10 @@ export function NotesPanel({
   async function addNote(event: React.FormEvent) {
     event.preventDefault();
     const text = body.trim();
-    if (!text) return;
+    if (!text) {
+      toast.info(t("emptyNote"));
+      return;
+    }
 
     if (!navigator.onLine) {
       queueNote(text);
@@ -269,7 +272,7 @@ export function NotesPanel({
               </>
             )}
           </button>
-          <Button disabled={saving || !body.trim()} type="submit">
+          <Button disabled={saving} type="submit">
             {saving ? t("saving") : t("add")}
           </Button>
         </div>

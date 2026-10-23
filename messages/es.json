@@ -218,7 +218,8 @@
     "share": "Compartir",
     "delete": "Borrar nota",
     "button": "Notas ({count})",
-    "drawerTitle": "Notas"
+    "drawerTitle": "Notas",
+    "emptyNote": "Escribe la nota antes de añadirla."
   },
   "links": {
     "kind": {
@@ -419,7 +420,8 @@
       },
       "of": "Aportación de {name}",
       "legend": "1 = casi nada · 3 = lo esperado · 5 = muchísimo. Nadie del grupo verá tu valoración.",
-      "save": "Guardar valoración"
+      "save": "Guardar valoración",
+      "pickOne": "Valora al menos a un compañero antes de guardar."
     }
   },
   "studio": {
@@ -835,7 +837,8 @@
     "creating": "Creando espacio…",
     "create": "Crear espacio",
     "questionsTitle": "Para prepararlo mejor necesito saber:",
-    "questionsHint": "Añade las respuestas a la descripción de arriba y vuelve a pulsar «Preparar con IA»."
+    "questionsHint": "Añade las respuestas a la descripción de arriba y vuelve a pulsar «Preparar con IA».",
+    "describeFirst": "Describe primero el espacio: qué se evalúa y quién participa."
   },
   "recordingNotice": {
     "default": "Las exposiciones de este espacio se grabarán para transcribirlas automáticamente y preparar un resumen y materiales de apoyo para la evaluación. El audio no se guarda: se borra en cuanto se convierte en texto. Se conservan solo la transcripción y los materiales generados, que ven únicamente las personas autorizadas del espacio.",
@@ -946,7 +949,14 @@
     "aiHint": "Se añaden después de las reglas comunes, que siempre mandan: la IA nunca pondrá notas ni inventará contenido.",
     "aiLabel": "Indicaciones para la IA (opcional, máx. {max})",
     "aiPlaceholder": "Céntrate en la metodología y en si las conclusiones se apoyan en datos.",
-    "advancedHint": "Código para unirse al espacio y si se puede usar"
+    "advancedHint": "Código para unirse al espacio y si se puede usar",
+    "branding": "Imagen del espacio",
+    "brandingDescription": "El logo y el color salen en la portada del espacio, que ven todas las personas.",
+    "logo": "Logo",
+    "logoHint": "PNG o SVG con fondo transparente, cuadrado mejor.",
+    "removeLogo": "Quitar el logo",
+    "color": "Color",
+    "colorHint": "Para la portada. Si es claro, el texto se pone oscuro solo."
   },
   "recordingsAdmin": {
     "noName": "(sin nombre)",
@@ -1053,7 +1063,12 @@
     "importStudents": "Importar alumnado",
     "importUnits": "Importar {units} (formato equipos.txt)",
     "newUnit": "{mode, select, teams {Nuevo equipo} groups {Nuevo grupo} candidates {Nueva candidatura} other {Nuevo proyecto}}",
-    "membersCount": "{count, plural, one {# integrante} other {# integrantes}}"
+    "membersCount": "{count, plural, one {# integrante} other {# integrantes}}",
+    "import": "Importar lista",
+    "importHint": "Pega o sube una lista. Primero verás una vista previa; no se guarda nada hasta que confirmes.",
+    "emptyTitle": "Todavía no hay {units}",
+    "emptyText": "Impórtalos desde una lista (por ejemplo, el CSV de PoliformaT) o créalos uno a uno con el botón de arriba.",
+    "edit": "Editar"
   },
   "teamEditor": {
     "number": "Nº",
@@ -1332,7 +1347,8 @@
     "panelAutoFailed": "No se ha podido completar el reparto automático.",
     "assistantGroupsFailed": "No se han podido crear los grupos.",
     "publishNoCriteria": "Antes de publicar, añade los criterios de la rúbrica (Evaluación → Rúbrica).",
-    "publishWeights": "Los pesos de la rúbrica suman {total} %; deben sumar 100 % para publicar."
+    "publishWeights": "Los pesos de la rúbrica suman {total} %; deben sumar 100 % para publicar.",
+    "brandingFailed": "No se ha podido guardar la imagen del espacio."
   },
   "rubricEditor": {
     "levels": {
@@ -1441,7 +1457,8 @@
       "askStart": "¿Qué día y a qué hora empiezan?",
       "askDuration": "¿Cuántos minutos dura cada turno (y si hay descanso entre ellos)?",
       "askGroupsCount": "¿Cuántos {units} quieres crear (o quién va en cada uno)?",
-      "askEvaluation": "¿Qué quieres evaluar, con qué criterios (o te los propongo yo) y con qué escala?"
+      "askEvaluation": "¿Qué quieres evaluar, con qué criterios (o te los propongo yo) y con qué escala?",
+      "tooShort": "Escribe qué quieres preparar (al menos unas palabras)."
     },
     "preview": {
       "page": "Página propuesta",
@@ -1467,5 +1484,21 @@
       "byNumber": "por número",
       "agendaNote": "Sustituye la agenda actual si ya hay una. Después puedes reordenar los turnos en Organizar agenda."
     }
+  },
+  "welcome": {
+    "title": "Te damos la bienvenida a tu espacio",
+    "intro": "Con estos tres pasos ya se puede evaluar. Lo demás (agenda, grabaciones, voto del público) es opcional.",
+    "rubric": "Prepara la rúbrica",
+    "rubricText": "Los criterios, su peso y qué significa cada nivel.",
+    "rubricAction": "Crear la rúbrica",
+    "units": "Añade los {units}",
+    "unitsText": "Impórtalos desde una lista o créalos uno a uno.",
+    "unitsAction": "Añadir",
+    "people": "Invita al {evaluator}",
+    "peopleText": "Comparte el enlace y el código, o crea invitaciones personales.",
+    "peopleAction": "Invitar",
+    "done": "Hecho",
+    "hide": "Ocultar la bienvenida",
+    "assistantHint": "¿Prefieres que te lo prepare la IA? Cuéntaselo al <link>asistente</link>."
   }
 }

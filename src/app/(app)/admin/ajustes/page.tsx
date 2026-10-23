@@ -1,4 +1,5 @@
 import {
+  updateBrandingAction,
   updateEventAction,
   updateMaterialsSettingsAction,
   updateStudentVisibilityAction,
@@ -7,6 +8,7 @@ import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/app/page-header";
 import { AdvancedSettings, SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
+import { FileField } from "@/components/app/file-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LOCALES, localeNames } from "@/i18n/config";
@@ -14,7 +16,7 @@ import { getSession } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
 export default async function AdminSettingsPage() {
-  const { supabase, event, words } = await getSession();
+  const { supabase, event, words, branding } = await getSession();
   const statusLabels = words.stageLabels;
   const [tLocale, t, tNav] = await Promise.all([
     getTranslations("locale"),
@@ -90,6 +92,32 @@ export default async function AdminSettingsPage() {
           </AdvancedSettings>
         </SettingsForm>
       ) : null}
+
+      <SettingsForm action={updateBrandingAction} description={t("brandingDescription")} title={t("branding")}>
+        <SettingRow description={t("logoHint")} label={t("logo")}>
+          <div className="flex items-center gap-3 sm:justify-end">
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="" className="size-10 rounded-lg border border-border bg-white object-contain p-1" src={branding.logoUrl} />
+            ) : null}
+            <FileField accept="image/*" label={t("logo")} name="logo" />
+          </div>
+          {branding.logoUrl ? (
+            <label className="mt-2 flex items-center gap-2 text-sm sm:justify-end">
+              <input name="removeLogo" type="checkbox" /> {t("removeLogo")}
+            </label>
+          ) : null}
+        </SettingRow>
+        <SettingRow description={t("colorHint")} htmlFor="accentColor" label={t("color")}>
+          <input
+            className="h-10 w-20 cursor-pointer rounded-md border border-input bg-transparent p-1 sm:ml-auto sm:block"
+            defaultValue={branding.color ?? "#3f4444"}
+            id="accentColor"
+            name="accentColor"
+            type="color"
+          />
+        </SettingRow>
+      </SettingsForm>
 
       {enabledRoles.includes("student") ? (
         <SettingsForm

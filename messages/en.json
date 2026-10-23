@@ -218,7 +218,8 @@
     "share": "Share",
     "delete": "Delete note",
     "button": "Notes ({count})",
-    "drawerTitle": "Notes"
+    "drawerTitle": "Notes",
+    "emptyNote": "Write the note before adding it."
   },
   "links": {
     "kind": {
@@ -419,7 +420,8 @@
       },
       "of": "Contribution of {name}",
       "legend": "1 = almost nothing · 3 = as expected · 5 = a great deal. No one in the group will see your rating.",
-      "save": "Save rating"
+      "save": "Save rating",
+      "pickOne": "Rate at least one teammate before saving."
     }
   },
   "studio": {
@@ -835,7 +837,8 @@
     "creating": "Creating space…",
     "create": "Create space",
     "questionsTitle": "To prepare it better I need to know:",
-    "questionsHint": "Add your answers to the description above and press “Prepare with AI” again."
+    "questionsHint": "Add your answers to the description above and press “Prepare with AI” again.",
+    "describeFirst": "Describe the space first: what is evaluated and who takes part."
   },
   "recordingNotice": {
     "default": "Presentations in this space will be recorded to transcribe them automatically and prepare a summary and support materials for the evaluation. The audio isn't kept: it's deleted as soon as it becomes text. Only the transcript and the generated materials are kept, and only authorized people in the space can see them.",
@@ -946,7 +949,14 @@
     "aiHint": "They're added after the common rules, which always win: the AI will never grade or make up content.",
     "aiLabel": "Instructions for the AI (optional, max. {max})",
     "aiPlaceholder": "Focus on the methodology and on whether the conclusions are backed by data.",
-    "advancedHint": "Code to join the space and whether it can be used"
+    "advancedHint": "Code to join the space and whether it can be used",
+    "branding": "Space look",
+    "brandingDescription": "The logo and color appear on the space's cover, which everyone sees.",
+    "logo": "Logo",
+    "logoHint": "PNG or SVG with a transparent background, ideally square.",
+    "removeLogo": "Remove logo",
+    "color": "Color",
+    "colorHint": "For the cover. If it's light, the text turns dark automatically."
   },
   "recordingsAdmin": {
     "noName": "(no name)",
@@ -1053,7 +1063,12 @@
     "importStudents": "Import students",
     "importUnits": "Import {units} (equipos.txt format)",
     "newUnit": "{mode, select, teams {New team} groups {New group} candidates {New entry} other {New project}}",
-    "membersCount": "{count, plural, one {# member} other {# members}}"
+    "membersCount": "{count, plural, one {# member} other {# members}}",
+    "import": "Import a list",
+    "importHint": "Paste or upload a list. You'll see a preview first; nothing is saved until you confirm.",
+    "emptyTitle": "No {units} yet",
+    "emptyText": "Import them from a list (for example, the PoliformaT CSV) or create them one by one with the button above.",
+    "edit": "Edit"
   },
   "teamEditor": {
     "number": "No.",
@@ -1332,7 +1347,8 @@
     "panelAutoFailed": "The automatic assignment couldn't be completed.",
     "assistantGroupsFailed": "The groups couldn't be created.",
     "publishNoCriteria": "Before publishing, add the rubric criteria (Evaluation → Rubric).",
-    "publishWeights": "The rubric weights add up to {total} %; they must add up to 100 % to publish."
+    "publishWeights": "The rubric weights add up to {total} %; they must add up to 100 % to publish.",
+    "brandingFailed": "The space's look couldn't be saved."
   },
   "rubricEditor": {
     "levels": {
@@ -1441,7 +1457,8 @@
       "askStart": "On what day and at what time do they start?",
       "askDuration": "How many minutes is each slot (and is there a break between them)?",
       "askGroupsCount": "How many {units} do you want to create (or who goes in each one)?",
-      "askEvaluation": "What do you want to evaluate, with which criteria (or shall I suggest them) and on what scale?"
+      "askEvaluation": "What do you want to evaluate, with which criteria (or shall I suggest them) and on what scale?",
+      "tooShort": "Write what you want to set up (at least a few words)."
     },
     "preview": {
       "page": "Proposed page",
@@ -1467,5 +1484,21 @@
       "byNumber": "by number",
       "agendaNote": "Replaces the current schedule if there is one. You can reorder slots afterwards in Organize schedule."
     }
+  },
+  "welcome": {
+    "title": "Welcome to your space",
+    "intro": "With these three steps you can start evaluating. The rest (schedule, recordings, audience vote) is optional.",
+    "rubric": "Set up the rubric",
+    "rubricText": "The criteria, their weight and what each level means.",
+    "rubricAction": "Create the rubric",
+    "units": "Add the {units}",
+    "unitsText": "Import them from a list or create them one by one.",
+    "unitsAction": "Add",
+    "people": "Invite the {evaluator}",
+    "peopleText": "Share the link and code, or create personal invitations.",
+    "peopleAction": "Invite",
+    "done": "Done",
+    "hide": "Hide the welcome",
+    "assistantHint": "Would you rather the AI set it up? Tell the <link>assistant</link>."
   }
 }

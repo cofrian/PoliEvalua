@@ -182,7 +182,7 @@ export function TeamLinks({
               placeholder={t("description")}
               value={label}
             />
-            <Button className="h-9" disabled={busy || !url.trim()} onClick={() => void addLink()} type="button">
+            <Button className="h-9" disabled={busy} onClick={() => void addLink()} type="button">
               {t("add")}
             </Button>
           </div>

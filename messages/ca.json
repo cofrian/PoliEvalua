@@ -218,7 +218,8 @@
     "share": "Compartir",
     "delete": "Esborrar la nota",
     "button": "Notes ({count})",
-    "drawerTitle": "Notes"
+    "drawerTitle": "Notes",
+    "emptyNote": "Escriu la nota abans d'afegir-la."
   },
   "links": {
     "kind": {
@@ -419,7 +420,8 @@
       },
       "of": "Aportació de {name}",
       "legend": "1 = quasi res · 3 = el que s'esperava · 5 = moltíssim. Ningú del grup veurà la teua valoració.",
-      "save": "Guardar la valoració"
+      "save": "Guardar la valoració",
+      "pickOne": "Valora almenys un company abans de guardar."
     }
   },
   "studio": {
@@ -835,7 +837,8 @@
     "creating": "Creant l'espai…",
     "create": "Crear l'espai",
     "questionsTitle": "Per a preparar-ho millor necessite saber:",
-    "questionsHint": "Afig les respostes a la descripció de dalt i torna a prémer «Preparar amb IA»."
+    "questionsHint": "Afig les respostes a la descripció de dalt i torna a prémer «Preparar amb IA».",
+    "describeFirst": "Descriu primer l'espai: què s'avalua i qui participa."
   },
   "recordingNotice": {
     "default": "Les exposicions d'este espai es gravaran per a transcriure-les automàticament i preparar un resum i materials de suport per a l'avaluació. L'àudio no es guarda: s'esborra tan prompte com es convertix en text. Només es conserven la transcripció i els materials generats, que veuen únicament les persones autoritzades de l'espai.",
@@ -946,7 +949,14 @@
     "aiHint": "S'afigen després de les regles comunes, que sempre manen: la IA mai posarà notes ni inventarà contingut.",
     "aiLabel": "Indicacions per a la IA (opcional, màx. {max})",
     "aiPlaceholder": "Centra't en la metodologia i en si les conclusions es basen en dades.",
-    "advancedHint": "Codi per a unir-se a l'espai i si es pot usar"
+    "advancedHint": "Codi per a unir-se a l'espai i si es pot usar",
+    "branding": "Imatge de l'espai",
+    "brandingDescription": "El logotip i el color ixen en la portada de l'espai, que veuen totes les persones.",
+    "logo": "Logotip",
+    "logoHint": "PNG o SVG amb fons transparent, millor quadrat.",
+    "removeLogo": "Llevar el logotip",
+    "color": "Color",
+    "colorHint": "Per a la portada. Si és clar, el text es posa fosc sol."
   },
   "recordingsAdmin": {
     "noName": "(sense nom)",
@@ -1053,7 +1063,12 @@
     "importStudents": "Importar l'alumnat",
     "importUnits": "Importar {units} (format equipos.txt)",
     "newUnit": "{mode, select, teams {Equip nou} groups {Grup nou} candidates {Candidatura nova} other {Projecte nou}}",
-    "membersCount": "{count, plural, one {# integrant} other {# integrants}}"
+    "membersCount": "{count, plural, one {# integrant} other {# integrants}}",
+    "import": "Importar una llista",
+    "importHint": "Apega o puja una llista. Primer veuràs una previsualització; no es guarda res fins que confirmes.",
+    "emptyTitle": "Encara no hi ha {units}",
+    "emptyText": "Importa'ls des d'una llista (per exemple, el CSV de PoliformaT) o crea'ls d'un en un amb el botó de dalt.",
+    "edit": "Editar"
   },
   "teamEditor": {
     "number": "Núm.",
@@ -1332,7 +1347,8 @@
     "panelAutoFailed": "No s'ha pogut completar el repartiment automàtic.",
     "assistantGroupsFailed": "No s'han pogut crear els grups.",
     "publishNoCriteria": "Abans de publicar, afig els criteris de la rúbrica (Avaluació → Rúbrica).",
-    "publishWeights": "Els pesos de la rúbrica sumen {total} %; han de sumar 100 % per a publicar."
+    "publishWeights": "Els pesos de la rúbrica sumen {total} %; han de sumar 100 % per a publicar.",
+    "brandingFailed": "No s'ha pogut guardar la imatge de l'espai."
   },
   "rubricEditor": {
     "levels": {
@@ -1441,7 +1457,8 @@
       "askStart": "Quin dia i a quina hora comencen?",
       "askDuration": "Quants minuts dura cada torn (i si hi ha descans entre ells)?",
       "askGroupsCount": "Quants {units} vols crear (o qui va en cadascun)?",
-      "askEvaluation": "Què vols avaluar, amb quins criteris (o te'ls propose jo) i amb quina escala?"
+      "askEvaluation": "Què vols avaluar, amb quins criteris (o te'ls propose jo) i amb quina escala?",
+      "tooShort": "Escriu què vols preparar (almenys unes paraules)."
     },
     "preview": {
       "page": "Pàgina proposada",
@@ -1467,5 +1484,21 @@
       "byNumber": "per número",
       "agendaNote": "Substituïx l'agenda actual si ja n'hi ha una. Després pots reordenar els torns en Organitzar l'agenda."
     }
+  },
+  "welcome": {
+    "title": "Et donem la benvinguda al teu espai",
+    "intro": "Amb estos tres passos ja es pot avaluar. La resta (agenda, gravacions, vot del públic) és opcional.",
+    "rubric": "Prepara la rúbrica",
+    "rubricText": "Els criteris, el seu pes i què significa cada nivell.",
+    "rubricAction": "Crear la rúbrica",
+    "units": "Afig els {units}",
+    "unitsText": "Importa'ls des d'una llista o crea'ls d'un en un.",
+    "unitsAction": "Afegir",
+    "people": "Convida el {evaluator}",
+    "peopleText": "Comparteix l'enllaç i el codi, o crea invitacions personals.",
+    "peopleAction": "Convidar",
+    "done": "Fet",
+    "hide": "Amagar la benvinguda",
+    "assistantHint": "Prefereixes que t'ho prepare la IA? Explica-li-ho a l'<link>assistent</link>."
   }
 }

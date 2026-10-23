@@ -434,9 +434,10 @@ test("13. El admin puede editar la rúbrica y gestionar todo", async () => {
   await expect(adminPage.getByText(people.mentor.name)).toBeVisible();
 
   await adminPage.goto("/admin/equipos");
-  await expect(
-    adminPage.getByText(/Importar equipos/),
-  ).toBeVisible();
+  // La importación vive en una ventana que se abre desde la lista.
+  await adminPage.getByRole("button", { name: "Importar lista" }).first().click();
+  await expect(adminPage.getByText(/Importar equipos/)).toBeVisible();
+  await adminPage.keyboard.press("Escape");
   await expect(adminPage.getByText(team.name).first()).toBeVisible();
 
   await adminPage.goto("/admin/retos");

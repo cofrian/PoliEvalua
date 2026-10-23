@@ -66,7 +66,7 @@ export function SettingsForm({
         <span aria-live="polite" className="mr-auto text-xs text-muted-foreground">
           {dirty ? t("unsaved") : ""}
         </span>
-        <Button disabled={!dirty || pending} type="submit">
+        <Button disabled={pending} type="submit" variant={dirty ? "default" : "outline"}>
           {pending ? <Loader2 aria-hidden="true" className="animate-spin" /> : null}
           {pending ? t("saving") : t("save")}
         </Button>
