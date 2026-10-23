@@ -30,7 +30,7 @@ RUNNER = '''
 import os, subprocess, sys
 
 subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-    "faster-whisper==1.1.1", "requests", "nvidia-cudnn-cu12==9.*", "nvidia-cublas-cu12"])
+    "faster-whisper==1.1.1", "av==18.1.0", "requests", "nvidia-cudnn-cu12==9.*", "nvidia-cublas-cu12"])
 open("worker.py", "w", encoding="utf-8").write(WORKER_SOURCE)
 
 import nvidia.cublas.lib, nvidia.cudnn.lib

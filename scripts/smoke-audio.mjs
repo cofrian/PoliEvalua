@@ -1,8 +1,9 @@
 // Prueba de humo del audio: sube una grabación a la app como lo haría el
-// navegador y sigue la cola hasta el informe del jurado. Necesita un
-// trabajador de transcripción conectado a la misma app (worker/).
+// navegador y sigue la cola hasta el informe del jurado. Transcribe con Groq
+// (o con el trabajador de respaldo si Groq falla).
 // Crea un espacio y una persona temporales y los borra al terminar.
 // Uso: node scripts/smoke-audio.mjs <audio.wav> [url de la app]
+// Con SMOKE_RUNNER=external el audio se transcribe en el respaldo (Kaggle) y no en Groq.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "@playwright/test";
@@ -84,7 +85,19 @@ try {
     .from("presentation-audio")
     .uploadToSignedUrl(segment.path, segment.token, audio, { contentType: "audio/wav" });
   if (uploadError) throw uploadError;
-  await api(page, `/api/presentations/${id}/segments/0/uploaded`, {});
+  if (process.env.SMOKE_RUNNER === "external") {
+    // Prueba del respaldo: el trozo va directo al trabajador externo (Kaggle)
+    // sin pasar por Groq. Hace lo mismo que /uploaded, pero con runner externo.
+    const { data: seg } = await db.from("presentation_segments").select("id").eq("recording_id", id).eq("seq", 0).single();
+    await db.from("presentation_segments").update({ status: "queued" }).eq("id", seg.id);
+    const { error: jobError } = await db.from("processing_jobs").insert({
+      kind: "transcribe_segment", runner: "external", recording_id: id, event_id: eventId, segment_id: seg.id, priority: 100,
+    });
+    if (jobError) throw jobError;
+    step("Trozo encolado para el respaldo externo; lanza Kaggle (gh workflow run kaggle-worker.yml)");
+  } else {
+    await api(page, `/api/presentations/${id}/segments/0/uploaded`, {});
+  }
   await api(page, `/api/presentations/${id}/finalize`, { segmentsExpected: 1, durationSeconds, sizeBytes: audio.length });
   await browser.close();
   step("Audio subido y grabación cerrada: en cola");

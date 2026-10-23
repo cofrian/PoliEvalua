@@ -59,7 +59,7 @@ WORKER_PREFIX = "{platform}"
 WHISPER_MODEL = "large-v3-turbo"  # en GPU: máxima calidad y ~1 min por 15 min de audio
 """),
     code("""
-!pip install -q faster-whisper==1.1.1 requests nvidia-cudnn-cu12==9.* nvidia-cublas-cu12
+!pip install -q faster-whisper==1.1.1 av==18.1.0 requests nvidia-cudnn-cu12==9.* nvidia-cublas-cu12
 """),
     code("%%writefile worker.py\n" + worker_source),
     code("""
