@@ -49,7 +49,7 @@ for gpu in range(max(gpus, 1)):
         "APP_URL": APP_URL,
         "WORKER_TOKEN": WORKER_TOKEN,
         "WORKER_ID": f"kaggle-auto-gpu{gpu}",
-        "WHISPER_MODEL": "large-v3-turbo" if gpus else "small",
+        "WHISPER_MODEL": "large-v3" if gpus else "small",
         "WHISPER_DEVICE": "cuda" if gpus else "cpu",
         "WHISPER_COMPUTE_TYPE": "auto" if gpus else "int8",
         "CUDA_VISIBLE_DEVICES": str(gpu),
