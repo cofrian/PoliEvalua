@@ -52,7 +52,7 @@ antes de uso productivo se deben revisar sus condiciones y capacidad.
    reclaman trabajos con `claim_processing_job` (`FOR UPDATE SKIP LOCKED`).
    Hay reintentos con espera creciente (15 s, 30 s, 60 s) y un límite global de
    trabajos internos simultáneos (`MAX_INTERNAL_CONCURRENCY`).
-3. **Transcripción**: Whisper `large-v3-turbo` en Groq (plan gratuito: unas
+3. **Transcripción**: Whisper `large-v3` en Groq (plan gratuito: unas
    2 h de audio por hora y 8 h al día), con un limitador global en la base de
    datos (`take_provider_slot`, `GROQ_REQUESTS_PER_MINUTE`). Si el cupo por
    minuto está lleno, el trabajo espera sin gastar intento; si se agota el cupo

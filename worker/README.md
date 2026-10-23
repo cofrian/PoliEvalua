@@ -25,7 +25,7 @@ grabaciones y nunca entrega la misma a dos a la vez.
 | `APP_URL` | Sí | URL pública de la app, p. ej. `https://tu-app.vercel.app` |
 | `WORKER_TOKEN` | Sí | El mismo valor que `TRANSCRIPTION_WORKER_TOKEN` en la app |
 | `WORKER_ID` | No | Nombre único del trabajador (`hf-1`, `upv-gpu`…) |
-| `WHISPER_MODEL` | No | `small` (por defecto, CPU), `medium`, `large-v3-turbo` (GPU) |
+| `WHISPER_MODEL` | No | `small` (por defecto, CPU), `medium`, `large-v3` (GPU) |
 | `WHISPER_DEVICE` | No | `auto`, `cpu` o `cuda` |
 | `WHISPER_COMPUTE_TYPE` | No | `int8` en CPU, `float16` en GPU |
 | `EXIT_AFTER_IDLE_SECONDS` | No | Termina tras ese tiempo sin trabajo (0 = nunca) |
@@ -64,7 +64,7 @@ docker run --rm -p 7860:7860 \
   transcriptor-upv
 ```
 
-Con GPU NVIDIA añade `--gpus all -e WHISPER_DEVICE=cuda -e WHISPER_COMPUTE_TYPE=float16 -e WHISPER_MODEL=large-v3-turbo`
+Con GPU NVIDIA añade `--gpus all -e WHISPER_DEVICE=cuda -e WHISPER_COMPUTE_TYPE=float16 -e WHISPER_MODEL=large-v3`
 (requiere una imagen base con CUDA/cuDNN, p. ej. `nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04`).
 
 Un trabajador detrás de la red de la UPV no necesita puertos abiertos: es él
