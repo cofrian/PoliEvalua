@@ -225,7 +225,7 @@ test("4. El juez entra y ve los equipos", async ({ browser }) => {
     judgePage.getByRole("heading", { name: "Equipos" }),
   ).toBeVisible();
   await expect(
-    judgePage.getByText("Juez", { exact: true }).first(),
+    judgePage.getByText("Jurado", { exact: true }).first(),
   ).toBeVisible();
   await expect(judgePage.getByRole("link", { name: team.name })).toBeVisible();
   // Filtro y buscador
@@ -358,7 +358,7 @@ test("10. El propietario entra con su cuenta y ve lo privado", async ({
   await eventCard.getByRole("button", { name: "Entrar al espacio" }).click();
   await adminPage.waitForURL("**/equipos");
   await expect(
-    adminPage.getByText("Propietario", { exact: true }).first(),
+    adminPage.getByText("Gestión (propietario)", { exact: true }).first(),
   ).toBeVisible();
 
   await adminPage.goto(`/equipos/${team.id}`);
@@ -523,7 +523,7 @@ test("16. Volver a entrar recupera las notas (mismo correo)", async ({
   browser,
 }) => {
   const again = await login(browser, people.judge);
-  await expect(again.getByText("Juez", { exact: true }).first()).toBeVisible();
+  await expect(again.getByText("Jurado", { exact: true }).first()).toBeVisible();
   await again.goto(`/equipos/${team.id}`);
   await expect(again.getByText(privateText)).toBeVisible();
 });
@@ -589,7 +589,7 @@ test("19. La plantilla de asignatura permite alumnado y bloquea roles no autoriz
   expect(created.settings).toMatchObject({
     participant_mode: "groups",
     evaluation_mode: "mixed",
-    enabled_roles: ["teacher", "student"],
+    enabled_roles: ["judge", "student"],
     join_roles: ["student"],
     modules: ["participants", "rubric", "notes", "results"],
     academic: {
@@ -634,7 +634,7 @@ test("19. La plantilla de asignatura permite alumnado y bloquea roles no autoriz
   await studentPage.getByLabel("Participaré como").selectOption("student");
   await studentPage.getByRole("button", { name: "Entrar al espacio" }).click();
   await studentPage.waitForURL("**/equipos");
-  await expect(studentPage.getByText("Estudiante", { exact: true }).first()).toBeVisible();
+  await expect(studentPage.getByText("Participante", { exact: true }).first()).toBeVisible();
   await expect(studentPage.getByRole("link", { name: "Grupo de prueba" })).toBeVisible();
 
   await studentPage.goto(`/equipos/${classTeam.id}/evaluar`);

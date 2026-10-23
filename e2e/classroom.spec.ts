@@ -364,3 +364,15 @@ test("13. Quien entra por primera vez ve el tutorial, y puede volver a verlo", a
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+test("15. El cronómetro sale al evaluar, aunque no haya agenda", async () => {
+  const page = pages.teacher!;
+  const { data: team } = await db.from("teams").select("id").eq("event_id", eventId).limit(1).single();
+  await page.goto(`/equipos/${team!.id}/evaluar`);
+  const box = page.getByRole("group", { name: "Cronómetro" });
+  const timer = box.getByRole("timer");
+  await expect(timer).toHaveText("10:00");
+  await box.getByRole("button", { name: "Empezar" }).click();
+  await expect(box.getByRole("button", { name: "Pausa" })).toBeVisible();
+  await expect(timer).not.toHaveText("10:00");
+});

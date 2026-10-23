@@ -7,14 +7,14 @@
     "spaceHint": "Language of AI texts and the audience vote, and the default spoken language in recordings."
   },
   "roles": {
-    "owner": "Owner",
-    "manager": "Manager",
-    "judge": "Judge",
+    "owner": "Management (owner)",
+    "manager": "Management",
+    "judge": "Jury",
     "mentor": "Mentor",
-    "teacher": "Teacher",
-    "student": "Student",
-    "reviewer": "Reviewer",
-    "viewer": "Viewer"
+    "teacher": "Jury",
+    "student": "Participant",
+    "reviewer": "Jury",
+    "viewer": "View only"
   },
   "nav": {
     "main": "Main",
@@ -773,27 +773,27 @@
     "roles": {
       "judge": {
         "label": "Jury",
-        "description": "Scores with the rubric."
+        "description": "Evaluates and scores with the rubric."
       },
       "mentor": {
-        "label": "Mentors",
-        "description": "Comments and takes notes without voting."
+        "label": "Mentor",
+        "description": "Supports and takes notes, without scoring."
       },
       "teacher": {
         "label": "Teaching staff",
         "description": "Sets up and evaluates course activities."
       },
       "student": {
-        "label": "Students",
-        "description": "Take part without management rights or a teacher vote."
+        "label": "Participant",
+        "description": "Who is evaluated: sees their page, adds deliverables and their grade."
       },
       "reviewer": {
         "label": "Reviewers",
         "description": "Review entries or projects."
       },
       "viewer": {
-        "label": "Viewers",
-        "description": "Read-only access."
+        "label": "View only",
+        "description": "Can only look."
       }
     },
     "modules": {
@@ -1647,5 +1647,14 @@
         "text": "You can watch this tutorial again anytime from your menu."
       }
     }
+  },
+  "timer": {
+    "left": "Time left",
+    "start": "Start",
+    "resume": "Resume",
+    "pause": "Pause",
+    "reset": "Reset",
+    "duration": "Length",
+    "title": "Timer"
   }
 }

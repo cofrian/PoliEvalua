@@ -14,7 +14,7 @@ import { selectClass } from "@/lib/app/ui";
 
 const initialState: CreateSpaceState = {};
 
-const ROLE_VALUES = ["judge", "mentor", "teacher", "student", "reviewer", "viewer"] as const;
+const ROLE_VALUES = ["judge", "mentor", "student", "viewer"] as const;
 const MODULE_VALUES = ["participants", "rubric", "notes", "results", "sponsors"] as const;
 const KIND_VALUES = ["hackathon", "class", "awards", "project", "custom"] as const;
 
@@ -40,7 +40,7 @@ const templates: Record<SpaceKind, {
     participantMode: "groups",
     evaluationMode: "mixed",
     academic: true,
-    roles: ["teacher", "student"],
+    roles: ["judge", "student"],
     joinRoles: ["student"],
     modules: ["participants", "rubric", "notes", "results"],
   },
@@ -48,7 +48,7 @@ const templates: Record<SpaceKind, {
     participantMode: "candidates",
     evaluationMode: "rubric",
     academic: false,
-    roles: ["reviewer", "viewer"],
+    roles: ["judge", "viewer"],
     joinRoles: ["viewer"],
     modules: ["participants", "rubric", "notes", "results"],
   },
@@ -56,7 +56,7 @@ const templates: Record<SpaceKind, {
     participantMode: "individuals",
     evaluationMode: "mixed",
     academic: false,
-    roles: ["teacher", "student", "reviewer"],
+    roles: ["judge", "student"],
     joinRoles: ["student"],
     modules: ["participants", "rubric", "notes", "results"],
   },
@@ -64,7 +64,7 @@ const templates: Record<SpaceKind, {
     participantMode: "individuals",
     evaluationMode: "feedback",
     academic: false,
-    roles: ["reviewer"],
+    roles: ["judge"],
     joinRoles: [],
     modules: ["participants", "notes"],
   },
@@ -385,7 +385,7 @@ export function CreateSpaceForm() {
         </div>
         <p className="text-sm text-muted-foreground">{t("codeHint")}</p>
         <div className="flex flex-wrap gap-3">
-          {roleOptions.filter((role) => roles.includes(role.value) && role.value !== "teacher").map((role) => (
+          {roleOptions.filter((role) => roles.includes(role.value)).map((role) => (
             <label className="flex cursor-pointer items-center gap-2 rounded-full border border-input px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/10" key={role.value}>
               <input
                 checked={joinRoles.includes(role.value)}
