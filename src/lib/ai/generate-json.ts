@@ -44,6 +44,8 @@ export async function generateJson<T>({
   system,
   prompt,
   abortSignal,
+  history = [],
+  promptSchema,
   maxOutputTokens = 5000,
 }: {
   provider: Provider;
@@ -52,15 +54,19 @@ export async function generateJson<T>({
   system: string;
   prompt: string;
   abortSignal: AbortSignal;
+  /** Turnos anteriores de la conversación, del más antiguo al más reciente. */
+  history?: ModelMessage[];
+  /** Formato que se describe al modelo cuando `schema` tiene transformaciones. */
+  promptSchema?: z.ZodType;
   maxOutputTokens?: number;
 }): Promise<T> {
-  const messages: ModelMessage[] = [{ role: "user", content: prompt }];
+  const messages: ModelMessage[] = [...history, { role: "user", content: prompt }];
   let lastProblem = "";
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const { text } = await generateText({
       model: provider.chatModel(modelId),
-      system: `${system}\n\n${jsonInstruction(schema)}`,
+      system: `${system}\n\n${jsonInstruction(promptSchema ?? schema)}`,
       messages,
       maxOutputTokens,
       temperature: 0.2,
@@ -71,6 +77,7 @@ export async function generateJson<T>({
       providerOptions: { nvidia: NVIDIA_NO_THINKING },
     });
 
+    if (process.env.DEBUG_ASSISTANT) console.log("CRUDO", modelId, text.slice(0, 1500));
     let candidate: unknown;
     try {
       candidate = extractJson(text);

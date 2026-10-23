@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   DndContext,
   KeyboardSensor,
@@ -44,13 +45,7 @@ export type EditableCriterion = {
   }[];
 };
 
-const DEFAULT_LEVELS = [
-  "Muy insuficiente",
-  "Insuficiente",
-  "Adecuado",
-  "Muy bueno",
-  "Excelente",
-];
+const LEVEL_SCORES = [1, 2, 3, 4, 5] as const;
 
 export function RubricEditor({
   canEdit,
@@ -67,6 +62,7 @@ export function RubricEditor({
   rubricId: string;
   userId: string;
 }) {
+  const t = useTranslations("rubricEditor");
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const [criteria, setCriteria] = useState(initialCriteria);
@@ -109,10 +105,10 @@ export function RubricEditor({
       ),
     );
     if (results.some((r) => r.error)) {
-      toast.error("No se ha podido guardar el nuevo orden.");
+      toast.error(t("orderError"));
     } else {
       await recordChange(
-        `ha movido «${criteria[oldIndex].title}» a la posición ${newIndex + 1}`,
+        t("moved", { title: criteria[oldIndex].title, position: newIndex + 1 }),
       );
     }
     router.refresh();
@@ -124,7 +120,7 @@ export function RubricEditor({
       .from("rubric_criteria")
       .insert({
         rubric_id: rubricId,
-        title: "Nuevo criterio",
+        title: t("newCriterion"),
         weight: 0,
         order: criteria.length + 1,
       })
@@ -133,19 +129,19 @@ export function RubricEditor({
 
     if (error || !data) {
       setBusy(false);
-      toast.error("No se ha podido añadir el criterio.");
+      toast.error(t("addError"));
       return;
     }
 
     await supabase.from("rubric_levels").insert(
-      DEFAULT_LEVELS.map((label, index) => ({
+      LEVEL_SCORES.map((score) => ({
         criterion_id: data.id,
-        score: index + 1,
-        label,
+        score,
+        label: t(`levels.${score}`),
         descriptor: null,
       })),
     );
-    await recordChange("ha añadido un criterio nuevo");
+    await recordChange(t("added"));
     setBusy(false);
     setEditing(data.id);
     router.refresh();
@@ -154,7 +150,7 @@ export function RubricEditor({
   async function removeCriterion(criterion: EditableCriterion) {
     if (
       !window.confirm(
-        `¿Quitar «${criterion.title}»? Las puntuaciones ya puestas se conservan pero dejan de contar.`,
+        t("removeConfirm", { title: criterion.title }),
       )
     ) {
       return;
@@ -164,10 +160,10 @@ export function RubricEditor({
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", criterion.id);
     if (error) {
-      toast.error("No se ha podido quitar el criterio.");
+      toast.error(t("removeError"));
       return;
     }
-    await recordChange(`ha quitado el criterio «${criterion.title}»`);
+    await recordChange(t("removed", { title: criterion.title }));
     router.refresh();
   }
 
@@ -181,12 +177,12 @@ export function RubricEditor({
     if (error) {
       toast.error(
         error.message.includes("100")
-          ? "Los pesos deben sumar 100 % para bloquear la rúbrica."
-          : "No se ha podido cambiar el bloqueo.",
+          ? t("lockWeights")
+          : t("lockError"),
       );
       return;
     }
-    await recordChange(locked ? "ha desbloqueado la rúbrica" : "ha bloqueado la rúbrica");
+    await recordChange(locked ? t("unlocked") : t("locked"));
     router.refresh();
   }
 
@@ -197,7 +193,7 @@ export function RubricEditor({
       {canEdit ? (
         <div className="flex flex-wrap gap-2">
           <Button disabled={busy} onClick={() => void addCriterion()} type="button">
-            <Plus className="size-4" /> Añadir criterio
+            <Plus className="size-4" /> {t("add")}
           </Button>
           {isAdmin ? (
             <Button
@@ -208,11 +204,11 @@ export function RubricEditor({
             >
               {locked ? (
                 <>
-                  <LockOpen className="size-4" /> Desbloquear rúbrica
+                  <LockOpen className="size-4" /> {t("unlock")}
                 </>
               ) : (
                 <>
-                  <Lock className="size-4" /> Bloquear rúbrica
+                  <Lock className="size-4" /> {t("lock")}
                 </>
               )}
             </Button>
@@ -255,13 +251,14 @@ export function RubricEditor({
 }
 
 function WeightBar({ total }: { total: number }) {
+  const t = useTranslations("rubricEditor");
   const ok = Math.abs(total - 100) < 0.01;
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-sm font-semibold">
-        <span>Suma de pesos</span>
+        <span>{t("weightSum")}</span>
         <span className={ok ? "text-leaf-500" : "text-coral-400"}>
-          {total} % {ok ? "✔" : `(deben sumar 100 %)`}
+          {total} % {ok ? "✔" : t("mustSum")}
         </span>
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-line dark:bg-[#262838]">
@@ -296,6 +293,7 @@ function SortableCriterion({
   onRemove: () => void;
   onSaved: (summary: string, diff: Record<string, unknown>) => Promise<void>;
 }) {
+  const t = useTranslations("rubricEditor");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: criterion.id, disabled: !canEdit || editing });
 
@@ -314,7 +312,7 @@ function SortableCriterion({
         <div className="flex gap-3">
           {canEdit ? (
             <button
-              aria-label={`Mover ${criterion.title}`}
+              aria-label={t("move", { title: criterion.title })}
               className="mt-1 cursor-grab touch-none text-muted-foreground"
               type="button"
               {...attributes}
@@ -337,7 +335,7 @@ function SortableCriterion({
             ) : null}
             <details className="mt-2 text-sm">
               <summary className="cursor-pointer font-semibold text-muted-foreground">
-                Ver los {criterion.rubric_levels.length} niveles
+                {t("seeLevels", { count: criterion.rubric_levels.length })}
               </summary>
               <ul className="mt-2 space-y-1.5">
                 {criterion.rubric_levels.map((level) => (
@@ -349,7 +347,7 @@ function SortableCriterion({
                       {level.descriptor || "—"}
                     </span>
                     {level.example ? (
-                      <span className="mt-0.5 block text-xs italic text-muted-foreground">Ejemplo: {level.example}</span>
+                      <span className="mt-0.5 block text-xs italic text-muted-foreground">{t("example", { example: level.example })}</span>
                     ) : null}
                   </li>
                 ))}
@@ -358,16 +356,16 @@ function SortableCriterion({
             {canEdit ? (
               <div className="mt-3 flex gap-2">
                 <Button onClick={onEdit} size="sm" type="button" variant="outline">
-                  Editar
+                  {t("edit")}
                 </Button>
                 <Button
-                  aria-label={`Quitar ${criterion.title}`}
+                  aria-label={t("removeLabel", { title: criterion.title })}
                   onClick={onRemove}
                   size="sm"
                   type="button"
                   variant="ghost"
                 >
-                  <Trash2 className="size-4" /> Quitar
+                  <Trash2 className="size-4" /> {t("remove")}
                 </Button>
               </div>
             ) : null}
@@ -387,6 +385,7 @@ function CriterionForm({
   onCancel: () => void;
   onSaved: (summary: string, diff: Record<string, unknown>) => Promise<void>;
 }) {
+  const t = useTranslations("rubricEditor");
   const supabase = useMemo(() => createClient(), []);
   const [title, setTitle] = useState(criterion.title);
   const [description, setDescription] = useState(criterion.description ?? "");
@@ -398,11 +397,11 @@ function CriterionForm({
     event.preventDefault();
     const numericWeight = Number(weight.replace(",", "."));
     if (!title.trim()) {
-      toast.error("El criterio necesita un nombre.");
+      toast.error(t("nameRequired"));
       return;
     }
     if (!Number.isFinite(numericWeight) || numericWeight < 0 || numericWeight > 100) {
-      toast.error("El peso debe estar entre 0 y 100.");
+      toast.error(t("weightRange"));
       return;
     }
 
@@ -421,13 +420,13 @@ function CriterionForm({
 
     if (error) {
       setSaving(false);
-      toast.error("No se ha podido guardar el criterio.");
+      toast.error(t("saveError"));
       return;
     }
     if (!updated?.length) {
       setSaving(false);
       toast.error(
-        "Otra persona ha cambiado este criterio mientras lo editabas. Se recargarán sus cambios; revisa y vuelve a guardar.",
+        t("conflict"),
       );
       onCancel();
       return;
@@ -447,25 +446,25 @@ function CriterionForm({
           id: level.id,
           criterion_id: criterion.id,
           score: level.score,
-          label: level.label.trim() || DEFAULT_LEVELS[level.score - 1] || String(level.score),
+          label: level.label.trim() || (level.score >= 1 && level.score <= 5 ? t(`levels.${level.score}`) : String(level.score)),
           descriptor: level.descriptor?.trim() || null,
           example: level.example?.trim() || null,
         })),
       );
-      if (levelsError) toast.error("No se han podido guardar los niveles.");
+      if (levelsError) toast.error(t("levelsError"));
     }
 
     const parts: string[] = [];
-    if (title.trim() !== criterion.title) parts.push(`el nombre a «${title.trim()}»`);
-    if (numericWeight !== criterion.weight) parts.push(`el peso a ${numericWeight} %`);
-    if ((description.trim() || null) !== criterion.description) parts.push("la descripción");
-    if (changedLevels.length) parts.push(`${changedLevels.length} nivel(es)`);
+    if (title.trim() !== criterion.title) parts.push(t("changedName", { title: title.trim() }));
+    if (numericWeight !== criterion.weight) parts.push(t("changedWeight", { weight: numericWeight }));
+    if ((description.trim() || null) !== criterion.description) parts.push(t("changedDescription"));
+    if (changedLevels.length) parts.push(t("changedLevels", { count: changedLevels.length }));
 
     setSaving(false);
     await onSaved(
       parts.length
-        ? `ha cambiado en «${criterion.title}» ${parts.join(", ")}`
-        : `ha revisado «${criterion.title}» sin cambios`,
+        ? t("changed", { title: criterion.title, parts: parts.join(", ") })
+        : t("unchanged", { title: criterion.title }),
       {
         criterion_id: criterion.id,
         before: { title: criterion.title, weight: criterion.weight },
@@ -478,11 +477,11 @@ function CriterionForm({
     <form className="space-y-4" onSubmit={(event) => void save(event)}>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         <label className="space-y-1 text-sm font-semibold">
-          <span>Nombre del criterio</span>
+          <span>{t("name")}</span>
           <Input onChange={(e) => setTitle(e.target.value)} value={title} />
         </label>
         <label className="space-y-1 text-sm font-semibold">
-          <span>Peso (%)</span>
+          <span>{t("weight")}</span>
           <Input
             inputMode="decimal"
             onChange={(e) => setWeight(e.target.value)}
@@ -491,7 +490,7 @@ function CriterionForm({
         </label>
       </div>
       <label className="block space-y-1 text-sm font-semibold">
-        <span>Descripción (opcional)</span>
+        <span>{t("description")}</span>
         <Textarea
           className="min-h-16"
           onChange={(e) => setDescription(e.target.value)}
@@ -503,7 +502,7 @@ function CriterionForm({
         {levels.map((level, i) => (
           <div className="grid gap-2 sm:grid-cols-[10rem_1fr]" key={level.id}>
             <Input
-              aria-label={`Nombre del nivel ${level.score}`}
+              aria-label={t("levelName", { score: level.score })}
               onChange={(e) =>
                 setLevels((current) =>
                   current.map((l, j) => (j === i ? { ...l, label: e.target.value } : l)),
@@ -512,7 +511,7 @@ function CriterionForm({
               value={level.label}
             />
             <Textarea
-              aria-label={`Descripción del nivel ${level.score}`}
+              aria-label={t("levelDescription", { score: level.score })}
               className="min-h-14"
               onChange={(e) =>
                 setLevels((current) =>
@@ -521,18 +520,18 @@ function CriterionForm({
                   ),
                 )
               }
-              placeholder={`Qué significa un ${level.score}`}
+              placeholder={t("levelPlaceholder", { score: level.score })}
               value={level.descriptor ?? ""}
             />
             <Textarea
-              aria-label={`Ejemplo del nivel ${level.score}`}
+              aria-label={t("levelExample", { score: level.score })}
               className="min-h-12 text-xs sm:col-start-2"
               onChange={(e) =>
                 setLevels((current) =>
                   current.map((l, j) => (j === i ? { ...l, example: e.target.value } : l)),
                 )
               }
-              placeholder={`Ejemplo opcional: cómo se ve en la práctica un ${level.score}`}
+              placeholder={t("levelExamplePlaceholder", { score: level.score })}
               value={level.example ?? ""}
             />
           </div>
@@ -540,10 +539,10 @@ function CriterionForm({
       </fieldset>
       <div className="flex gap-2">
         <Button disabled={saving} type="submit">
-          {saving ? "Guardando…" : "Guardar"}
+          {saving ? t("saving") : t("save")}
         </Button>
         <Button onClick={onCancel} type="button" variant="ghost">
-          Cancelar
+          {t("cancel")}
         </Button>
       </div>
     </form>

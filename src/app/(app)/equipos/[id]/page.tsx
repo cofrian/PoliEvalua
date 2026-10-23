@@ -1,6 +1,7 @@
 import { ArrowLeft, Mic2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import {
   AdminTeamEditor,
@@ -18,6 +19,7 @@ export default async function TeamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const t = await getTranslations("team");
   const { supabase, user, profile, canVote, isAdmin, event, recording, words, eventClosed } = await getSession();
 
   const [{ data: team }, { data: notes }, { data: evaluation }, { data: canVoteThisTeam }] =
@@ -92,12 +94,12 @@ export default async function TeamPage({
         <div>
           <p className="text-sm font-bold text-muted-foreground">
             {challenge?.name ? `${challenge.name} · ` : ""}{words.unit} #{team.number}
-            {team.table_location ? ` · Mesa ${team.table_location}` : ""}
+            {team.table_location ? ` · ${t("table", { table: team.table_location })}` : ""}
           </p>
           <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{team.name}</h1>
           {liveRecordings ? (
             <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive" role="status">
-              <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> Grabando la exposición
+              <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> {t("recording")}
             </p>
           ) : null}
           {team.project_title ? (
@@ -113,17 +115,17 @@ export default async function TeamPage({
         <div className="flex flex-wrap gap-2">
           <Button asChild className="h-11 px-5 font-bold" variant="outline">
             <Link href={`/equipos/${team.id}/presentaciones`}>
-              <Mic2 className="size-4" /> Exposiciones
+              <Mic2 className="size-4" /> {t("presentations")}
             </Link>
           </Button>
           {canVote && canVoteThisTeam ? (
             <Button asChild className="h-11 px-5 font-bold">
               <Link href={`/equipos/${team.id}/evaluar`}>
                 {evaluation?.status === "submitted"
-                  ? "Ver mi evaluación"
+                  ? t("viewEvaluation")
                   : evaluation
-                    ? "Continuar evaluación"
-                    : `Evaluar ${words.unitLower}`}
+                    ? t("continueEvaluation")
+                    : t("evaluate")}
               </Link>
             </Button>
           ) : null}
@@ -133,7 +135,7 @@ export default async function TeamPage({
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <aside className="space-y-4">
           <div className="rounded-xl border border-border bg-white p-4 dark:bg-card">
-            <h2 className="mb-2 font-display text-lg">Integrantes</h2>
+            <h2 className="mb-2 font-display text-lg">{t("members")}</h2>
             {members.length ? (
               <ul className="space-y-1 text-sm">
                 {members.map((member) => (
@@ -141,13 +143,13 @@ export default async function TeamPage({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">Sin integrantes.</p>
+              <p className="text-sm text-muted-foreground">{t("noMembers")}</p>
             )}
           </div>
           {isAdmin ? (
             <details className="rounded-xl border border-border bg-white p-4 dark:bg-card">
               <summary className="cursor-pointer font-display text-lg">
-                Editar equipo (admin)
+                {t("edit")}
               </summary>
               <div className="mt-4">
                 <AdminTeamEditor
@@ -159,7 +161,7 @@ export default async function TeamPage({
             </details>
           ) : null}
           <div className="rounded-xl border border-border bg-white p-4 dark:bg-card">
-            <h2 className="mb-2 font-display text-lg">Entregas</h2>
+            <h2 className="mb-2 font-display text-lg">{t("deliverables")}</h2>
             <TeamLinks
               canEdit={isAdmin || (isMyTeam && !eventClosed)}
               driveUrl={words.materials.driveUrl}
@@ -171,14 +173,14 @@ export default async function TeamPage({
           </div>
           {team.description ? (
             <div className="rounded-xl border border-border bg-white p-4 text-sm leading-6 dark:bg-card">
-              <h2 className="mb-2 font-display text-lg">Proyecto</h2>
+              <h2 className="mb-2 font-display text-lg">{t("project")}</h2>
               {team.description}
             </div>
           ) : null}
         </aside>
 
         <div>
-          <h2 className="mb-3 font-display text-xl">Notas</h2>
+          <h2 className="mb-3 font-display text-xl">{t("notes")}</h2>
           <NotesPanel
             eventId={event.id}
             initialNotes={(notes ?? []) as unknown as Note[]}

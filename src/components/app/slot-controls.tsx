@@ -2,6 +2,7 @@
 
 import { Pause, Play, SkipForward, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -32,6 +33,7 @@ export function SlotControls({
   durationMinutes: number;
 }) {
   const router = useRouter();
+  const t = useTranslations("slot");
   const supabase = useMemo(() => createClient(), []);
   const [pending, startTransition] = useTransition();
   const [now, setNow] = useState(() => Date.now());
@@ -57,7 +59,7 @@ export function SlotControls({
     startTransition(async () => {
       const { error } = await supabase.rpc("set_slot_status", { target_slot: slotId, next_status: next });
       if (error) {
-        toast.error("No se ha podido actualizar el turno.");
+        toast.error(t("updateError"));
         return;
       }
       router.refresh();
@@ -72,33 +74,33 @@ export function SlotControls({
       <div className="flex flex-wrap gap-2">
         {status === "pending" || status === "skipped" ? (
           <Button className="h-11 px-5 font-bold" disabled={pending} onClick={() => setStatus("live")}>
-            <Play className="size-4" /> Empezar turno
+            <Play className="size-4" /> {t("start")}
           </Button>
         ) : null}
         {status === "live" ? (
           <>
             <Button className="h-11 px-5 font-bold" disabled={pending} onClick={() => setStatus("done")}>
-              <Square className="size-4" /> Terminar
+              <Square className="size-4" /> {t("finish")}
             </Button>
             <Button className="h-11" disabled={pending} onClick={() => setStatus("pending")} variant="outline">
-              <Pause className="size-4" /> Reiniciar
+              <Pause className="size-4" /> {t("reset")}
             </Button>
           </>
         ) : null}
         {status === "pending" ? (
           <Button className="h-11" disabled={pending} onClick={() => setStatus("skipped")} variant="ghost">
-            <SkipForward className="size-4" /> Saltar
+            <SkipForward className="size-4" /> {t("skip")}
           </Button>
         ) : null}
       </div>
       {status === "live" && remaining <= 120 && remaining >= 0 ? (
         <p className="w-full text-sm font-semibold text-orange-600 dark:text-orange-400" role="status">
-          Quedan menos de 2 minutos.
+          {t("twoMinutes")}
         </p>
       ) : null}
       {status === "live" && remaining < 0 ? (
         <p className="w-full text-sm font-semibold text-destructive" role="status">
-          Tiempo agotado.
+          {t("timeUp")}
         </p>
       ) : null}
     </div>

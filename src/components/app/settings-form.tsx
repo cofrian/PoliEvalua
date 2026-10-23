@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ export function SettingsForm({
   description?: ReactNode;
   children: ReactNode;
 }) {
+  const t = useTranslations("common");
   const form = useRef<HTMLFormElement>(null);
   const [dirty, setDirty] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -32,9 +34,9 @@ export function SettingsForm({
       try {
         await action(formData);
         setDirty(false);
-        toast.success("Cambios guardados");
+        toast.success(t("saved"));
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "No se pudo guardar");
+        toast.error(error instanceof Error ? error.message : t("saveError"));
       }
     });
   }
@@ -62,11 +64,11 @@ export function SettingsForm({
         )}
       >
         <span aria-live="polite" className="mr-auto text-xs text-muted-foreground">
-          {dirty ? "Tienes cambios sin guardar" : ""}
+          {dirty ? t("unsaved") : ""}
         </span>
         <Button disabled={!dirty || pending} type="submit">
           {pending ? <Loader2 aria-hidden="true" className="animate-spin" /> : null}
-          {pending ? "Guardando…" : "Guardar cambios"}
+          {pending ? t("saving") : t("save")}
         </Button>
       </div>
     </form>

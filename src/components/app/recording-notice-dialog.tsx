@@ -1,6 +1,7 @@
 "use client";
 
 import { Mic2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ export function RecordingNoticeDialog({
   guarantee: string | null;
 }) {
   const [pending, startTransition] = useTransition();
+  const t = useTranslations("recordingNotice");
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function RecordingNoticeDialog({
       try {
         await acknowledgeRecordingNoticeAction();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "No se ha podido guardar.");
+        toast.error(error instanceof Error ? error.message : t("saveError"));
       }
     });
   }
@@ -58,7 +60,7 @@ export function RecordingNoticeDialog({
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{spaceName}</p>
             <h2 className="font-heading text-xl font-semibold" id="recording-notice-title">
-              Las exposiciones se grabarán
+              {t("title")}
             </h2>
           </div>
         </div>
@@ -67,7 +69,7 @@ export function RecordingNoticeDialog({
           {guarantee ? <p className="font-semibold">{guarantee}</p> : null}
         </div>
         <Button className="mt-6 w-full" disabled={pending} onClick={acknowledge} ref={buttonRef} type="button">
-          {pending ? "Guardando…" : "Entendido"}
+          {pending ? t("saving") : t("ok")}
         </Button>
       </div>
     </div>

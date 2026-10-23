@@ -1,6 +1,6 @@
 // Voto del público: configuración (events.settings.public_vote).
 
-export type PublicVoteSettings = { open: boolean; title: string; showResults: boolean };
+export type PublicVoteSettings = { open: boolean; title: string | null; showResults: boolean };
 
 export function publicVoteSettings(settings: unknown): PublicVoteSettings {
   const raw =
@@ -9,7 +9,7 @@ export function publicVoteSettings(settings: unknown): PublicVoteSettings {
       : {};
   return {
     open: raw.open === true,
-    title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim() : "Premio del público",
+    title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim() : null,
     showResults: raw.show_results === true,
   };
 }

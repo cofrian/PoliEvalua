@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +11,8 @@ import { createClient } from "@/lib/supabase/client";
 export function LiveRefresh({ eventId }: { eventId: string }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const t = useTranslations("results");
+  const format = useFormatter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
@@ -41,10 +44,10 @@ export function LiveRefresh({ eventId }: { eventId: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-leaf-500">
       <span className="size-2 animate-pulse rounded-full bg-leaf-500" aria-hidden="true" />
-      En directo
+      {t("live")}
       {lastUpdate ? (
         <span className="font-normal text-muted-foreground">
-          · actualizado {lastUpdate.toLocaleTimeString("es-ES")}
+          · {t("updated", { time: format.dateTime(lastUpdate, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) })}
         </span>
       ) : null}
     </span>

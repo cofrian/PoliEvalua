@@ -1,5 +1,7 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
+import { isLocale } from "@/i18n/config";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { z } from "zod";
@@ -21,12 +23,14 @@ export async function castPublicVoteAction(
   const parsed = z
     .object({ slug: z.string().min(3).max(60), teamId: z.string().uuid() })
     .safeParse({ slug: formData.get("slug"), teamId: formData.get("teamId") });
-  if (!parsed.success) return { ok: false, message: "Elige una opción." };
+  const localeValue = formData.get("locale");
+  const t = await getTranslations({ locale: isLocale(localeValue) ? localeValue : "es", namespace: "publicVote" });
+  if (!parsed.success) return { ok: false, message: t("errors.choose") };
 
   const admin = createAdminClient();
   const ipKey = [`ip:${await clientIp()}`];
   if (await isBlocked(admin, "public_vote", ipKey)) {
-    return { ok: false, message: "Hay demasiados votos desde esta red. Espera unos minutos." };
+    return { ok: false, message: t("errors.rate") };
   }
   await recordAttempt(admin, "public_vote", ipKey);
 
@@ -36,7 +40,7 @@ export async function castPublicVoteAction(
     .eq("slug", parsed.data.slug)
     .maybeSingle();
   if (!event || !publicVoteSettings(event.settings).open) {
-    return { ok: false, message: "La votación está cerrada." };
+    return { ok: false, message: t("errors.closed") };
   }
 
   const { data: team } = await admin
@@ -45,7 +49,7 @@ export async function castPublicVoteAction(
     .eq("id", parsed.data.teamId)
     .eq("event_id", event.id)
     .maybeSingle();
-  if (!team) return { ok: false, message: "Esa opción ya no existe." };
+  if (!team) return { ok: false, message: t("errors.gone") };
 
   const cookieStore = await cookies();
   const cookieName = `pv_${event.id.slice(0, 8)}`;
@@ -65,7 +69,7 @@ export async function castPublicVoteAction(
   const { error } = await admin
     .from("public_votes")
     .upsert({ event_id: event.id, voter_hash: voterHash, team_id: team.id }, { onConflict: "event_id,voter_hash" });
-  if (error) return { ok: false, message: "No se ha podido registrar el voto. Inténtalo de nuevo." };
+  if (error) return { ok: false, message: t("errors.save") };
 
-  return { ok: true, message: "¡Voto registrado! Puedes cambiarlo mientras la votación siga abierta.", teamId: team.id };
+  return { ok: true, message: t("saved"), teamId: team.id };
 }

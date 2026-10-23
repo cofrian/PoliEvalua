@@ -73,9 +73,3 @@ export const timeFormat = new Intl.DateTimeFormat("es-ES", {
   timeZone: "Europe/Madrid",
 });
 
-export const slotStatusLabels: Record<SlotStatus, string> = {
-  pending: "Pendiente",
-  live: "Exponiendo",
-  done: "Terminada",
-  skipped: "Saltada",
-};

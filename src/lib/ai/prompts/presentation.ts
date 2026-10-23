@@ -3,19 +3,21 @@
 // Si cambia cualquier texto de este archivo, sube PROMPT_VERSION y registra el
 // hash nuevo en PROMPT_HASHES (lo comprueba `npm run test:prompts`).
 
-export const PROMPT_VERSION = "2026.10.2";
+export const PROMPT_VERSION = "2026.10.4";
 
 /** Hash de los textos por versión; lo calcula scripts/check-prompt-version.mjs. */
 export const PROMPT_HASHES: Record<string, string> = {
   "2026.10.1": "54dff2db863f5145",
   "2026.10.2": "a2daf877e4ec40d4",
+  "2026.10.3": "3eec9a604a05744b",
+  "2026.10.4": "902d97487e556830",
 };
 
 export type SpaceKind = "hackathon" | "class" | "awards" | "project" | "custom";
 
 export const BASE_RULES = `Eres un asistente académico de la Universitat Politècnica de València.
 Trabajas solo con la transcripción de una exposición oral; no inventes nada que no esté en ella.
-Escribe en español claro y conserva los nombres técnicos tal como aparecen.
+Conserva los nombres técnicos tal como aparecen.
 No evalúes, no asignes notas y no decidas ganadores.`;
 
 /** Qué interesa en cada tipo de espacio. Nunca sustituye a la rúbrica. */
@@ -55,8 +57,28 @@ ${instructions}
 """`;
 }
 
-export function systemPrompt(kind: SpaceKind, instructions: string, jsonRules: string) {
-  return [BASE_RULES, KIND_CONTEXT[kind] ?? KIND_CONTEXT.custom, instructionsBlock(instructions), jsonRules]
+export type SpaceLocale = "es" | "ca" | "en";
+
+/** Idioma de la respuesta: el del espacio, aunque la exposición sea en otro. */
+export const LOCALE_RULE: Record<SpaceLocale, string> = {
+  es: "Escribe toda la respuesta en español claro.",
+  ca: "Escribe toda la respuesta en valenciano claro (normativa de la Acadèmia Valenciana de la Llengua), aunque la transcripción esté en otro idioma. Las citas textuales se copian tal cual.",
+  en: "Escribe toda la respuesta en inglés claro, aunque la transcripción esté en otro idioma. Las citas textuales se copian tal cual.",
+};
+
+export function systemPrompt(
+  kind: SpaceKind,
+  instructions: string,
+  jsonRules: string,
+  locale: SpaceLocale = "es",
+) {
+  return [
+    BASE_RULES,
+    LOCALE_RULE[locale] ?? LOCALE_RULE.es,
+    KIND_CONTEXT[kind] ?? KIND_CONTEXT.custom,
+    instructionsBlock(instructions),
+    jsonRules,
+  ]
     .filter(Boolean)
     .join("\n\n");
 }
@@ -119,13 +141,14 @@ export function buildAsrPrompt({
 
   const team = teamName?.trim();
   const title = projectTitle?.trim();
-  let head = team ? `Exposición del equipo ${team}` : "Exposición";
-  if (title) head += ` sobre «${title}»`;
   if (!team && !title && !terms.length) return null;
 
-  let text = `${head}.`;
+  // Solo nombres, sin frases: así la pista no empuja a Whisper hacia ningún
+  // idioma y sirve igual para exposiciones en castellano, valenciano o inglés.
+  let text = [team, title ? `«${title}»` : ""].filter(Boolean).join(" · ");
+  text = text ? `${text}.` : "";
   for (const [index, term] of terms.entries()) {
-    const next = `${text}${index === 0 ? " Términos: " : ", "}${term}`;
+    const next = `${text}${index === 0 ? (text ? " " : "") : ", "}${term}`;
     if (next.length + 1 > ASR_PROMPT_MAX) break;
     text = next;
   }
@@ -143,12 +166,37 @@ function normalizeEcho(text: string) {
 }
 
 /**
- * En segmentos sin voz Whisper a veces repite la pista. Si todo el texto está
- * contenido en ella, se descarta.
+ * Whisper a veces repite la pista: en segmentos sin voz (todo el texto está en
+ * ella) o al final del audio, pegando dos o más términos seguidos de la pista
+ * («… 20 more gardens Impacto y problema, Viabilidad.»). En ambos casos se quita.
  */
 export function dropPromptEcho(transcript: string, asrPrompt: string | null | undefined) {
   if (!asrPrompt) return transcript;
   const text = normalizeEcho(transcript);
   if (!text) return transcript;
-  return normalizeEcho(asrPrompt).includes(text) ? "" : transcript;
+  if (normalizeEcho(asrPrompt).includes(text)) return "";
+
+  // Términos de la pista como listas de palabras normalizadas.
+  const terms = asrPrompt
+    .split(/[.,·«»]+/)
+    .map((term) => normalizeEcho(term).split(" ").filter(Boolean))
+    .filter((words) => words.length);
+  const words = transcript.trimEnd().split(/\s+/);
+  const used = new Set<string[]>();
+  let removed = 0;
+  for (;;) {
+    const tail = words.map(normalizeEcho);
+    // Cada término cuenta una sola vez: «la viabilidad. Viabilidad.» se respeta.
+    const match = terms.find(
+      (term) =>
+        !used.has(term) &&
+        term.length <= tail.length && term.every((word, index) => tail[tail.length - term.length + index] === word),
+    );
+    if (!match) break;
+    words.splice(words.length - match.length);
+    used.add(match);
+    removed += 1;
+  }
+  // Con un solo término podría ser lo que de verdad se dijo al terminar.
+  return removed >= 2 ? words.join(" ").replace(/[\s,;:·-]+$/, "") + "." : transcript;
 }

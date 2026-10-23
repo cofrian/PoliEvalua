@@ -1,6 +1,7 @@
 "use client";
 
 import { NotebookPen } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { NotesPanel, type Note } from "@/components/app/notes-panel";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function NotesDrawer({
   userId: string;
   initialNotes: Note[];
 }) {
+  const t = useTranslations("notes");
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -31,12 +33,12 @@ export function NotesDrawer({
           className="fixed right-4 bottom-24 z-40 h-12 rounded-full px-5 font-bold shadow-lg lg:hidden"
           type="button"
         >
-          <NotebookPen className="size-4" /> Notas ({initialNotes.length})
+          <NotebookPen className="size-4" /> {t("button", { count: initialNotes.length })}
         </Button>
       </SheetTrigger>
       <SheetContent className="h-[85svh] overflow-y-auto px-4 pb-6" side="bottom">
         <SheetHeader className="px-0">
-          <SheetTitle className="font-display text-xl">Notas del equipo</SheetTitle>
+          <SheetTitle className="font-display text-xl">{t("drawerTitle")}</SheetTitle>
         </SheetHeader>
         <NotesPanel eventId={eventId} initialNotes={initialNotes} teamId={teamId} userId={userId} />
       </SheetContent>

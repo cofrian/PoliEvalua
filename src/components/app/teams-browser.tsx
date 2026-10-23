@@ -2,6 +2,7 @@
 
 import { Search, UsersRound } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/app/empty-state";
@@ -30,28 +31,22 @@ const statusStyles = {
   pending: "border-border bg-transparent",
 } as const;
 
-const statusLabels = {
-  submitted: "✔ Evaluado",
-  draft: "Borrador",
-  incomplete: "⚠ Incompleta",
-  pending: "Pendiente",
-} as const;
-
 export function TeamsBrowser({
   challenges,
   teams,
   canVote,
-  title = "Equipos",
+  title,
   isAdmin = false,
 }: {
   challenges: { id: string; name: string }[];
   teams: TeamSummary[];
   canVote: boolean;
   /** Nombre de la unidad en plural según el tipo de espacio. */
-  title?: string;
+  title: string;
   /** Quien gestiona ve cómo crear la lista cuando aún está vacía. */
   isAdmin?: boolean;
 }) {
+  const t = useTranslations("teams");
   const [challenge, setChallenge] = useState<string>("all");
   const [query, setQuery] = useState("");
 
@@ -67,7 +62,7 @@ export function TeamsBrowser({
     );
   }, [teams, challenge, query]);
 
-  const tabs = [{ id: "all", name: "Todos" }, ...challenges];
+  const tabs = [{ id: "all", name: t("all") }, ...challenges];
 
   return (
     <div className="space-y-6">
@@ -75,10 +70,10 @@ export function TeamsBrowser({
         <div>
           <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {teams.length} {title.toLowerCase()} ·{" "}
+            {t("count", { count: teams.length, units: title.toLowerCase() })} ·{" "}
             {canVote
-              ? `${teams.filter((t) => t.status === "submitted").length} evaluados por ti`
-              : "como mentor puedes tomar notas, no votar"}
+              ? t("evaluatedByYou", { count: teams.filter((team) => team.status === "submitted").length })
+              : t("mentorHint")}
           </p>
         </div>
         <div className="relative w-full sm:w-72">
@@ -87,10 +82,10 @@ export function TeamsBrowser({
             className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            aria-label="Buscar equipo"
+            aria-label={t("searchLabel")}
             className="h-10 pl-9"
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar por nombre o número"
+            placeholder={t("searchPlaceholder")}
             value={query}
           />
         </div>
@@ -123,21 +118,21 @@ export function TeamsBrowser({
           action={
             isAdmin ? (
               <Button asChild>
-                <Link href="/admin/equipos">Crear o importar {title.toLowerCase()}</Link>
+                <Link href="/admin/equipos">{t("createOrImport", { units: title.toLowerCase() })}</Link>
               </Button>
             ) : null
           }
           description={
             isAdmin
-              ? "Crea la lista a mano o impórtala desde una hoja de cálculo. Aparecerán aquí para evaluarlos."
-              : "Cuando la organización los cree, aparecerán aquí."
+              ? t("emptyAdmin")
+              : t("emptyOther")
           }
           icon={<UsersRound aria-hidden="true" />}
-          title={`Todavía no hay ${title.toLowerCase()}`}
+          title={t("emptyTitle", { units: title.toLowerCase() })}
         />
       ) : filtered.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">
-          Nada coincide con «{query}».
+          {t("noMatch", { query })}
         </p>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -168,18 +163,18 @@ export function TeamsBrowser({
                       className={cn("shrink-0 border", statusStyles[team.status])}
                       variant="outline"
                     >
-                      {statusLabels[team.status]}
+                      {t(`status.${team.status}`)}
                     </Badge>
                   ) : null}
                 </div>
                 <p className="mt-auto text-xs text-muted-foreground">
-                  {team.memberCount} {team.memberCount === 1 ? "integrante" : "integrantes"}
-                  {team.myNotes ? ` · ${team.myNotes} ${team.myNotes === 1 ? "nota tuya" : "notas tuyas"}` : ""}
-                  {team.sharedNotes ? ` · ${team.sharedNotes} ${team.sharedNotes === 1 ? "compartida" : "compartidas"}` : ""}
+                  {t("members", { count: team.memberCount })}
+                  {team.myNotes ? ` · ${t("myNotes", { count: team.myNotes })}` : ""}
+                  {team.sharedNotes ? ` · ${t("sharedNotes", { count: team.sharedNotes })}` : ""}
                 </p>
                 {canVote && !team.canEvaluate ? (
                   <p className="text-xs font-semibold text-orange-700 dark:text-orange-300">
-                    Asignado a otro panel
+                    {t("otherPanel")}
                   </p>
                 ) : null}
               </Link>

@@ -1,16 +1,22 @@
 "use server";
 
+import { adminMessage } from "@/lib/app/admin-messages";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { logAudit } from "@/lib/app/audit";
 import { getSession } from "@/lib/app/session";
-import { evaluationProposalSchema } from "@/lib/ai/evaluation-proposal";
+import {
+  assistantActionSchema,
+  evaluationProposalSchema,
+  type AssistantAction,
+} from "@/lib/ai/evaluation-proposal";
+import { buildAgenda } from "@/lib/app/agenda-builder";
 
 async function requireManager() {
   const session = await getSession();
-  if (!session.isAdmin) throw new Error("Solo el gestor puede hacer esto.");
+  if (!session.isAdmin) throw new Error(await adminMessage("onlyAdmin"));
   return session;
 }
 
@@ -92,7 +98,7 @@ export async function saveEvaluationSettingsAction(formData: FormData) {
     },
     { onConflict: "event_id" },
   );
-  if (error) throw new Error("No se ha podido guardar la página de evaluación.");
+  if (error) throw new Error(await adminMessage("evaluationSaveFailed"));
 
   await logAudit(
     supabase,
@@ -141,7 +147,7 @@ export async function saveAcademicContextAction(formData: FormData) {
     },
     { onConflict: "event_id" },
   );
-  if (error) throw new Error("No se han podido guardar los datos académicos.");
+  if (error) throw new Error(await adminMessage("academicSaveFailed"));
 
   await logAudit(
     supabase,
@@ -157,36 +163,84 @@ export async function saveAcademicContextAction(formData: FormData) {
 
 const proposalIdSchema = z.string().uuid();
 
+/** Las propuestas antiguas guardaban la evaluación sin envoltorio. */
+function storedAction(action: string, proposal: unknown): AssistantAction {
+  if (action === "evaluation" && proposal && typeof proposal === "object" && !("type" in proposal)) {
+    return { type: "evaluation", proposal: evaluationProposalSchema.parse(proposal) };
+  }
+  return assistantActionSchema.parse(proposal);
+}
+
+/** Aplica lo que propuso el asistente, solo después de que la persona lo confirme. */
 export async function applyAssistantProposalAction(formData: FormData) {
-  const { supabase, user, event } = await requireManager();
+  const session = await requireManager();
+  const { supabase, user, event } = session;
   const proposalId = proposalIdSchema.parse(formData.get("proposalId"));
   const { data: row } = await supabase
     .from("assistant_proposals")
-    .select("id, proposal, status")
+    .select("id, proposal, status, action")
     .eq("id", proposalId)
     .eq("event_id", event.id)
     .maybeSingle();
 
   if (!row || row.status !== "pending") {
-    throw new Error("La propuesta ya no está pendiente.");
+    throw new Error(await adminMessage("proposalNotPending"));
   }
-  const proposal = evaluationProposalSchema.parse(row.proposal);
-  const { error } = await supabase.rpc("apply_evaluation_proposal", {
-    p_event_id: event.id,
-    p_proposal: proposal,
-  });
-  if (error) throw new Error(error.message);
+  const action = storedAction(row.action, row.proposal);
+  let target = "/admin/asistente";
 
-  if (proposal.jury.enabled && proposal.jury.panelNames.length) {
-    await supabase.from("jury_panels").upsert(
-      proposal.jury.panelNames.map((name, index) => ({
-        event_id: event.id,
-        name,
-        order: index,
-        active: true,
-      })),
-      { onConflict: "event_id,name" },
-    );
+  if (action.type === "evaluation") {
+    const { proposal } = action;
+    const { error } = await supabase.rpc("apply_evaluation_proposal", {
+      p_event_id: event.id,
+      p_proposal: proposal,
+    });
+    if (error) throw new Error(error.message);
+
+    if (proposal.jury.enabled && proposal.jury.panelNames.length) {
+      await supabase.from("jury_panels").upsert(
+        proposal.jury.panelNames.map((name, index) => ({
+          event_id: event.id,
+          name,
+          order: index,
+          active: true,
+        })),
+        { onConflict: "event_id,name" },
+      );
+    }
+    target = "/admin/evaluacion?applied=1";
+  } else if (action.type === "groups") {
+    // Se añaden a continuación de los que ya hay; los que coinciden en nombre no se duplican.
+    const { data: existing } = await supabase.from("teams").select("name, number").eq("event_id", event.id);
+    const taken = new Set((existing ?? []).map((team) => team.name.toLowerCase()));
+    let next = Math.max(0, ...(existing ?? []).map((team) => team.number ?? 0)) + 1;
+    const fresh = action.groups.filter((group) => !taken.has(group.name.toLowerCase()));
+    if (fresh.length) {
+      const { data: created, error } = await supabase
+        .from("teams")
+        .insert(fresh.map((group) => ({ event_id: event.id, name: group.name, project_title: group.projectTitle, number: next++ })))
+        .select("id, name");
+      if (error || !created) throw new Error(await adminMessage("assistantGroupsFailed"));
+      const members = created.flatMap((team) =>
+        (fresh.find((group) => group.name === team.name)?.members ?? []).map((fullName) => ({
+          event_id: event.id,
+          team_id: team.id,
+          full_name: fullName,
+        })),
+      );
+      if (members.length) await supabase.from("team_members").insert(members);
+    }
+    target = "/admin/equipos";
+  } else {
+    const result = await buildAgenda(session, {
+      rooms: action.rooms,
+      start: action.start,
+      duration: action.durationMinutes,
+      gap: action.gapMinutes,
+      order: action.order,
+    });
+    if (!result.ok) throw new Error(result.message);
+    target = "/admin/agenda";
   }
 
   await supabase
@@ -194,17 +248,11 @@ export async function applyAssistantProposalAction(formData: FormData) {
     .update({ status: "applied", applied_at: new Date().toISOString() })
     .eq("id", proposalId)
     .eq("event_id", event.id);
-  await logAudit(
-    supabase,
-    event.id,
-    user.id,
-    "aplicar_propuesta_asistente",
-    "assistant_proposals",
-    proposalId,
-    { evaluationTitle: proposal.evaluation.title },
-  );
+  await logAudit(supabase, event.id, user.id, "aplicar_propuesta_asistente", "assistant_proposals", proposalId, {
+    action: action.type,
+  });
   revalidatePath("/", "layout");
-  redirect("/admin/evaluacion?applied=1");
+  redirect(target);
 }
 
 export async function rejectAssistantProposalAction(formData: FormData) {

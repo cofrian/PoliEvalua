@@ -1,6 +1,9 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
+
+import es from "../../../messages/es.json";
 
 import { createClient } from "@/lib/supabase/server";
 
@@ -68,16 +71,24 @@ export async function getOwnedRecording(session: PresentationSession, id: string
   return recording;
 }
 
-export function presentationErrorResponse(error: unknown) {
+// Los errores se escriben en castellano en el código; aquí se traducen al
+// idioma de quien llama buscando su clave en messages/es.json.
+const apiErrorKeys = new Map(Object.entries(es.apiErrors).map(([key, text]) => [text, key]));
+
+async function translateApiError(message: string) {
+  const key = apiErrorKeys.get(message);
+  if (!key) return message;
+  const t = await getTranslations("apiErrors");
+  return t(key as keyof typeof es.apiErrors);
+}
+
+export async function presentationErrorResponse(error: unknown) {
   if (error instanceof PresentationAccessError) {
-    return Response.json({ error: error.message }, { status: error.status });
+    return Response.json({ error: await translateApiError(error.message) }, { status: error.status });
   }
   console.error(
     "Error en grabaciones de exposiciones:",
     error instanceof Error ? error.message : "Error desconocido",
   );
-  return Response.json(
-    { error: "No se ha podido completar la operación." },
-    { status: 500 },
-  );
+  return Response.json({ error: await translateApiError(es.apiErrors.generic) }, { status: 500 });
 }

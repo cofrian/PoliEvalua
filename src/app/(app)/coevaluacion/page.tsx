@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { ContributionForm, PeerReviewForm, type PeerCriterion } from "@/components/app/peer-review-form";
 import { peerReviewSettings } from "@/lib/app/peer-review";
@@ -9,6 +10,7 @@ export default async function PeerReviewPage() {
   const { supabase, user, event, role, words, eventClosed } = await getSession();
   const settings = peerReviewSettings(event.settings);
   if (role !== "student" || !settings.enabled) redirect("/mi-grupo");
+  const t = await getTranslations("peer");
 
   const [{ data: rubric }, { data: membership }, { data: assignments }, { data: reviews }, { data: contributions }] =
     await Promise.all([
@@ -71,26 +73,26 @@ export default async function PeerReviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Coevaluación</h1>
+        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Usa la misma rúbrica que el {words.evaluator}.{" "}
-          {settings.anonymous ? "Los comentarios llegan a cada grupo sin tu nombre." : ""} Puedes corregir lo enviado hasta el cierre.
+          {t("intro", { evaluator: words.evaluator })}{" "}
+          {settings.anonymous ? `${t("anonymous")} ` : ""}{t("canCorrect")}
         </p>
       </div>
 
       {!ownTeam ? (
-        <p className={cardClass}>Todavía no estás en ningún {words.unitLower}.</p>
+        <p className={cardClass}>{t("noTeam", { mode: words.mode })}</p>
       ) : null}
 
       {settings.peer ? (
         <section className="space-y-4">
-          <h2 className="font-display text-xl">{words.units} que te tocan</h2>
+          <h2 className="font-display text-xl">{t("assigned", { units: words.units })}</h2>
           {assigned.length ? (
             assigned.map((team) => (
               <details className={cardClass} key={team.id} open={reviewFor(team.id, "peer")?.status !== "submitted"}>
                 <summary className="cursor-pointer font-semibold">
                   #{team.number} · {team.name}
-                  {reviewFor(team.id, "peer")?.status === "submitted" ? " · ✔ Enviada" : ""}
+                  {reviewFor(team.id, "peer")?.status === "submitted" ? t("sent") : ""}
                 </summary>
                 <div className="mt-4">
                   <PeerReviewForm
@@ -105,14 +107,14 @@ export default async function PeerReviewPage() {
               </details>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">La gestión todavía no ha repartido los {words.unitsLower} a evaluar.</p>
+            <p className="text-sm text-muted-foreground">{t("notAssigned", { units: words.unitsLower })}</p>
           )}
         </section>
       ) : null}
 
       {settings.self && ownTeam ? (
         <section className="space-y-4">
-          <h2 className="font-display text-xl">Autoevaluación de {ownTeam.name}</h2>
+          <h2 className="font-display text-xl">{t("selfTitle", { name: ownTeam.name })}</h2>
           <div className={cardClass}>
             <PeerReviewForm
               criteria={criteria}
@@ -128,7 +130,7 @@ export default async function PeerReviewPage() {
 
       {settings.contribution && ownTeam ? (
         <section className="space-y-4">
-          <h2 className="font-display text-xl">Aportación de tus compañeros</h2>
+          <h2 className="font-display text-xl">{t("contributionTitle")}</h2>
           <div className={cardClass}>
             <ContributionForm
               eventId={event.id}

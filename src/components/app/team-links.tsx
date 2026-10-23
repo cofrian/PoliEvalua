@@ -2,6 +2,7 @@
 
 import { ExternalLink, FolderOpen, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,14 +20,7 @@ export type TeamLink = {
 
 type LinkKind = "repo" | "web" | "video" | "slides" | "drive" | "other";
 
-const kindLabels: Record<LinkKind, string> = {
-  repo: "Repositorio",
-  web: "Web o demo",
-  video: "Vídeo",
-  slides: "Presentación",
-  drive: "Carpeta o documento",
-  other: "Otro",
-};
+const KINDS: LinkKind[] = ["repo", "web", "video", "slides", "drive", "other"];
 
 /** Sugiere el tipo a partir del dominio para ahorrar un paso. */
 function guessKind(url: string): LinkKind | null {
@@ -57,6 +51,8 @@ export function TeamLinks({
   instructions: string | null;
 }) {
   const router = useRouter();
+  const t = useTranslations("links");
+  const kindLabel = (value: LinkKind) => t(`kind.${value}`);
   const supabase = useMemo(() => createClient(), []);
   const [url, setUrl] = useState("");
   const [label, setLabel] = useState("");
@@ -67,7 +63,7 @@ export function TeamLinks({
   async function addLink() {
     const value = url.trim();
     if (!/^https?:\/\/\S+\.\S+/i.test(value)) {
-      toast.error("Pega un enlace completo que empiece por https://");
+      toast.error(t("invalid"));
       return;
     }
     setBusy(true);
@@ -82,20 +78,20 @@ export function TeamLinks({
     });
     setBusy(false);
     if (error) {
-      toast.error("No se ha podido guardar el enlace. Comprueba que perteneces a este grupo.");
+      toast.error(t("saveError"));
       return;
     }
     setUrl("");
     setLabel("");
     setKindTouched(false);
-    toast.success("Enlace añadido.");
+    toast.success(t("added"));
     router.refresh();
   }
 
   async function removeLink(id: string) {
     const { error } = await supabase.from("team_links").delete().eq("id", id);
     if (error) {
-      toast.error("No se ha podido quitar el enlace.");
+      toast.error(t("removeError"));
       return;
     }
     router.refresh();
@@ -111,7 +107,7 @@ export function TeamLinks({
           rel="noopener noreferrer"
           target="_blank"
         >
-          <FolderOpen aria-hidden="true" className="size-4" /> Carpeta común de entregas
+          <FolderOpen aria-hidden="true" className="size-4" /> {t("sharedFolder")}
           <ExternalLink aria-hidden="true" className="ml-auto size-4" />
         </a>
       ) : null}
@@ -127,14 +123,14 @@ export function TeamLinks({
                 target="_blank"
               >
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">
-                  {kindLabels[link.kind]}
+                  {kindLabel(link.kind)}
                 </span>
                 <span className="truncate">{link.label || link.url.replace(/^https?:\/\//, "")}</span>
                 <ExternalLink aria-hidden="true" className="ml-auto size-4 shrink-0" />
               </a>
               {canEdit ? (
                 <Button
-                  aria-label={`Quitar ${link.label || kindLabels[link.kind]}`}
+                  aria-label={t("remove", { name: link.label || kindLabel(link.kind) })}
                   className="size-9 shrink-0"
                   onClick={() => void removeLink(link.id)}
                   size="icon"
@@ -148,13 +144,13 @@ export function TeamLinks({
           ))}
         </ul>
       ) : (
-        <p className="text-muted-foreground">Todavía no hay enlaces.</p>
+        <p className="text-muted-foreground">{t("empty")}</p>
       )}
 
       {canEdit ? (
         <div className="space-y-2 rounded-lg border border-dashed border-border p-3">
           <Input
-            aria-label="Enlace"
+            aria-label={t("link")}
             inputMode="url"
             onChange={(event) => {
               setUrl(event.target.value);
@@ -166,7 +162,7 @@ export function TeamLinks({
           />
           <div className="flex flex-wrap gap-2">
             <select
-              aria-label="Tipo de enlace"
+              aria-label={t("type")}
               className={selectClass}
               onChange={(event) => {
                 setKind(event.target.value as LinkKind);
@@ -174,20 +170,20 @@ export function TeamLinks({
               }}
               value={kind}
             >
-              {(Object.keys(kindLabels) as LinkKind[]).map((value) => (
-                <option key={value} value={value}>{kindLabels[value]}</option>
+              {KINDS.map((value) => (
+                <option key={value} value={value}>{kindLabel(value)}</option>
               ))}
             </select>
             <Input
-              aria-label="Descripción (opcional)"
+              aria-label={t("description")}
               className="h-9 min-w-40 flex-1"
               maxLength={120}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="Descripción (opcional)"
+              placeholder={t("description")}
               value={label}
             />
             <Button className="h-9" disabled={busy || !url.trim()} onClick={() => void addLink()} type="button">
-              Añadir
+              {t("add")}
             </Button>
           </div>
         </div>

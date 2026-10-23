@@ -1,5 +1,6 @@
 import "server-only";
 
+import { whisperLanguage } from "@/lib/app/recording-notice";
 import { createHash, timingSafeEqual } from "node:crypto";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -16,6 +17,7 @@ import {
   INSTRUCTIONS_MAX,
   PROMPT_VERSION,
   type SpaceKind,
+  type SpaceLocale,
 } from "@/lib/ai/prompts/presentation";
 import { TranscriptionError, groqConfigured, transcribeWithGroq } from "@/lib/ai/transcription";
 import { mergeTranscripts } from "@/lib/app/merge-transcripts";
@@ -62,7 +64,7 @@ type TeamRelation =
   | { name: string; project_title: string | null; challenge_id: string | null }[]
   | null;
 
-type EventRow = { kind: SpaceKind; settings: { ai?: { instructions?: unknown } } | null };
+type EventRow = { kind: SpaceKind; locale?: SpaceLocale; settings: { ai?: { instructions?: unknown } } | null };
 type EventRelation = EventRow | EventRow[] | null;
 
 function shortHash(text: string) {
@@ -304,8 +306,7 @@ export async function handleJobFailure(
     await admin
       .from("presentation_recordings")
       .update({
-        error_message:
-          "Transcribiendo con el servidor de respaldo; puede tardar unos minutos.",
+        error_message: "@backup",
       })
       .eq("id", job.recording_id);
     await wakeWorkers(admin);
@@ -323,7 +324,7 @@ export async function handleJobFailure(
       .from("presentation_recordings")
       .update({
         status: "transcribed",
-        error_message: `La transcripción está lista, pero no se pudo generar el análisis: ${friendlyError(message)} Pulsa «Reintentar».`,
+        error_message: `@analysisFailed:${failureReason(message)}`,
       })
       .eq("id", job.recording_id);
     return;
@@ -336,21 +337,25 @@ export async function handleJobFailure(
   await markRecordingFailed(
     admin,
     job.recording_id,
-    `No se pudo transcribir el audio: ${friendlyError(message)} El audio se ha borrado; pega la transcripción para generar los materiales.`,
+    `@transcribeFailed:${failureReason(message)}`,
   );
   await deleteRecordingAudio(admin, job.recording_id);
 }
 
 /** Mensaje para la persona usuaria; el detalle técnico queda en last_error. */
-export function friendlyError(message: string) {
-  if (/NVIDIA_API_KEY|GROQ_API_KEY|clave/i.test(message)) return "la IA no está configurada en el servidor.";
-  if (/ninguno de los modelos/i.test(message)) return "los modelos de IA no están disponibles ahora mismo.";
-  if (/no se detectó voz/i.test(message)) return "no se detectó voz en la grabación.";
-  if (/trabajador de respaldo|transcriptor de respaldo/i.test(message)) return message;
-  if (/ejecutor no respondió|timeout|tiempo|abort/i.test(message)) return "el servicio tardó demasiado en responder.";
-  if (/formato|ffmpeg|unsupported/i.test(message)) return "el formato del audio no es compatible.";
-  if (/audio temporal|ya no existe/i.test(message)) return "el audio temporal ya no está disponible.";
-  return "el servicio de IA ha fallado.";
+/**
+ * Motivo de un fallo como código. error_message guarda «@tipo:motivo» y la
+ * pantalla lo traduce al idioma de quien lo mira (studio.errors en messages/).
+ */
+export function failureReason(message: string) {
+  if (/NVIDIA_API_KEY|GROQ_API_KEY|clave/i.test(message)) return "notConfigured";
+  if (/ninguno de los modelos/i.test(message)) return "modelsDown";
+  if (/no se detectó voz/i.test(message)) return "noSpeech";
+  if (/trabajador de respaldo|transcriptor de respaldo/i.test(message)) return "backupFailed";
+  if (/ejecutor no respondió|timeout|tiempo|abort/i.test(message)) return "timeout";
+  if (/formato|ffmpeg|unsupported/i.test(message)) return "format";
+  if (/audio temporal|ya no existe/i.test(message)) return "audioGone";
+  return "failed";
 }
 
 /** Espera turno en el limitador global del proveedor o aplaza el trabajo. */
@@ -447,7 +452,7 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
     text = await transcribeWithGroq({
       audio: new Blob([audio], { type: segment.mime_type }),
       fileName: segment.storage_path.split("/").at(-1) ?? `${segment.seq}.webm`,
-      language: (recording?.language || process.env.TRANSCRIPTION_LANGUAGE || "es").split("-")[0],
+      language: whisperLanguage(recording?.language),
       prompt: recording?.asr_prompt ?? null,
     });
   } catch (error) {
@@ -527,7 +532,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     .update({ status: "analyzing", error_message: null })
     .eq("id", job.recording_id)
     .select(
-      "id, event_id, team_id, transcript, analysis_state, team:teams(name, project_title, challenge_id), event:events(kind, settings)",
+      "id, event_id, team_id, transcript, analysis_state, team:teams(name, project_title, challenge_id), event:events(kind, settings, locale)",
     )
     .maybeSingle();
   if (!recording?.transcript) throw new TranscriptionError("No hay transcripción.", false);
@@ -550,6 +555,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     criteria: await rubricCriteria(admin, recording.event_id),
     kind,
     instructions,
+    locale: event?.locale ?? "es",
     previous: state,
     deps: {
       acquireSlot: () => acquireSlot(admin, "nvidia"),

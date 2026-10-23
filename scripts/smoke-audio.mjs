@@ -3,6 +3,7 @@
 // (o con el trabajador de respaldo si Groq falla).
 // Crea un espacio y una persona temporales y los borra al terminar.
 // Uso: node scripts/smoke-audio.mjs <audio.wav> [url de la app]
+// SMOKE_LOCALE=ca|en fija el idioma del espacio; SMOKE_SPOKEN=es|ca|en fija el hablado (por defecto se detecta).
 // Con SMOKE_RUNNER=external el audio se transcribe en el respaldo (Kaggle) y no en Groq.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
@@ -53,7 +54,11 @@ try {
   if (createError) throw createError;
   eventId = created;
   const { data: event } = await db.from("events").select("settings").eq("id", eventId).single();
-  await db.from("events").update({ settings: { ...event.settings, recording: { enabled: true, notice_version: 1 } } }).eq("id", eventId);
+  // SMOKE_LOCALE: idioma del espacio (el de la IA). SMOKE_SPOKEN: idioma hablado («auto» por defecto).
+  await db.from("events").update({
+    locale: process.env.SMOKE_LOCALE || "es",
+    settings: { ...event.settings, recording: { enabled: true, notice_version: 1, spoken_language: process.env.SMOKE_SPOKEN || "auto" } },
+  }).eq("id", eventId);
   await db.from("event_members").update({ recording_notice_version: 1, recording_notice_ack_at: new Date().toISOString() }).eq("event_id", eventId).eq("user_id", userId);
   const { data: team } = await db.from("teams").insert({ event_id: eventId, name: "Grupo Aurora", number: 1, project_title: "Riego inteligente para huertos urbanos" }).select("id").single();
   // Rúbrica mínima para que el informe pueda citar evidencias por criterio.
@@ -122,7 +127,9 @@ try {
       step(`Cola:\n    ${summary}`);
       lastJobs = summary;
     }
-    if (["ready", "failed"].includes(recording.status)) break;
+    // SMOKE_ASR_ONLY=1: basta con la transcripción (p. ej. en local sin NVIDIA_API_KEY).
+    const asrOnly = process.env.SMOKE_ASR_ONLY === "1";
+    if (["ready", "failed", ...(asrOnly ? ["transcribed"] : [])].includes(recording.status)) break;
     await new Promise((resolve) => setTimeout(resolve, 5_000));
   }
 
@@ -136,7 +143,8 @@ try {
   console.log(`\n— Informe del jurado — ${report ? `${(report.criteria_evidence ?? []).length} criterios con evidencias, ${(report.questions ?? []).length} preguntas, ${(report.risks ?? []).length} riesgos` : "(ninguno)"}`);
   console.log(`— Audio en el almacenamiento: ${files?.length ?? 0} archivos · borrado registrado: ${recording.audio_deleted_at ? "sí" : "no"}`);
   if (recording.error_message) console.log(`— Error: ${recording.error_message}`);
-  ok = recording.status === "ready" && Boolean(recording.transcript) && !files?.length;
+  const done = process.env.SMOKE_ASR_ONLY === "1" ? ["ready", "transcribed"] : ["ready"];
+  ok = done.includes(recording.status) && Boolean(recording.transcript) && !files?.length;
   step(ok ? "PRUEBA SUPERADA" : "PRUEBA FALLIDA");
 } finally {
   if (eventId) await db.from("events").delete().eq("id", eventId);

@@ -1,5 +1,9 @@
 "use server";
 
+import { adminMessage } from "@/lib/app/admin-messages";
+import { buildAgenda } from "@/lib/app/agenda-builder";
+import { isLocale } from "@/i18n/config";
+import { isSpokenLanguage } from "@/lib/app/recording-notice";
 import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
@@ -17,7 +21,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 async function requireAdmin() {
   const session = await getSession();
-  if (!session.isAdmin) throw new Error("Solo el admin puede hacer esto.");
+  if (!session.isAdmin) throw new Error(await adminMessage("onlyAdmin"));
   return session;
 }
 
@@ -55,7 +59,7 @@ export async function createInvitationAction(
       role: formData.get("role"),
       days: formData.get("days"),
     });
-  if (!parsed.success) return { error: "Revisa el correo, el rol y la caducidad." };
+  if (!parsed.success) return { error: await adminMessage("inviteInvalid") };
 
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -70,7 +74,7 @@ export async function createInvitationAction(
     expires_at: expiresAt,
     created_by: user.id,
   });
-  if (error) return { error: "No se ha podido crear la invitación." };
+  if (error) return { error: await adminMessage("inviteFailed") };
 
   const requestHeaders = await headers();
   const forwardedHost = requestHeaders.get("x-forwarded-host");
@@ -138,14 +142,16 @@ export async function updateEventAction(formData: FormData) {
   const id = text(formData, "id");
   const status = statusSchema.parse(formData.get("status"));
   const signupCode = text(formData, "signupCode").toUpperCase();
+  const locale = formData.get("locale");
   const changes = {
     name: text(formData, "name") || undefined,
     status,
     signup_open: formData.get("signupOpen") === "on",
     ...(signupCode ? { signup_code: signupCode } : {}),
+    ...(isLocale(locale) ? { locale } : {}),
   };
 
-  if (id !== event.id) throw new Error("El espacio activo no coincide.");
+  if (id !== event.id) throw new Error(await adminMessage("spaceMismatch"));
   await supabase.from("events").update(changes).eq("id", event.id);
   await logAudit(supabase, event.id, user.id, "actualizar_evento", "events", id, changes);
   refreshAll();
@@ -161,8 +167,10 @@ export async function updateRecordingSettingsAction(formData: FormData) {
   // Activar o cambiar el texto obliga a que todos vuelvan a confirmar el aviso.
   const mustReconfirm =
     enabled && (!recording.enabled || customText !== recording.customText);
+  const spokenLanguage = formData.get("spokenLanguage");
   const next = {
     enabled,
+    spoken_language: isSpokenLanguage(spokenLanguage) ? spokenLanguage : "auto",
     notice_version: mustReconfirm ? recording.noticeVersion + 1 : recording.noticeVersion,
     notice_text: customText,
   };
@@ -174,7 +182,7 @@ export async function updateRecordingSettingsAction(formData: FormData) {
     .single();
   const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), recording: next };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
-  if (error) throw new Error("No se ha podido guardar la configuración de grabación.");
+  if (error) throw new Error(await adminMessage("recordingSaveFailed"));
 
   await logAudit(supabase, event.id, user.id, "configurar_grabacion", "events", event.id, next);
   refreshAll();
@@ -196,7 +204,7 @@ export async function updateStudentVisibilityAction(formData: FormData) {
     students: { show_rubric: showRubric, publish_results: publishResults },
   };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
-  if (error) throw new Error("No se ha podido guardar la visibilidad para el alumnado.");
+  if (error) throw new Error(await adminMessage("studentsSaveFailed"));
   await logAudit(supabase, event.id, user.id, "visibilidad_alumnado", "events", event.id, {
     show_rubric: showRubric,
     publish_results: publishResults,
@@ -210,7 +218,7 @@ export async function updateMaterialsSettingsAction(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const driveUrl = text(formData, "driveUrl");
   if (driveUrl && !/^https?:\/\//i.test(driveUrl)) {
-    throw new Error("El enlace de la carpeta debe empezar por https://");
+    throw new Error(await adminMessage("driveHttps"));
   }
   const materials = {
     drive_url: driveUrl.slice(0, 2000) || null,
@@ -223,7 +231,7 @@ export async function updateMaterialsSettingsAction(formData: FormData) {
     .single();
   const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), materials };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
-  if (error) throw new Error("No se ha podido guardar la configuración de entregas.");
+  if (error) throw new Error(await adminMessage("materialsSaveFailed"));
   await logAudit(supabase, event.id, user.id, "configurar_entregas", "events", event.id, materials);
   refreshAll();
 }
@@ -234,7 +242,7 @@ export async function updateAiSettingsAction(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const rawInstructions = text(formData, "aiInstructions");
   if (rawInstructions.length > INSTRUCTIONS_MAX) {
-    throw new Error(`Las indicaciones no pueden pasar de ${INSTRUCTIONS_MAX} caracteres.`);
+    throw new Error(await adminMessage("aiTooLong", { max: INSTRUCTIONS_MAX }));
   }
   const ai = {
     instructions: cleanAdminText(rawInstructions, INSTRUCTIONS_MAX) || null,
@@ -246,33 +254,21 @@ export async function updateAiSettingsAction(formData: FormData) {
     .single();
   const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), ai };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
-  if (error) throw new Error("No se han podido guardar los ajustes de IA.");
+  if (error) throw new Error(await adminMessage("aiSaveFailed"));
   await logAudit(supabase, event.id, user.id, "configurar_ia", "events", event.id, ai);
   refreshAll();
 }
 
 // ========== AGENDA ==========
 
-/** Convierte «2026-11-05T09:30» (hora de Valencia) a un instante UTC. */
-function madridLocalToUtc(value: string) {
-  const asUtc = new Date(`${value}:00Z`);
-  if (Number.isNaN(asUtc.getTime())) return null;
-  const madrid = new Date(asUtc.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
-  const utc = new Date(asUtc.toLocaleString("en-US", { timeZone: "UTC" }));
-  return new Date(asUtc.getTime() - (madrid.getTime() - utc.getTime()));
-}
-
 export type AgendaState = { ok: boolean; message: string } | null;
 
-/**
- * Genera la agenda completa: reparte los grupos entre las salas (por número o
- * al azar) y calcula la hora de cada turno. Sustituye la agenda anterior.
- */
+/** Genera la agenda desde Admin → Agenda (la lógica vive en buildAgenda). */
 export async function generateAgendaAction(
   _previous: AgendaState,
   formData: FormData,
 ): Promise<AgendaState> {
-  const { supabase, user, event, words } = await requireAdmin();
+  const session = await requireAdmin();
   const parsed = z
     .object({
       rooms: z.string().trim().min(1).max(400),
@@ -288,47 +284,11 @@ export async function generateAgendaAction(
       gap: formData.get("gap"),
       order: formData.get("order"),
     });
-  if (!parsed.success) return { ok: false, message: "Revisa las salas, la hora de inicio y la duración." };
+  if (!parsed.success) return { ok: false, message: await adminMessage("agendaInvalid") };
 
-  const start = madridLocalToUtc(parsed.data.start);
-  if (!start) return { ok: false, message: "La hora de inicio no es válida." };
-  const rooms = [...new Set(parsed.data.rooms.split(",").map((room) => room.trim()).filter(Boolean))].slice(0, 20);
-
-  const { data: teams } = await supabase
-    .from("teams")
-    .select("id, number")
-    .eq("event_id", event.id)
-    .order("number");
-  if (!teams?.length) return { ok: false, message: `Primero crea los ${words.unitsLower}.` };
-
-  const ordered =
-    parsed.data.order === "random"
-      ? [...teams].sort(() => Math.random() - 0.5)
-      : teams;
-  const step = (parsed.data.duration + parsed.data.gap) * 60_000;
-  const rows = ordered.map((team, index) => {
-    const position = Math.floor(index / rooms.length);
-    return {
-      event_id: event.id,
-      team_id: team.id,
-      room: rooms[index % rooms.length],
-      position,
-      starts_at: new Date(start.getTime() + position * step).toISOString(),
-      duration_minutes: parsed.data.duration,
-    };
-  });
-
-  const { error: deleteError } = await supabase.from("presentation_slots").delete().eq("event_id", event.id);
-  if (deleteError) return { ok: false, message: "No se ha podido sustituir la agenda anterior." };
-  const { error } = await supabase.from("presentation_slots").insert(rows);
-  if (error) return { ok: false, message: "No se ha podido guardar la agenda." };
-
-  await logAudit(supabase, event.id, user.id, "generar_agenda", "presentation_slots", null, {
-    rooms,
-    slots: rows.length,
-  });
-  refreshAll();
-  return { ok: true, message: `Agenda creada: ${rows.length} turnos en ${rooms.length} sala(s).` };
+  const result = await buildAgenda(session, { ...parsed.data, rooms: parsed.data.rooms.split(",") });
+  if (result.ok) refreshAll();
+  return result;
 }
 
 /** Mueve un turno una posición arriba o abajo dentro de su sala y recalcula horas. */
@@ -396,7 +356,7 @@ export async function updatePeerReviewSettingsAction(formData: FormData) {
   const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
   const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), peer_review: peerReview };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
-  if (error) throw new Error("No se ha podido guardar la coevaluación.");
+  if (error) throw new Error(await adminMessage("peerSaveFailed"));
   await logAudit(supabase, event.id, user.id, "configurar_coevaluacion", "events", event.id, peerReview);
   refreshAll();
 }
@@ -413,9 +373,9 @@ export async function generatePeerAssignmentsAction(): Promise<PeerAssignState> 
   ]);
   const students = (members ?? []).map((member) => ({ userId: member.user_id as string, teamId: member.team_id }));
   if (!students.length) {
-    return { ok: false, message: "Ningún estudiante ha entrado todavía con su correo: no hay a quién asignar." };
+    return { ok: false, message: await adminMessage("peerNoStudents") };
   }
-  if ((teams ?? []).length < 2) return { ok: false, message: `Hacen falta al menos dos ${words.unitsLower}.` };
+  if ((teams ?? []).length < 2) return { ok: false, message: await adminMessage("peerTwoUnits", { units: words.unitsLower }) };
 
   const assignments = assignPeerReviews(
     students,
@@ -423,11 +383,11 @@ export async function generatePeerAssignmentsAction(): Promise<PeerAssignState> 
     Math.min(settings.reviewsPerStudent, (teams ?? []).length - 1),
   );
   const { error: deleteError } = await supabase.from("peer_assignments").delete().eq("event_id", event.id);
-  if (deleteError) return { ok: false, message: "No se ha podido sustituir el reparto anterior." };
+  if (deleteError) return { ok: false, message: await adminMessage("peerReplaceFailed") };
   const { error } = await supabase.from("peer_assignments").insert(
     assignments.map((item) => ({ event_id: event.id, reviewer_id: item.reviewerId, team_id: item.teamId })),
   );
-  if (error) return { ok: false, message: "No se ha podido guardar el reparto." };
+  if (error) return { ok: false, message: await adminMessage("peerAssignFailed") };
 
   await logAudit(supabase, event.id, user.id, "repartir_coevaluacion", "peer_assignments", null, {
     students: students.length,
@@ -436,7 +396,7 @@ export async function generatePeerAssignmentsAction(): Promise<PeerAssignState> 
   refreshAll();
   return {
     ok: true,
-    message: `Reparto hecho: ${students.length} estudiantes, ${assignments.length} revisiones asignadas.`,
+    message: await adminMessage("peerAssigned", { students: students.length, reviews: assignments.length }),
   };
 }
 
@@ -452,7 +412,7 @@ export async function updatePublicVoteAction(formData: FormData) {
   const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
   const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), public_vote: publicVote };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
-  if (error) throw new Error("No se ha podido guardar la votación del público.");
+  if (error) throw new Error(await adminMessage("publicSaveFailed"));
   await logAudit(supabase, event.id, user.id, "configurar_voto_publico", "events", event.id, publicVote);
   refreshAll();
 }
@@ -499,7 +459,7 @@ export async function deleteChallengeAction(formData: FormData) {
     .select("id", { count: "exact", head: true })
     .eq("event_id", event.id)
     .eq("challenge_id", id);
-  if (count) throw new Error("Mueve o borra antes los equipos de este reto.");
+  if (count) throw new Error(await adminMessage("challengeHasTeams"));
 
   await supabase.from("challenges").delete().eq("id", id).eq("event_id", event.id);
   await logAudit(supabase, event.id, user.id, "borrar_reto", "challenges", id);
@@ -540,7 +500,7 @@ export async function deleteTeamAction(formData: FormData) {
     .eq("event_id", event.id)
     .eq("team_id", id);
   if (count) {
-    throw new Error("Este equipo ya tiene evaluaciones; no se puede borrar.");
+    throw new Error(await adminMessage("teamHasEvaluations"));
   }
 
   await supabase.from("teams").delete().eq("id", id).eq("event_id", event.id);
@@ -555,13 +515,13 @@ export async function addMemberAction(formData: FormData) {
   const email = text(formData, "email").toLowerCase() || null;
   if (!fullName) return;
   if (email && !z.string().email().safeParse(email).success) {
-    throw new Error("El correo no es válido.");
+    throw new Error(await adminMessage("emailInvalid"));
   }
 
   const { error } = await supabase
     .from("team_members")
     .insert({ event_id: event.id, team_id: teamId, full_name: fullName, email });
-  if (error?.code === "23505") throw new Error("Ese correo ya está en otro grupo de este espacio.");
+  if (error?.code === "23505") throw new Error(await adminMessage("emailInOtherGroup"));
   await logAudit(supabase, event.id, user.id, "añadir_participante", "teams", teamId, { fullName });
   refreshAll();
 }
@@ -573,7 +533,7 @@ export async function renameMemberAction(formData: FormData) {
   const email = text(formData, "email").toLowerCase() || null;
   if (!fullName) return;
   if (email && !z.string().email().safeParse(email).success) {
-    throw new Error("El correo no es válido.");
+    throw new Error(await adminMessage("emailInvalid"));
   }
 
   const { error } = await supabase
@@ -581,7 +541,7 @@ export async function renameMemberAction(formData: FormData) {
     .update({ full_name: fullName, email })
     .eq("id", id)
     .eq("event_id", event.id);
-  if (error?.code === "23505") throw new Error("Ese correo ya está en otro grupo de este espacio.");
+  if (error?.code === "23505") throw new Error(await adminMessage("emailInOtherGroup"));
   await logAudit(supabase, event.id, user.id, "renombrar_participante", "team_members", id, { fullName });
   refreshAll();
 }
@@ -608,7 +568,7 @@ export async function importTeamsAction(
   const file = formData.get("file");
   const raw =
     file instanceof File && file.size ? await file.text() : text(formData, "content");
-  if (!raw) return { ok: false, message: "Pega el contenido o sube un archivo." };
+  if (!raw) return { ok: false, message: await adminMessage("importEmpty") };
 
   const parsed = Papa.parse<string[]>(raw.replace(/^﻿/, "").trim(), {
     delimiter: raw.includes("\t") ? "\t" : "",
@@ -686,7 +646,7 @@ export async function importTeamsAction(
   refreshAll();
   return {
     ok: true,
-    message: `Importación hecha: ${created} equipos nuevos, ${updated} actualizados y ${members} participantes añadidos.`,
+    message: await adminMessage("importDone", { created, updated, members }),
   };
 }
 
@@ -718,7 +678,7 @@ export async function importRosterAction(
   try {
     parsed = rosterSchema.parse(JSON.parse(text(formData, "roster")));
   } catch {
-    return { ok: false, message: "La lista no es válida. Revisa la vista previa e inténtalo de nuevo." };
+    return { ok: false, message: await adminMessage("rosterInvalid") };
   }
 
   const [{ data: teams }, { data: existingMembers }] = await Promise.all([
@@ -741,7 +701,7 @@ export async function importRosterAction(
       .insert({ event_id: event.id, name, number: nextNumber })
       .select("id")
       .single();
-    if (error || !data) return { ok: false, message: `No se ha podido crear «${name}».` };
+    if (error || !data) return { ok: false, message: await adminMessage("rosterCreateFailed", { name }) };
     teamIds.set(name.toLowerCase(), data.id);
     nextNumber += 1;
     createdGroups += 1;
@@ -757,7 +717,7 @@ export async function importRosterAction(
     }));
   if (rows.length) {
     const { error } = await supabase.from("team_members").insert(rows);
-    if (error) return { ok: false, message: "No se ha podido guardar el alumnado. No se ha añadido nadie." };
+    if (error) return { ok: false, message: await adminMessage("rosterSaveFailed") };
   }
 
   await logAudit(supabase, event.id, user.id, "importar_alumnado", "team_members", null, {
@@ -785,7 +745,7 @@ async function uploadLogo(file: FormDataEntryValue | null, name: string) {
   const { error } = await supabase.storage
     .from("public-assets")
     .upload(path, file, { contentType: file.type, upsert: true });
-  if (error) throw new Error("No se ha podido subir el logo.");
+  if (error) throw new Error(await adminMessage("logoFailed"));
   return supabase.storage.from("public-assets").getPublicUrl(path).data.publicUrl;
 }
 

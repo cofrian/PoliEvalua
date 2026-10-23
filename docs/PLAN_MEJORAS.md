@@ -171,6 +171,19 @@ no se conservará el audio.
 ### 7.2 Idiomas
 - `next-intl` con castellano, valenciano e inglés; textos de la IA en el idioma del espacio.
 
+> Estado (23/10/2026): hecha en el PR #41 (migración `0029_locales.sql`, aplicada).
+> - Idioma por persona (perfil o selector en entrar, registro y votación) y por
+>   espacio (Ajustes → General). La URL no cambia: cookie `NEXT_LOCALE`.
+> - Toda la interfaz traducida (`messages/{es,ca,en}.json`); `npm run test:messages`
+>   comprueba que los tres tienen las mismas claves y que el navegador recibe los
+>   grupos que usa (`src/i18n/client-messages.ts`).
+> - IA: resúmenes, informe del jurado y asistentes en el idioma del espacio
+>   (prompts v2026.10.4). Whisper detecta el idioma de cada fragmento por defecto
+>   (Admin → Grabaciones permite fijarlo); probado con audio en valenciano y en inglés.
+> - La proyección y la votación pública usan el idioma del espacio.
+> - Pendiente: revisión del valenciano por el Servei de Promoció i Normalització
+>   Lingüística de la UPV (`messages/ca.json`).
+
 ### 7.3 Accesibilidad
 - Auditoría WCAG 2.1 AA (contraste, teclado, lectores de pantalla) y
   transcripción visible como alternativa al audio.
@@ -179,14 +192,18 @@ no se conservará el audio.
 - Chat de varios turnos en Admin con acciones confirmables: crear grupos,
   ajustar rúbrica, generar agenda. Siempre con vista previa y confirmación.
 
+> Estado (23/10/2026): hecha en código (migración `0030_assistant_chat.sql`).
+> Conversaciones con hilo, tres acciones (evaluación, grupos, agenda) con vista
+> previa y «Confirmar y aplicar». Si falta algo imprescindible, el asistente
+> pregunta en lugar de inventar; el de crear espacios también.
+
 ---
 
 ## Fase 9 — Calidad de la IA (transcripción y análisis)
 
-> Estado (23/10/2026): implementada en código; pendiente aplicar `0028`, subir
-> el notebook de Kaggle y repetir el smoke de audio. «Regenerar análisis» está
-> en la propia grabación (autor o gestión) y la comprobación de versión es
-> `npm run test:prompts`, incluida en `test:ci`.
+> Estado (23/10/2026): terminada (PRs #38–#40). `0028` aplicada, Groq y Kaggle con
+> Whisper large-v3 y smoke de audio superado por las dos vías. «Regenerar análisis»
+> está en la propia grabación y la comprobación de versión es `npm run test:prompts`.
 
 Orden de trabajo: 9.4 → 9.2 → 9.3 → 9.1. Primero se ordenan los prompts y se
 les pone versión; después se añade el contexto. Así cada cambio posterior

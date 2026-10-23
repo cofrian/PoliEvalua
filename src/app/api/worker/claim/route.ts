@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { whisperLanguage } from "@/lib/app/recording-notice";
 import {
   AUDIO_BUCKET,
   EXTERNAL_LEASE_SECONDS,
@@ -64,7 +65,8 @@ export async function POST(request: Request) {
     attempt: job.attempts,
     audioUrl: signed.signedUrl,
     mimeType: segment.mime_type,
-    language: (recording?.language ?? "es").split("-")[0],
+    // null = detectar el idioma.
+    language: whisperLanguage(recording?.language),
     // Los trabajadores antiguos ignoran este campo.
     prompt: recording?.asr_prompt ?? null,
     durationSeconds: Math.round((segment.end_ms - segment.start_ms) / 1000),

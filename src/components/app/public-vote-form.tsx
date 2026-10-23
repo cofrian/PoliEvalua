@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 
 import { castPublicVoteAction, type PublicVoteState } from "@/app/votar/[slug]/actions";
@@ -10,11 +11,14 @@ export function PublicVoteForm({
   slug,
   teams,
   currentTeamId,
+  locale,
 }: {
   slug: string;
   teams: { id: string; number: number | null; name: string; project_title: string | null }[];
   currentTeamId: string | null;
+  locale: string;
 }) {
+  const t = useTranslations("publicVote");
   const [state, formAction] = useActionState<PublicVoteState, FormData>(castPublicVoteAction, null);
   const [selected, setSelected] = useState(currentTeamId);
   const voted = state?.ok ? state.teamId : currentTeamId;
@@ -22,8 +26,9 @@ export function PublicVoteForm({
   return (
     <form action={formAction} className="mt-6 space-y-3">
       <input name="slug" type="hidden" value={slug} />
+      <input name="locale" type="hidden" value={locale} />
       <fieldset className="space-y-2">
-        <legend className="sr-only">Proyectos</legend>
+        <legend className="sr-only">{t("options")}</legend>
         {teams.map((team) => (
           <label
             className="flex cursor-pointer items-center gap-3 rounded-xl border border-input bg-white p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/10 dark:bg-card"
@@ -45,7 +50,7 @@ export function PublicVoteForm({
                 <span className="block text-sm text-muted-foreground">{team.project_title}</span>
               ) : null}
             </span>
-            {voted === team.id ? <CheckCircle2 aria-label="Tu voto" className="size-5 text-leaf-500" /> : null}
+            {voted === team.id ? <CheckCircle2 aria-label={t("yourVote")} className="size-5 text-leaf-500" /> : null}
           </label>
         ))}
       </fieldset>
@@ -63,8 +68,8 @@ export function PublicVoteForm({
       ) : null}
       <div className="sticky bottom-4">
         <SubmitButton
-          idleLabel={voted && voted !== selected ? "Cambiar mi voto" : voted ? "Votar de nuevo" : "Votar"}
-          pendingLabel="Enviando…"
+          idleLabel={voted && voted !== selected ? t("change") : voted ? t("again") : t("vote")}
+          pendingLabel={t("sending")}
         />
       </div>
     </form>

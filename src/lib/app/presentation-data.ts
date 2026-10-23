@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getTranslations } from "next-intl/server";
 
 import type { JuryReportRecord, PresentationRecord } from "@/components/app/presentation-studio";
 
@@ -34,9 +35,8 @@ export async function loadPresentationData(
   };
 }
 
-export function recordingDisabledReason(enabled: boolean, isAdmin: boolean) {
+export async function recordingDisabledReason(enabled: boolean, isAdmin: boolean) {
   if (enabled) return null;
-  return isAdmin
-    ? "La grabación está desactivada en este espacio. Actívala en Admin → Grabaciones: todas las personas verán antes un aviso."
-    : "La grabación de exposiciones no está activada en este espacio.";
+  const t = await getTranslations("recordingDisabled");
+  return isAdmin ? t("admin") : t("other");
 }

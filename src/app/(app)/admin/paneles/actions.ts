@@ -1,5 +1,6 @@
 "use server";
 
+import { adminMessage } from "@/lib/app/admin-messages";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -8,7 +9,7 @@ import { getSession } from "@/lib/app/session";
 
 async function requireManager() {
   const session = await getSession();
-  if (!session.isAdmin) throw new Error("Solo el gestor puede organizar paneles.");
+  if (!session.isAdmin) throw new Error(await adminMessage("onlyAdmin"));
   return session;
 }
 
@@ -34,14 +35,14 @@ export async function savePanelAction(formData: FormData) {
       .update({ name, description, order, active: true })
       .eq("id", id)
       .eq("event_id", event.id);
-    if (error) throw new Error("No se ha podido actualizar el panel.");
+    if (error) throw new Error(await adminMessage("panelUpdateFailed"));
   } else {
     const { data, error } = await supabase
       .from("jury_panels")
       .insert({ event_id: event.id, name, description, order })
       .select("id")
       .single();
-    if (error || !data) throw new Error("No se ha podido crear el panel.");
+    if (error || !data) throw new Error(await adminMessage("panelCreateFailed"));
     entityId = data.id;
   }
 
@@ -85,7 +86,7 @@ export async function updatePanelMembersAction(formData: FormData) {
     const { error } = await supabase.from("jury_panel_members").insert(
       allowed.map((userId) => ({ event_id: event.id, panel_id: panelId, user_id: userId })),
     );
-    if (error) throw new Error("No se han podido asignar las personas del panel.");
+    if (error) throw new Error(await adminMessage("panelMembersFailed"));
   }
   await logAudit(supabase, event.id, user.id, "asignar_jurado_panel", "jury_panels", panelId, { members: allowed.length });
   revalidatePath("/admin/paneles");
@@ -108,7 +109,7 @@ export async function updatePanelTeamsAction(formData: FormData) {
     const { error } = await supabase.from("jury_panel_assignments").insert(
       teams.map((teamId) => ({ event_id: event.id, panel_id: panelId, team_id: teamId, round })),
     );
-    if (error) throw new Error("No se han podido asignar los proyectos.");
+    if (error) throw new Error(await adminMessage("panelTeamsFailed"));
   }
   await logAudit(supabase, event.id, user.id, "asignar_proyectos_panel", "jury_panels", panelId, { teams: teams.length, round });
   revalidatePath("/admin/paneles");
@@ -121,7 +122,7 @@ export async function autoAssignPanelsAction(formData: FormData) {
     supabase.from("jury_panels").select("id").eq("event_id", event.id).eq("active", true).order("order"),
     supabase.from("teams").select("id").eq("event_id", event.id).order("number"),
   ]);
-  if (!panels?.length) throw new Error("Crea al menos un panel activo.");
+  if (!panels?.length) throw new Error(await adminMessage("panelNone"));
 
   await supabase
     .from("jury_panel_assignments")
@@ -136,7 +137,7 @@ export async function autoAssignPanelsAction(formData: FormData) {
   }));
   if (rows.length) {
     const { error } = await supabase.from("jury_panel_assignments").insert(rows);
-    if (error) throw new Error("No se ha podido completar el reparto automático.");
+    if (error) throw new Error(await adminMessage("panelAutoFailed"));
   }
   await logAudit(supabase, event.id, user.id, "repartir_proyectos_paneles", "jury_panel_assignments", null, { teams: rows.length, panels: panels.length, round });
   revalidatePath("/admin/paneles");

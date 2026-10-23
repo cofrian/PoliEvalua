@@ -1,3 +1,5 @@
+import { getFormatter, getTranslations } from "next-intl/server";
+
 import { Presence } from "@/components/app/presence";
 import {
   RubricEditor,
@@ -6,18 +8,12 @@ import {
 import { RubricLiveUpdates } from "@/components/app/rubric-live-updates";
 import { getSession } from "@/lib/app/session";
 
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
 export default async function RubricPage() {
   const { supabase, user, profile, isAdmin, event, role, words } = await getSession();
   const isStudent = role === "student";
+  const [t, format] = await Promise.all([getTranslations("rubric"), getFormatter()]);
   if (isStudent && !words.studentsSeeRubric) {
-    return <p>La rúbrica de este espacio todavía no está visible para el alumnado.</p>;
+    return <p>{t("hiddenForStudents")}</p>;
   }
 
   const { data: rubric } = await supabase
@@ -31,7 +27,7 @@ export default async function RubricPage() {
     .maybeSingle();
 
   if (!rubric) {
-    return <p>No hay ninguna rúbrica activa.</p>;
+    return <p>{t("none")}</p>;
   }
 
   const { data: changes } = await supabase
@@ -64,11 +60,10 @@ export default async function RubricPage() {
       <RubricLiveUpdates rubricId={rubric.id} userId={user.id} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Rúbrica</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {rubric.name} · versión {rubric.version} · escala{" "}
-            {rubric.scale_min}–{rubric.scale_max}
-            {rubric.locked ? " · 🔒 Bloqueada" : ""}
+            {t("meta", { name: rubric.name, version: rubric.version, min: rubric.scale_min, max: rubric.scale_max })}
+            {rubric.locked ? t("locked") : ""}
           </p>
         </div>
         <Presence
@@ -84,8 +79,8 @@ export default async function RubricPage() {
       {!canEdit ? (
         <p className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm dark:bg-card">
           {isStudent
-            ? `Así te evaluará el ${words.evaluator}: revisa cada criterio y lo que se espera en cada nivel antes de tu ${words.presentation}.`
-            : "Solo las personas propietarias y gestoras pueden cambiar la estructura de la rúbrica."}
+            ? t("studentHint", { evaluator: words.evaluator, presentation: words.presentation })
+            : t("readOnlyHint")}
         </p>
       ) : null}
 
@@ -99,7 +94,7 @@ export default async function RubricPage() {
       />
 
       {isStudent ? null : <section>
-        <h2 className="mb-3 font-display text-xl">Historial de cambios</h2>
+        <h2 className="mb-3 font-display text-xl">{t("history")}</h2>
         {changes?.length ? (
           <ul className="divide-y divide-border rounded-xl border border-border bg-white text-sm dark:bg-card">
             {changes.map((change) => (
@@ -107,19 +102,19 @@ export default async function RubricPage() {
                 <span>
                   <strong>
                     {(change.author as unknown as { full_name: string } | null)
-                      ?.full_name ?? "Alguien"}
+                      ?.full_name ?? t("someone")}
                   </strong>{" "}
                   {change.summary}
                 </span>
                 <span className="text-muted-foreground">
-                  {dateFormat.format(new Date(change.created_at))}
+                  {format.dateTime(new Date(change.created_at), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                 </span>
               </li>
             ))}
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Todavía no se ha cambiado nada.
+            {t("noChanges")}
           </p>
         )}
       </section>}

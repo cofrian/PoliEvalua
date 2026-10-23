@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
 import { AiEvidencePanel } from "@/components/app/ai-evidence-panel";
@@ -8,7 +9,7 @@ import { EvaluationForm } from "@/components/app/evaluation-form";
 import { NotesPanel } from "@/components/app/notes-panel";
 import { PresentationStudio } from "@/components/app/presentation-studio";
 import { SlotControls } from "@/components/app/slot-controls";
-import { scheduleRoom, slotStatusLabels, timeFormat } from "@/lib/app/agenda";
+import { scheduleRoom, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
 import { loadEvaluationContext } from "@/lib/app/evaluation-data";
 import { loadPresentationData, recordingDisabledReason } from "@/lib/app/presentation-data";
@@ -28,18 +29,25 @@ export default async function RoomPage({
   const session = await getSession();
   const { supabase, user, event, canVote, isAdmin, role, recording, words } = session;
   if (!canVote) redirect("/agenda");
+  const [t, tAgenda] = await Promise.all([getTranslations("room"), getTranslations("agenda")]);
 
   const agenda = await loadAgenda(supabase, event.id);
   const rooms = [...new Set(agenda.map((slot) => slot.room))];
   if (!rooms.length) {
     return (
       <div className={`${cardClass} mx-auto max-w-xl space-y-2`}>
-        <h1 className="font-display text-xl">No hay agenda</h1>
+        <h1 className="font-display text-xl">{t("noAgenda")}</h1>
         <p className="text-sm text-muted-foreground">
           {isAdmin ? (
-            <>Crea la agenda en <Link className="underline" href="/admin/agenda">Admin → Agenda</Link>.</>
+            t.rich("createAgenda", {
+              link: (chunks) => (
+                <Link className="underline" href="/admin/agenda">
+                  {chunks}
+                </Link>
+              ),
+            })
           ) : (
-            "La gestión del espacio todavía no ha preparado la agenda."
+            t("notReady")
           )}
         </p>
       </div>
@@ -82,8 +90,8 @@ export default async function RoomPage({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold text-muted-foreground">
-              {room} · {slotStatusLabels[current.status]}
-              {current.expectedStart ? ` · previsto a las ${timeFormat.format(current.expectedStart)}` : ""}
+              {room} · {tAgenda(`status.${current.status}`)}
+              {current.expectedStart ? ` · ${t("expectedAt", { time: timeFormat.format(current.expectedStart) })}` : ""}
             </p>
             <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
               {words.unit} #{current.team.number} · {current.team.name}
@@ -94,7 +102,7 @@ export default async function RoomPage({
               className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground"
               href={`/sala?room=${encodeURIComponent(room)}&slot=${next.id}`}
             >
-              Siguiente: {next.team.name} <ArrowRight aria-hidden="true" className="size-4" />
+              {t("next", { name: next.team.name })} <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           ) : null}
         </div>
@@ -111,7 +119,7 @@ export default async function RoomPage({
         canManage={isAdmin}
         initialRecords={presentations.records}
         juryReports={presentations.juryReports}
-        recordingDisabledReason={recordingDisabledReason(recording.enabled, isAdmin)}
+        recordingDisabledReason={await recordingDisabledReason(recording.enabled, isAdmin)}
         teamId={current.team_id}
         userId={user.id}
       />
@@ -140,7 +148,7 @@ export default async function RoomPage({
               />
             </div>
             <div>
-              <h2 className="mb-3 font-display text-xl">Notas</h2>
+              <h2 className="mb-3 font-display text-xl">{t("notes")}</h2>
               <NotesPanel
                 eventId={event.id}
                 initialNotes={evaluation.notes}

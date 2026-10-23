@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import {
@@ -39,11 +40,11 @@ const spaceSchema = z
   })
   .refine(
     (data) => data.joinRoles.every((role) => data.enabledRoles.includes(role)),
-    { message: "Los perfiles con código deben estar habilitados.", path: ["joinRoles"] },
+    { message: "joinRolesEnabled", path: ["joinRoles"] },
   )
   .refine(
     (data) => !data.academicEnabled || (data.subjectName?.length ?? 0) >= 2,
-    { message: "Indica la asignatura del espacio académico.", path: ["subjectName"] },
+    { message: "subjectRequired", path: ["subjectName"] },
   );
 
 export type CreateSpaceState = {
@@ -76,7 +77,7 @@ export async function selectSpaceAction(formData: FormData) {
     .eq("status", "active")
     .maybeSingle();
 
-  if (!membership) throw new Error("No tienes acceso activo a este espacio.");
+  if (!membership) throw new Error((await getTranslations("spaceErrors"))("noAccess"));
   await setActiveSpace(membership.event_id);
   redirect("/equipos");
 }
@@ -85,6 +86,7 @@ export async function joinSpaceAction(
   _previousState: JoinSpaceState,
   formData: FormData,
 ): Promise<JoinSpaceState> {
+  const t = await getTranslations("spaceErrors");
   const parsed = z
     .object({
       accessCode: z.string().trim().min(6).max(40),
@@ -95,13 +97,13 @@ export async function joinSpaceAction(
       role: formData.get("role"),
     });
 
-  if (!parsed.success) return { error: "Revisa el código y el rol." };
+  if (!parsed.success) return { error: t("checkCode") };
 
   const { user } = await getAccount();
   const admin = createAdminClient();
   const attemptKeys = [`ip:${await clientIp()}`, `user:${user.id}`];
   if (await isBlocked(admin, "bad_code", attemptKeys)) {
-    return { error: "Demasiados intentos. Espera unos minutos." };
+    return { error: t("tooMany") };
   }
 
   const { data: event } = await admin
@@ -113,7 +115,7 @@ export async function joinSpaceAction(
 
   if (!event) {
     await recordAttempt(admin, "bad_code", attemptKeys);
-    return { error: "El código no es válido o el acceso está cerrado." };
+    return { error: t("badCode") };
   }
 
   const settings = event.settings as { join_roles?: string[] } | null;
@@ -121,7 +123,7 @@ export async function joinSpaceAction(
     ? settings.join_roles
     : ["judge", "mentor"];
   if (!allowedRoles.includes(parsed.data.role)) {
-    return { error: "Ese perfil no está habilitado para entrar con código en este espacio." };
+    return { error: t("roleNotAllowed") };
   }
 
   const { data: current } = await admin
@@ -132,7 +134,7 @@ export async function joinSpaceAction(
     .maybeSingle();
 
   if (current?.status === "inactive") {
-    return { error: "Tu acceso a este espacio está desactivado. Contacta con su gestor." };
+    return { error: t("inactive") };
   }
 
   if (!current) {
@@ -142,7 +144,7 @@ export async function joinSpaceAction(
       role: parsed.data.role,
       status: "active",
     });
-    if (error) return { error: "No se ha podido añadir el espacio a tu cuenta." };
+    if (error) return { error: t("addFailed") };
   }
 
   await clearAttempts(admin, "bad_code", attemptKeys);
@@ -154,6 +156,7 @@ export async function createSpaceAction(
   _previousState: CreateSpaceState,
   formData: FormData,
 ): Promise<CreateSpaceState> {
+  const t = await getTranslations("spaceErrors");
   const parsed = spaceSchema.safeParse({
     name: formData.get("name"),
     slug: formData.get("slug"),
@@ -177,8 +180,7 @@ export async function createSpaceAction(
 
   if (!parsed.success) {
     return {
-      error:
-        "Revisa la identidad, los perfiles, las funciones seleccionadas y el código (mínimo 6 caracteres).",
+      error: t("checkCreate"),
     };
   }
 
@@ -214,12 +216,26 @@ export async function createSpaceAction(
     const duplicate = error?.message.toLowerCase().includes("duplicate");
     return {
       error: duplicate
-        ? "Ese identificador o código de acceso ya está en uso."
-        : "No se ha podido crear el espacio. Inténtalo de nuevo.",
+        ? t("inUse")
+        : t("createFailed"),
     };
   }
 
   await setActiveSpace(data);
+  // El espacio nace en el idioma con el que se ha creado (IA, votación pública…),
+  // y la base de datos pone en castellano la rúbrica y la página de evaluación.
+  const locale = await getLocale();
+  await supabase.from("events").update({ locale }).eq("id", data);
+  if (locale !== "es") {
+    const tDefaults = await getTranslations("spaceDefaults");
+    await Promise.all([
+      supabase.from("rubrics").update({ name: tDefaults("rubric") }).eq("event_id", data),
+      supabase
+        .from("evaluation_pages")
+        .update({ title: tDefaults("evaluationPage", { space: parsed.data.name }) })
+        .eq("event_id", data),
+    ]);
+  }
 
   const proposal = parseAssistantProposal(formData.get("assistantProposal"));
   if (proposal) {
@@ -248,6 +264,7 @@ export async function duplicateSpaceAction(
   _previousState: DuplicateSpaceState,
   formData: FormData,
 ): Promise<DuplicateSpaceState> {
+  const t = await getTranslations("spaceErrors");
   const parsed = z
     .object({
       sourceId: z.string().uuid(),
@@ -262,7 +279,7 @@ export async function duplicateSpaceAction(
       accessCode: formData.get("accessCode"),
     });
   if (!parsed.success) {
-    return { error: "Revisa el nombre, el identificador (minúsculas y guiones) y el código (mínimo 6)." };
+    return { error: t("checkDuplicate") };
   }
 
   const { supabase } = await getAccount();
@@ -275,10 +292,14 @@ export async function duplicateSpaceAction(
   if (error || typeof data !== "string") {
     return {
       error: error?.message.toLowerCase().includes("duplicate")
-        ? "Ese identificador o código de acceso ya está en uso."
-        : "No se ha podido duplicar el espacio.",
+        ? t("inUse")
+        : t("duplicateFailed"),
     };
   }
+
+  // El duplicado conserva el idioma del original.
+  const { data: source } = await supabase.from("events").select("locale").eq("id", parsed.data.sourceId).maybeSingle();
+  if (source?.locale) await supabase.from("events").update({ locale: source.locale }).eq("id", data);
 
   await setActiveSpace(data);
   redirect("/admin");

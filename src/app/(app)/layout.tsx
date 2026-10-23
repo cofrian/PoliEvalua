@@ -1,13 +1,20 @@
+import { getTranslations } from "next-intl/server";
+
 import { AppShell } from "@/components/app/app-shell";
 import { RecordingNoticeDialog } from "@/components/app/recording-notice-dialog";
 import { buildNavigation } from "@/lib/app/navigation";
-import { NO_AUDIO_GUARANTEE, needsRecordingNotice } from "@/lib/app/recording-notice";
-import { getSession, roleLabels } from "@/lib/app/session";
+import { needsRecordingNotice } from "@/lib/app/recording-notice";
+import { getSession } from "@/lib/app/session";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await getSession();
+  const [tNav, tRoles, tNotice] = await Promise.all([
+    getTranslations("nav"),
+    getTranslations("roles"),
+    getTranslations("recordingNotice"),
+  ]);
   const { supabase, profile, event, memberships, membership, recording } = session;
   const showRecordingNotice = needsRecordingNotice(
     recording,
@@ -30,11 +37,11 @@ export default async function AppLayout({
     <>
       <AppShell
         current={{ id: event.id, name: event.name }}
-        groups={buildNavigation(session)}
+        groups={buildNavigation(session, tNav)}
         profile={{
           name: profile.full_name,
           avatarUrl: profile.avatar_url,
-          roleLabel: roleLabels[profile.role],
+          roleLabel: tRoles(profile.role),
         }}
         spaces={spaces}
       >
@@ -42,9 +49,9 @@ export default async function AppLayout({
       </AppShell>
       {showRecordingNotice ? (
         <RecordingNoticeDialog
-          guarantee={recording.customText ? NO_AUDIO_GUARANTEE : null}
+          guarantee={recording.customText ? tNotice("guarantee") : null}
           spaceName={event.name}
-          text={recording.noticeText}
+          text={recording.customText ?? tNotice("default")}
         />
       ) : null}
     </>

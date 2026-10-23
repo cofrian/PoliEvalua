@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Bar,
   BarChart,
@@ -17,10 +18,11 @@ export function ResultsChart({
 }: {
   data: { name: string; media: number; dispersion: number }[];
 }) {
+  const t = useTranslations("results");
   if (!data.length) return null;
 
   return (
-    <div className="h-72 w-full print:hidden" role="img" aria-label="Media por equipo">
+    <div className="h-72 w-full print:hidden" role="img" aria-label={t("chartLabel")}>
       <ResponsiveContainer height="100%" width="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 48, left: 0 }}>
           <CartesianGrid stroke="currentColor" strokeOpacity={0.1} vertical={false} />
@@ -37,7 +39,7 @@ export function ResultsChart({
             contentStyle={{ borderRadius: 8, fontSize: 12 }}
             formatter={(value, key) => [
               key === "media" ? `${value} / 100` : String(value),
-              key === "media" ? "Media" : "Dispersión",
+              key === "media" ? t("average") : t("dispersion"),
             ]}
           />
           <Bar dataKey="media" fill="var(--orange-500)" radius={[4, 4, 0, 0]}>

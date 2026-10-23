@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { AdminTeamEditor, type AdminTeam } from "@/components/app/admin-team-editor";
 import { PageHeader } from "@/components/app/page-header";
 import { ImportTeamsForm } from "@/components/app/import-teams-form";
@@ -7,6 +9,7 @@ import { cardClass } from "@/lib/app/ui";
 
 export default async function AdminTeamsPage() {
   const { supabase, event, words } = await getSession();
+  const t = await getTranslations("teamsAdmin");
   const settings = (event.settings ?? {}) as { enabled_roles?: string[] };
   const hasStudents = (settings.enabled_roles ?? []).includes("student");
 
@@ -31,7 +34,7 @@ export default async function AdminTeamsPage() {
     })),
     {
       id: "none",
-      title: challenges?.length ? `Sin reto` : words.units,
+      title: challenges?.length ? t("noChallenge") : words.units,
       list: allTeams.filter(
         (team) => !team.challenge_id || !(challenges ?? []).some((c) => c.id === team.challenge_id),
       ),
@@ -41,26 +44,26 @@ export default async function AdminTeamsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Crea grupos a mano o importa una lista; cada uno con sus integrantes y enlaces."
+        description={t("description")}
         title={words.units}
       />
     <div className="space-y-8">
       {hasStudents ? (
         <section className={cardClass}>
-          <h2 className="mb-3 font-display text-xl">Importar alumnado</h2>
+          <h2 className="mb-3 font-display text-xl">{t("importStudents")}</h2>
           <RosterImport unit={words.unit} units={words.units} />
         </section>
       ) : null}
 
       <details className={cardClass} open={!hasStudents}>
-        <summary className="cursor-pointer font-display text-xl">Importar {words.unitsLower} (formato equipos.txt)</summary>
+        <summary className="cursor-pointer font-display text-xl">{t("importUnits", { units: words.unitsLower })}</summary>
         <div className="mt-3">
           <ImportTeamsForm />
         </div>
       </details>
 
       <section className={cardClass}>
-        <h2 className="mb-3 font-display text-xl">Nuevo {words.unitLower}</h2>
+        <h2 className="mb-3 font-display text-xl">{t("newUnit", { mode: words.mode })}</h2>
         <AdminTeamEditor challenges={challenges ?? []} team={null} />
       </section>
 
@@ -76,7 +79,7 @@ export default async function AdminTeamsPage() {
                   <summary className="cursor-pointer font-semibold">
                     #{team.number} · {team.name}{" "}
                     <span className="font-normal text-muted-foreground">
-                      · {team.team_members.length} integrantes
+                      · {t("membersCount", { count: team.team_members.length })}
                     </span>
                   </summary>
                   <div className="mt-4">

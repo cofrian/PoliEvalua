@@ -1,5 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import type { Discrepancies } from "@/lib/app/results";
 
@@ -16,10 +17,11 @@ export function DiscrepanciesPanel({
   unitsLower: string;
 }) {
   const { judges, criteria, underEvaluated } = discrepancies;
+  const t = useTranslations("discrepancies");
   if (!judges.length && !criteria.length && !underEvaluated.length) {
     return (
       <p className="rounded-xl border border-leaf-500/50 bg-leaf-500/10 p-4 text-sm">
-        Sin discrepancias destacables: todos los {unitsLower} tienen al menos {minEvaluations} evaluación(es) y el jurado coincide.
+        {t("none", { units: unitsLower, count: minEvaluations })}
       </p>
     );
   }
@@ -27,11 +29,11 @@ export function DiscrepanciesPanel({
   return (
     <section className="space-y-4 rounded-xl border border-orange-500/50 bg-orange-500/5 p-4">
       <h2 className="flex items-center gap-2 font-display text-xl">
-        <AlertTriangle aria-hidden="true" className="size-5 text-orange-600" /> Para revisar antes de cerrar
+        <AlertTriangle aria-hidden="true" className="size-5 text-orange-600" /> {t("title")}
       </h2>
       {underEvaluated.length ? (
         <div>
-          <p className="text-sm font-semibold">Con menos de {minEvaluations} evaluación(es)</p>
+          <p className="text-sm font-semibold">{t("under", { count: minEvaluations })}</p>
           <ul className="mt-1 flex flex-wrap gap-2 text-sm">
             {underEvaluated.map((team) => (
               <li key={team.teamId}>
@@ -45,12 +47,17 @@ export function DiscrepanciesPanel({
       ) : null}
       {judges.length ? (
         <div>
-          <p className="text-sm font-semibold">Evaluadores alejados del resto</p>
+          <p className="text-sm font-semibold">{t("judges")}</p>
           <ul className="mt-1 space-y-1 text-sm">
             {judges.map((judge) => (
               <li key={judge.judgeId}>
-                <strong>{judge.judgeName}</strong> puntúa de media {Math.abs(judge.bias)} puntos{" "}
-                {judge.bias > 0 ? "por encima" : "por debajo"} del resto ({judge.evaluated} evaluaciones).
+                {t.rich("judgeBias", {
+                  name: judge.judgeName,
+                  points: Math.abs(judge.bias),
+                  direction: judge.bias > 0 ? "above" : "below",
+                  count: judge.evaluated,
+                  strong: (chunks) => <strong>{chunks}</strong>,
+                })}
               </li>
             ))}
           </ul>
@@ -58,14 +65,14 @@ export function DiscrepanciesPanel({
       ) : null}
       {criteria.length ? (
         <div>
-          <p className="text-sm font-semibold">Criterios con mucho desacuerdo (diferencia ≥ {scaleMax / 2} puntos)</p>
+          <p className="text-sm font-semibold">{t("criteria", { points: scaleMax / 2 })}</p>
           <ul className="mt-1 space-y-1 text-sm">
             {criteria.slice(0, 15).map((item) => (
               <li key={`${item.teamId}-${item.criterion}`}>
-                {item.teamName} · {item.criterion}: {item.spread} puntos entre la nota más alta y la más baja
+                {t("spread", { team: item.teamName, criterion: item.criterion, points: item.spread })}
               </li>
             ))}
-            {criteria.length > 15 ? <li className="text-muted-foreground">… y {criteria.length - 15} más</li> : null}
+            {criteria.length > 15 ? <li className="text-muted-foreground">{t("more", { count: criteria.length - 15 })}</li> : null}
           </ul>
         </div>
       ) : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +25,7 @@ export function Presence({
   me: Viewer;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const t = useTranslations("common");
   const [viewers, setViewers] = useState<Viewer[]>([]);
 
   const { id, name, avatar } = me;
@@ -80,8 +82,8 @@ export function Presence({
       </div>
       <span>
         {viewers.length === 1
-          ? `${viewers[0].name} también está aquí`
-          : `${viewers.length} personas más aquí`}
+          ? t("alsoHere", { name: viewers[0].name })
+          : t("othersHere", { count: viewers.length })}
       </span>
     </div>
   );

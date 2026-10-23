@@ -87,7 +87,8 @@ export async function POST(request: Request) {
       title: parsed.data.title,
       storage_path: `events/${session.eventId}/presentations/${team.id}/${id}/`,
       mime_type: "audio/webm",
-      language: process.env.TRANSCRIPTION_LANGUAGE || "es",
+      // Idioma hablado: «auto» o el fijado en Admin → Grabaciones («ca» = valenciano).
+      language: recordingSettings(event?.settings).spokenLanguage,
       visibility: parsed.data.visibility,
       status: "uploading",
       asr_prompt: asrPrompt,

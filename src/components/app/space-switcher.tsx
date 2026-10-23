@@ -2,6 +2,7 @@
 
 import { Check, ChevronsUpDown, LayoutGrid, Plus } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 
 import { selectSpaceAction } from "@/app/(app)/espacios/actions";
@@ -13,7 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+
+import { cn } from "@/lib/utils";
 
 export type SpaceOption = { id: string; name: string };
 
@@ -28,6 +30,7 @@ export function SpaceSwitcher({
   className?: string;
 }) {
   const [pending, startTransition] = useTransition();
+  const t = useTranslations("common");
 
   function choose(id: string) {
     if (id === current.id) return;
@@ -39,7 +42,7 @@ export function SpaceSwitcher({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={`Espacio actual: ${current.name}. Cambiar de espacio`}
+        aria-label={t("currentSpace", { name: current.name })}
         className={cn("flex max-w-40 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted sm:max-w-56", className)}
         disabled={pending}
       >
@@ -47,7 +50,7 @@ export function SpaceSwitcher({
         <ChevronsUpDown aria-hidden="true" className="size-3.5 shrink-0 opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Tus espacios</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("yourSpaces")}</DropdownMenuLabel>
         {spaces.map((space) => (
           <DropdownMenuItem key={space.id} onSelect={() => choose(space.id)}>
             <Check
@@ -60,12 +63,12 @@ export function SpaceSwitcher({
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/espacios">
-            <LayoutGrid aria-hidden="true" className="size-4" /> Ver todos los espacios
+            <LayoutGrid aria-hidden="true" className="size-4" /> {t("allSpaces")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/espacios/nuevo">
-            <Plus aria-hidden="true" className="size-4" /> Nuevo espacio
+            <Plus aria-hidden="true" className="size-4" /> {t("newSpace")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

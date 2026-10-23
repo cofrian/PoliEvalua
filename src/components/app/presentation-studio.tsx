@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -110,39 +111,27 @@ const FILE_TYPES: Record<string, string> = {
   "audio/x-wav": "audio/wav",
 };
 
-const statusLabels: Record<PresentationStatus, string> = {
-  uploading: "Grabando / subiendo",
-  uploaded: "Audio subido",
-  queued: "En cola",
-  transcribing: "Transcribiendo",
-  transcribed: "Texto listo",
-  analyzing: "Agentes analizando",
-  ready: "Análisis listo",
-  failed: "Requiere atención",
-  inactive: "Retirada",
-};
+type StudioT = ReturnType<typeof useTranslations<"studio">>;
 
-const coverageLabels: Record<CriterionEvidence["coverage"], string> = {
-  clear: "Tratado con claridad",
-  partial: "Tratado en parte",
-  absent: "No se menciona",
-};
+const FAILURE_REASONS = ["notConfigured", "modelsDown", "noSpeech", "backupFailed", "timeout", "format", "audioGone", "failed"];
+
+/** error_message llega como código («@tipo:motivo») o como texto de grabaciones antiguas. */
+function recordingErrorText(message: string, t: StudioT) {
+  if (!message.startsWith("@")) return message;
+  const [kind, reason = "failed"] = message.slice(1).split(":");
+  const why = t(`errors.reasons.${FAILURE_REASONS.includes(reason) ? reason : "failed"}`);
+  if (kind === "backup") return t("errors.backup");
+  if (kind === "analysisFailed") return t("errors.analysisFailed", { reason: why });
+  return t("errors.transcribeFailed", { reason: why });
+}
 
 /** Los errores de getUserMedia llegan en inglés y con nombres técnicos. */
-function microphoneErrorMessage(error: unknown) {
+function microphoneErrorMessage(error: unknown, t: StudioT) {
   const name = error instanceof DOMException ? error.name : "";
-  if (name === "NotAllowedError" || name === "SecurityError") {
-    return "El navegador no tiene permiso para usar el micrófono. Actívalo en el candado de la barra de direcciones y vuelve a intentarlo.";
-  }
-  if (name === "NotFoundError" || name === "OverconstrainedError") {
-    return "No se ha encontrado ningún micrófono. Conecta uno y vuelve a intentarlo.";
-  }
-  if (name === "NotReadableError" || name === "AbortError") {
-    return "El micrófono está ocupado por otra aplicación (Teams, Zoom…). Ciérrala y vuelve a intentarlo.";
-  }
-  return error instanceof Error && error.message
-    ? error.message
-    : "No se ha podido empezar a grabar. Revisa el micrófono y vuelve a intentarlo.";
+  if (name === "NotAllowedError" || name === "SecurityError") return t("mic.denied");
+  if (name === "NotFoundError" || name === "OverconstrainedError") return t("mic.notFound");
+  if (name === "NotReadableError" || name === "AbortError") return t("mic.busy");
+  return error instanceof Error && error.message ? error.message : t("mic.generic");
 }
 
 function formatDuration(seconds: number) {
@@ -211,6 +200,7 @@ function MindMap({ map }: { map: PresentationInsights["mindMap"] }) {
 }
 
 function Waveform({ analyser }: { analyser: AnalyserNode | null }) {
+  const t = useTranslations("studio");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -251,7 +241,7 @@ function Waveform({ analyser }: { analyser: AnalyserNode | null }) {
 
   return (
     <canvas
-      aria-label="Forma de onda del micrófono"
+      aria-label={t("waveform")}
       className="h-24 w-full"
       ref={canvasRef}
       role="img"
@@ -260,14 +250,15 @@ function Waveform({ analyser }: { analyser: AnalyserNode | null }) {
 }
 
 function JuryReport({ report }: { report: JuryReportRecord }) {
+  const t = useTranslations("studio.jury");
+  const tCoverage = useTranslations("aiEvidence.coverage");
   return (
     <section className="rounded-2xl border-2 border-upv-blue/40 bg-upv-blue/5 p-4 sm:p-5">
       <h4 className="flex items-center gap-2 font-display text-lg">
-        <Gavel className="size-5" /> Para el jurado
+        <Gavel className="size-5" /> {t("title")}
       </h4>
       <p className="mt-1 text-xs text-muted-foreground">
-        Solo lo ven el jurado y la gestión. Las citas están comprobadas contra la
-        transcripción; no es una nota ni una recomendación de voto.
+        {t("note")}
       </p>
 
       {report.criteria_evidence.length ? (
@@ -284,7 +275,7 @@ function JuryReport({ report }: { report: JuryReportRecord }) {
                     item.coverage === "absent" && "bg-muted text-muted-foreground",
                   )}
                 >
-                  {coverageLabels[item.coverage]}
+                  {tCoverage(item.coverage)}
                 </span>
               </div>
               {item.evidence.length ? (
@@ -312,7 +303,7 @@ function JuryReport({ report }: { report: JuryReportRecord }) {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div>
-          <h5 className="mb-2 font-bold">Preguntas sugeridas</h5>
+          <h5 className="mb-2 font-bold">{t("questions")}</h5>
           <ol className="list-decimal space-y-1.5 pl-5 text-sm">
             {report.questions.map((question, index) => (
               <li key={`${question}-${index}`}>{question}</li>
@@ -321,7 +312,7 @@ function JuryReport({ report }: { report: JuryReportRecord }) {
         </div>
         {report.risks.length ? (
           <div>
-            <h5 className="mb-2 font-bold">Puntos a aclarar</h5>
+            <h5 className="mb-2 font-bold">{t("risks")}</h5>
             <ul className="space-y-1.5 text-sm">
               {report.risks.map((risk, index) => (
                 <li className="flex gap-2" key={`${risk}-${index}`}>
@@ -336,13 +327,13 @@ function JuryReport({ report }: { report: JuryReportRecord }) {
   );
 }
 
-function progressText(record: PresentationRecord) {
+function progressText(record: PresentationRecord, t: StudioT) {
   const done = record.segments.filter((segment) => segment.status === "done").length;
   const total = record.segments_expected ?? record.segments.length;
-  if (record.status === "analyzing") return "Los agentes están creando resumen, esquema, mapa mental e informe…";
-  if (record.status === "uploading") return `Recibiendo audio: ${done}/${total} partes ya transcritas.`;
-  if (record.status === "queued" && done === 0) return "En cola: se procesará en cuanto haya hueco.";
-  return `Transcribiendo: ${done}/${total} partes listas.`;
+  if (record.status === "analyzing") return t("progress.analyzing");
+  if (record.status === "uploading") return t("progress.uploading", { done, total });
+  if (record.status === "queued" && done === 0) return t("progress.queued");
+  return t("progress.transcribing", { done, total });
 }
 
 export function PresentationStudio({
@@ -364,13 +355,14 @@ export function PresentationStudio({
   juryReports: JuryReportRecord[];
 }) {
   const router = useRouter();
+  const t = useTranslations("studio");
   const supabase = useMemo(() => createClient(), []);
   const recordingIdRef = useRef<string | null>(null);
   const uploadsRef = useRef<Promise<void>[]>([]);
   const sizeRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [liveRecordingId, setLiveRecordingId] = useState<string | null>(null);
-  const [title, setTitle] = useState("Nueva exposición");
+  const [title, setTitle] = useState(() => t("defaultTitle"));
   const [visibility, setVisibility] = useState<"private" | "event">("private");
   const [busy, setBusy] = useState(false);
   const [uploaded, setUploaded] = useState(0);
@@ -408,14 +400,12 @@ export function PresentationStudio({
   const stopRef = useRef<() => Promise<void>>(async () => undefined);
   const handleFinishRequired = useCallback((reason: "limit" | "interrupted") => {
     if (reason === "limit") {
-      toast.info("Se ha alcanzado la duración máxima. Guardando la grabación…");
+      toast.info(t("toast.limit"));
     } else {
-      toast.warning(
-        "El micrófono se ha desconectado o lo ha usado otra aplicación. Guardamos lo grabado hasta ahora.",
-      );
+      toast.warning(t("toast.interrupted"));
     }
     void stopRef.current();
-  }, []);
+  }, [t]);
 
   const recorder = useSegmentedRecorder({
     maxSeconds: MAX_SECONDS,
@@ -503,7 +493,7 @@ export function PresentationStudio({
       if (recordingId) {
         void fetch(`/api/presentations/${recordingId}`, { method: "DELETE" }).catch(() => undefined);
       }
-      toast.error(microphoneErrorMessage(error));
+      toast.error(microphoneErrorMessage(error, t));
     } finally {
       setBusy(false);
     }
@@ -522,15 +512,13 @@ export function PresentationStudio({
         sizeBytes: sizeRef.current,
       });
       if (await finalizeRecording(saved)) {
-        toast.success("Grabación completa. El texto y los materiales aparecerán aquí.");
-        setTitle("Nueva exposición");
+        toast.success(t("toast.complete"));
+        setTitle(t("defaultTitle"));
       } else {
-        toast.warning(
-          "Parte del audio no se ha podido subir. Está guardado en este navegador: pulsa «Reanudar subida».",
-        );
+        toast.warning(t("toast.partial"));
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo cerrar la grabación.");
+      toast.error(error instanceof Error ? error.message : t("toast.closeError"));
     } finally {
       recordingIdRef.current = null;
       setLiveRecordingId(null);
@@ -547,11 +535,11 @@ export function PresentationStudio({
   async function uploadFile(file: File) {
     const mimeType = FILE_TYPES[file.type];
     if (!mimeType) {
-      toast.error("Formato no admitido. Usa MP3, M4A, WAV, OGG o WEBM.");
+      toast.error(t("toast.format"));
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      toast.error("El archivo supera 20 MB. Expórtalo en MP3 o M4A para que ocupe menos.");
+      toast.error(t("toast.tooBig"));
       return;
     }
     setBusy(true);
@@ -577,10 +565,10 @@ export function PresentationStudio({
         sizeBytes: file.size,
       });
       await finalizeRecording(saved);
-      toast.success("Archivo subido. Lo estamos transcribiendo.");
+      toast.success(t("toast.fileUploaded"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo subir el archivo.");
+      toast.error(error instanceof Error ? error.message : t("toast.fileError"));
       void refreshPending();
     } finally {
       setBusy(false);
@@ -593,12 +581,10 @@ export function PresentationStudio({
     try {
       const finished = await resumeUpload(supabase, recording);
       toast.success(
-        finished
-          ? "Subida completada. Ya se está transcribiendo."
-          : "Audio subido. La grabación se cerrará cuando termines de grabar.",
+        finished ? t("toast.resumeDone") : t("toast.resumePartial"),
       );
     } catch {
-      toast.error("Sigue sin haber conexión. Inténtalo de nuevo en un momento.");
+      toast.error(t("toast.stillOffline"));
     } finally {
       setActiveId(null);
       void refreshPending();
@@ -611,7 +597,7 @@ export function PresentationStudio({
       ? (manualTranscripts[record.id] ?? record.transcript ?? "").trim()
       : undefined;
     if (useManual && (!transcript || transcript.length < 20)) {
-      toast.error("Pega al menos 20 caracteres de transcripción.");
+      toast.error(t("toast.manualTooShort"));
       return;
     }
     setActiveId(record.id);
@@ -622,27 +608,27 @@ export function PresentationStudio({
         body: JSON.stringify(transcript ? { transcript } : {}),
       });
       const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "No se pudo procesar.");
-      toast.success("Vuelto a poner en cola.");
+      if (!response.ok) throw new Error(payload.error || t("toast.processError"));
+      toast.success(t("toast.requeued"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo procesar.");
+      toast.error(error instanceof Error ? error.message : t("toast.processError"));
     } finally {
       setActiveId(null);
     }
   }
 
   async function retireRecord(record: PresentationRecord) {
-    if (!window.confirm("¿Retirar esta grabación? Dejará de aparecer en la biblioteca.")) return;
+    if (!window.confirm(t("toast.retireConfirm"))) return;
     setActiveId(record.id);
     try {
       const response = await fetch(`/api/presentations/${record.id}`, { method: "DELETE" });
       const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "No se pudo retirar.");
-      toast.success("Grabación retirada.");
+      if (!response.ok) throw new Error(payload.error || t("toast.retireError"));
+      toast.success(t("toast.retired"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo retirar.");
+      toast.error(error instanceof Error ? error.message : t("toast.retireError"));
     } finally {
       setActiveId(null);
     }
@@ -658,15 +644,15 @@ export function PresentationStudio({
     <div className="space-y-8">
       {pending.length ? (
         <section className="rounded-2xl border border-upv-yellow bg-upv-yellow/10 p-4">
-          <h3 className="font-display">Subidas pendientes en este navegador</h3>
+          <h3 className="font-display">{t("pendingTitle")}</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Se cortó la conexión mientras grababas. El audio está guardado aquí; súbelo para no perderlo.
+            {t("pendingText")}
           </p>
           <ul className="mt-3 space-y-2">
             {pending.map(({ recording, segments }) => (
               <li className="flex flex-wrap items-center justify-between gap-2" key={recording.recordingId}>
                 <span className="text-sm font-semibold">
-                  {recording.title || "Grabación"} · {segments} parte(s) sin subir
+                  {recording.title || t("recording")} · {t("partsPending", { count: segments })}
                 </span>
                 <Button
                   disabled={activeId === recording.recordingId}
@@ -674,7 +660,7 @@ export function PresentationStudio({
                   size="sm"
                   type="button"
                 >
-                  <RotateCw /> Reanudar subida
+                  <RotateCw /> {t("resume")}
                 </Button>
               </li>
             ))}
@@ -688,18 +674,16 @@ export function PresentationStudio({
         <div className="relative grid gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold">
-              <Sparkles className="size-4 text-upv-yellow" /> Estudio de exposición
+              <Sparkles className="size-4 text-upv-yellow" /> {t("badge")}
             </div>
-            <h2 className="font-display text-2xl tracking-tight sm:text-3xl">De la voz a las ideas</h2>
+            <h2 className="font-display text-2xl tracking-tight sm:text-3xl">{t("heroTitle")}</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
-              El audio se sube por partes mientras grabas y se transcribe a la vez.
-              Al terminar, unos agentes crean resumen, esquema, mapa mental y un
-              informe para el jurado. La voz se borra en cuanto hay texto.
+              {t("heroText")}
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/70">
-              <span className="rounded-full bg-white/10 px-3 py-1">Subida por partes</span>
-              <span className="rounded-full bg-white/10 px-3 py-1">Hasta 60 min</span>
-              <span className="rounded-full bg-white/10 px-3 py-1">Sin guardar la voz</span>
+              <span className="rounded-full bg-white/10 px-3 py-1">{t("chipParts")}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1">{t("chipMax")}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1">{t("chipNoVoice")}</span>
             </div>
           </div>
 
@@ -710,7 +694,7 @@ export function PresentationStudio({
                   <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                     <div className="space-y-1.5">
                       <Label className="text-white/80" htmlFor="presentation-title">
-                        Nombre de la exposición
+                        {t("nameLabel")}
                       </Label>
                       <Input
                         className="border-white/20 bg-white/10 text-white"
@@ -729,9 +713,9 @@ export function PresentationStudio({
                       type="button"
                     >
                       {visibility === "private" ? (
-                        <><Lock className="size-4" /> Solo yo</>
+                        <><Lock className="size-4" /> {t("onlyMe")}</>
                       ) : (
-                        <><Users className="size-4" /> Todo el espacio</>
+                        <><Users className="size-4" /> {t("wholeSpace")}</>
                       )}
                     </button>
                   </div>
@@ -751,8 +735,8 @@ export function PresentationStudio({
                   </div>
                   {recorder.isRecording ? (
                     <span className="text-xs text-white/70">
-                      {recorder.segmentCount} parte(s) · {uploaded} subida(s)
-                      {failedUploads ? ` · ${failedUploads} pendiente(s)` : ""}
+                      {t("partsInfo", { parts: recorder.segmentCount, uploaded })}
+                      {failedUploads ? t("failedInfo", { count: failedUploads }) : ""}
                     </span>
                   ) : (
                     <span className="text-xs text-white/60">{formatDuration(MAX_SECONDS)}</span>
@@ -762,12 +746,12 @@ export function PresentationStudio({
                   <Waveform analyser={recorder.analyser} />
                 ) : (
                   <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-white/20 text-white/55">
-                    <AudioLines className="mr-2 size-5" /> Pon el móvil cerca de quien expone
+                    <AudioLines className="mr-2 size-5" /> {t("placeMic")}
                   </div>
                 )}
                 {recorder.isRecording && !recorder.wakeLockActive ? (
                   <p className="mt-2 text-xs text-upv-yellow">
-                    No bloquees la pantalla mientras grabas: este navegador no puede mantenerla encendida.
+                    {t("keepAwake")}
                   </p>
                 ) : null}
                 <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -778,7 +762,7 @@ export function PresentationStudio({
                       onClick={() => void stopRecording()}
                       type="button"
                     >
-                      <Square className="size-4 fill-current" /> Terminar exposición
+                      <Square className="size-4 fill-current" /> {t("stop")}
                     </Button>
                   ) : (
                     <>
@@ -789,7 +773,7 @@ export function PresentationStudio({
                         type="button"
                       >
                         {busy ? <LoaderCircle className="size-5 animate-spin" /> : <Mic className="size-5" />}
-                        Empezar a grabar
+                        {t("start")}
                       </Button>
                       <Button
                         className="h-12 rounded-full border-white/30 bg-transparent text-white hover:bg-white/10"
@@ -798,7 +782,7 @@ export function PresentationStudio({
                         type="button"
                         variant="outline"
                       >
-                        <FileAudio className="size-5" /> Subir archivo
+                        <FileAudio className="size-5" /> {t("uploadFile")}
                       </Button>
                       <input
                         accept="audio/*"
@@ -821,8 +805,7 @@ export function PresentationStudio({
               </>
             ) : (
               <div className="flex min-h-40 items-center justify-center text-center text-sm text-white/70">
-                {recordingDisabledReason ??
-                  "El perfil de consulta puede ver materiales compartidos, pero no grabar."}
+                {recordingDisabledReason ?? t("viewerOnly")}
               </div>
             )}
           </div>
@@ -833,9 +816,9 @@ export function PresentationStudio({
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground uppercase">
-              Biblioteca del proyecto
+              {t("library")}
             </p>
-            <h2 className="font-display text-xl">Exposiciones</h2>
+            <h2 className="font-display text-xl">{t("presentations")}</h2>
           </div>
           <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">
             {initialRecords.length}
@@ -845,9 +828,9 @@ export function PresentationStudio({
         {initialRecords.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border py-14 text-center">
             <Mic className="mx-auto mb-3 size-8 text-muted-foreground" />
-            <p className="font-display">Todavía no hay exposiciones</p>
+            <p className="font-display">{t("emptyTitle")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              La primera grabación aparecerá aquí con todos sus materiales.
+              {t("emptyText")}
             </p>
           </div>
         ) : (
@@ -876,14 +859,14 @@ export function PresentationStudio({
                     <div className="min-w-0 flex-1">
                       <h3 className="truncate font-display text-base sm:text-lg">{record.title}</h3>
                       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <span>{record.creator?.full_name ?? "Usuario"}</span>
+                        <span>{record.creator?.full_name ?? t("user")}</span>
                         <span><Clock3 className="mr-1 inline size-3" />{formatDuration(record.duration_seconds)}</span>
                         {record.size_bytes ? <span>{formatSize(record.size_bytes)}</span> : null}
-                        <span>{record.visibility === "private" ? "🔒 Privada" : "👥 Compartida"}</span>
+                        <span>{record.visibility === "private" ? t("private") : t("shared")}</span>
                       </div>
                     </div>
                     <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-bold sm:inline">
-                      {statusLabels[record.status]}
+                      {t(`status.${record.status}`)}
                     </span>
                   </summary>
 
@@ -892,32 +875,32 @@ export function PresentationStudio({
                       <p className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Lock className="size-3.5" />
                         {record.audio_deleted_at
-                          ? "Audio eliminado tras la transcripción."
-                          : "Audio temporal: se eliminará al obtener el texto."}
+                          ? t("audioDeleted")
+                          : t("audioTemp")}
                       </p>
                       {canEdit ? (
                         <Button
-                          aria-label="Retirar grabación"
+                          aria-label={t("retireLabel")}
                           disabled={activeId === record.id}
                           onClick={() => void retireRecord(record)}
                           type="button"
                           variant="destructive"
                         >
-                          <Trash2 /> Retirar
+                          <Trash2 /> {t("retire")}
                         </Button>
                       ) : null}
                     </div>
 
                     {record.error_message ? (
                       <p className="rounded-xl border border-upv-red/30 bg-upv-red/5 p-3 text-sm">
-                        {record.error_message}
+                        {recordingErrorText(record.error_message, t)}
                       </p>
                     ) : null}
 
                     {processing ? (
                       <div className="flex items-center gap-3 rounded-xl bg-muted p-4 text-sm">
                         <LoaderCircle className="size-5 shrink-0 animate-spin" />
-                        {progressText(record)}
+                        {progressText(record, t)}
                       </div>
                     ) : null}
 
@@ -925,13 +908,13 @@ export function PresentationStudio({
                       <div className="grid gap-4 lg:grid-cols-2">
                         <section className="rounded-xl bg-muted/70 p-4">
                           <h4 className="mb-2 flex items-center gap-2 font-display">
-                            <FileText className="size-4" /> Resumen
+                            <FileText className="size-4" /> {t("summary")}
                           </h4>
                           <p className="text-sm leading-6 whitespace-pre-wrap">{record.summary}</p>
                         </section>
                         <section className="rounded-xl bg-upv-yellow/10 p-4">
                           <h4 className="mb-2 flex items-center gap-2 font-display">
-                            <Lightbulb className="size-4" /> Ideas clave
+                            <Lightbulb className="size-4" /> {t("keyPoints")}
                           </h4>
                           <ul className="space-y-2 text-sm">
                             {record.key_points.map((point, pointIndex) => (
@@ -947,7 +930,7 @@ export function PresentationStudio({
                     {record.outline.length ? (
                       <section>
                         <h4 className="mb-3 flex items-center gap-2 font-display text-lg">
-                          <ListTree className="size-5" /> Esquema de la exposición
+                          <ListTree className="size-5" /> {t("outline")}
                         </h4>
                         <ol className="grid gap-3 sm:grid-cols-2">
                           {record.outline.map((section, sectionIndex) => (
@@ -967,7 +950,7 @@ export function PresentationStudio({
                     {record.mind_map ? (
                       <section>
                         <h4 className="mb-3 flex items-center gap-2 font-display text-lg">
-                          <BrainCircuit className="size-5" /> Mapa mental
+                          <BrainCircuit className="size-5" /> {t("mindMap")}
                         </h4>
                         <MindMap map={record.mind_map} />
                       </section>
@@ -975,7 +958,7 @@ export function PresentationStudio({
 
                     {record.action_items.length ? (
                       <section className="rounded-xl border-l-4 border-l-upv-blue bg-muted/50 p-4">
-                        <h4 className="mb-2 font-display">Próximos pasos detectados</h4>
+                        <h4 className="mb-2 font-display">{t("nextSteps")}</h4>
                         <ul className="space-y-1 text-sm">
                           {record.action_items.map((item, itemIndex) => (
                             <li key={`${item}-${itemIndex}`}>□ {item}</li>
@@ -988,7 +971,7 @@ export function PresentationStudio({
 
                     {record.transcript ? (
                       <details className="rounded-xl border border-border p-4">
-                        <summary className="cursor-pointer font-bold">Ver transcripción completa</summary>
+                        <summary className="cursor-pointer font-bold">{t("fullTranscript")}</summary>
                         <p className="mt-4 max-h-96 overflow-y-auto text-sm leading-6 whitespace-pre-wrap text-muted-foreground">
                           {record.transcript}
                         </p>
@@ -999,14 +982,14 @@ export function PresentationStudio({
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                         <span>
                           {record.prompt_version
-                            ? `Análisis generado con los prompts v${record.prompt_version}.`
-                            : "Análisis generado con una versión de los prompts anterior a 2026.10."}
+                            ? t("promptVersion", { version: record.prompt_version })
+                            : t("promptOld")}
                         </span>
                         {canEdit && record.transcript ? (
                           <Button
                             disabled={activeId === record.id}
                             onClick={() => {
-                              if (window.confirm("¿Regenerar el análisis? Se sustituirá el actual con los ajustes de IA vigentes.")) {
+                              if (window.confirm(t("toast.regenerateConfirm"))) {
                                 void processRecord(record, true);
                               }
                             }}
@@ -1014,7 +997,7 @@ export function PresentationStudio({
                             type="button"
                             variant="outline"
                           >
-                            <Sparkles /> Regenerar análisis
+                            <Sparkles /> {t("regenerate")}
                           </Button>
                         ) : null}
                       </div>
@@ -1022,12 +1005,12 @@ export function PresentationStudio({
 
                     {canEdit && !processing && record.status !== "ready" ? (
                       <section className="rounded-xl border border-dashed border-border p-4">
-                        <h4 className="font-display">Recuperar o completar el análisis</h4>
+                        <h4 className="font-display">{t("recoverTitle")}</h4>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                          Puedes reintentar el procesamiento o pegar un texto corregido para crear los materiales.
+                          {t("recoverText")}
                         </p>
                         <Textarea
-                          aria-label={`Transcripción manual de ${record.title}`}
+                          aria-label={t("manualLabel", { title: record.title })}
                           className="mt-3 min-h-32"
                           onChange={(event) =>
                             setManualTranscripts((current) => ({
@@ -1035,7 +1018,7 @@ export function PresentationStudio({
                               [record.id]: event.target.value,
                             }))
                           }
-                          placeholder="Pega aquí una transcripción manual o corregida…"
+                          placeholder={t("manualPlaceholder")}
                           value={manualTranscripts[record.id] ?? record.transcript ?? ""}
                         />
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -1044,7 +1027,7 @@ export function PresentationStudio({
                             onClick={() => void processRecord(record, true)}
                             type="button"
                           >
-                            <Sparkles /> Analizar este texto
+                            <Sparkles /> {t("analyzeText")}
                           </Button>
                           {record.status === "transcribed" ||
                           (record.status === "failed" && !record.audio_deleted_at) ? (
@@ -1054,7 +1037,7 @@ export function PresentationStudio({
                               type="button"
                               variant="outline"
                             >
-                              <Play /> Reintentar
+                              <Play /> {t("retry")}
                             </Button>
                           ) : null}
                         </div>
@@ -1070,7 +1053,7 @@ export function PresentationStudio({
 
       <p className="flex items-start gap-2 rounded-xl bg-muted p-3 text-xs leading-5 text-muted-foreground">
         <Lock className="mt-0.5 size-4 shrink-0" />
-        El audio solo existe mientras se transcribe, en un contenedor privado, y se borra después. Una grabación privada solo la ve su autor y la gestión del espacio; una compartida, los miembros activos de este espacio. El informe para el jurado solo lo ven jurado y gestión.
+        {t("privacy")}
       </p>
     </div>
   );

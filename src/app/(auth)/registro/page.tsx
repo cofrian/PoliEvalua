@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { RegisterForm } from "@/components/auth/auth-forms";
 
-export const metadata: Metadata = {
-  title: "Crear cuenta",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("auth"))("registerMeta") };
+}
 
 export default async function RegisterPage({
   searchParams,
@@ -13,10 +14,11 @@ export default async function RegisterPage({
   searchParams: Promise<{ invite?: string }>;
 }) {
   const params = await searchParams;
+  const t = await getTranslations("auth");
   return (
     <AuthCard
-      description="Crea una única cuenta para participar en varios proyectos, asignaturas, premios o hackathones."
-      title="Crear cuenta"
+      description={t("registerDescription")}
+      title={t("registerTitle")}
     >
       <RegisterForm inviteToken={params.invite} />
     </AuthCard>

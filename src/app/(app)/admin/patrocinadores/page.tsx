@@ -1,3 +1,6 @@
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+
 import { deleteSponsorAction, saveSponsorAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
@@ -19,23 +22,24 @@ type Sponsor = {
 };
 
 function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
+  const t = useTranslations("sponsorsAdmin");
   return (
     <form action={saveSponsorAction} className="grid gap-3 sm:grid-cols-6">
       <input name="id" type="hidden" value={sponsor?.id ?? ""} />
       <label className="space-y-1 text-sm font-semibold sm:col-span-3">
-        <span className="block">Nombre</span>
+        <span className="block">{t("name")}</span>
         <Input defaultValue={sponsor?.name ?? ""} name="name" required />
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-2">
-        <span className="block">Web</span>
+        <span className="block">{t("web")}</span>
         <Input defaultValue={sponsor?.url ?? ""} name="url" placeholder="https://" />
       </label>
       <label className="space-y-1 text-sm font-semibold">
-        <span className="block">Orden</span>
+        <span className="block">{t("order")}</span>
         <Input defaultValue={sponsor?.order ?? ""} inputMode="numeric" name="order" />
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-2">
-        <span className="block">Altura en el pie (px)</span>
+        <span className="block">{t("height")}</span>
         <Input
           defaultValue={sponsor?.display_height ?? 40}
           inputMode="numeric"
@@ -43,7 +47,7 @@ function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
         />
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-2">
-        <span className="block">Proporción (ancho ÷ alto)</span>
+        <span className="block">{t("ratio")}</span>
         <Input
           defaultValue={sponsor?.aspect_ratio ?? 3}
           inputMode="decimal"
@@ -56,18 +60,18 @@ function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
           name="darkBackground"
           type="checkbox"
         />
-        Fondo blanco en modo oscuro
+        {t("darkBg")}
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-3">
-        <span className="block">Logo (modo claro)</span>
+        <span className="block">{t("logoLight")}</span>
         <input accept="image/*" className="block text-sm" name="logoLight" type="file" />
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-3">
-        <span className="block">Logo (modo oscuro, opcional)</span>
+        <span className="block">{t("logoDark")}</span>
         <input accept="image/*" className="block text-sm" name="logoDark" type="file" />
       </label>
       <div className="sm:col-span-6">
-        <Button type="submit">{sponsor ? "Guardar" : "Añadir patrocinador"}</Button>
+        <Button type="submit">{sponsor ? t("save") : t("add")}</Button>
       </div>
     </form>
   );
@@ -75,6 +79,7 @@ function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
 
 export default async function AdminSponsorsPage() {
   const { supabase, event } = await getSession();
+  const t = await getTranslations("sponsorsAdmin");
   const { data: sponsors } = await supabase
     .from("sponsors")
     .select(
@@ -86,13 +91,12 @@ export default async function AdminSponsorsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Logos y enlaces que aparecen en el pie y en la pantalla del proyector."
-        title="Patrocinadores"
+        description={t("description")}
+        title={t("title")}
       />
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Estos logos salen en el pie de la pantalla de acceso, en el orden indicado.
-        Ajusta la altura para que todos se vean con el mismo peso visual.
+        {t("help")}
       </p>
       {((sponsors ?? []) as Sponsor[]).map((sponsor) => (
         <section className={cardClass} key={sponsor.id}>
@@ -106,20 +110,20 @@ export default async function AdminSponsorsPage() {
                 style={{ height: sponsor.display_height }}
               />
             ) : (
-              <span className="text-sm text-muted-foreground">Sin logo</span>
+              <span className="text-sm text-muted-foreground">{t("noLogo")}</span>
             )}
           </div>
           <SponsorForm sponsor={sponsor} />
           <form action={deleteSponsorAction} className="mt-2">
             <input name="id" type="hidden" value={sponsor.id} />
-            <ConfirmSubmit confirmLabel="Quitar" title={`¿Quitar a ${sponsor.name}?`}>
-              Quitar patrocinador
+            <ConfirmSubmit confirmLabel={t("remove")} title={t("removeTitle", { name: sponsor.name })}>
+              {t("removeButton")}
             </ConfirmSubmit>
           </form>
         </section>
       ))}
       <section className={cardClass}>
-        <h2 className="mb-3 font-display text-xl">Nuevo patrocinador</h2>
+        <h2 className="mb-3 font-display text-xl">{t("new")}</h2>
         <SponsorForm sponsor={null} />
       </section>
     </div>

@@ -6,11 +6,27 @@ type ParticipantMode = "teams" | "groups" | "individuals" | "candidates";
 type EventStatus = "setup" | "building" | "judging" | "closed";
 type SpaceModule = "participants" | "rubric" | "notes" | "results" | "sponsors";
 
-const units: Record<ParticipantMode, { one: string; many: string }> = {
-  teams: { one: "Equipo", many: "Equipos" },
-  groups: { one: "Grupo", many: "Grupos" },
-  individuals: { one: "Proyecto", many: "Proyectos" },
-  candidates: { one: "Candidatura", many: "Candidaturas" },
+type Locale = "es" | "ca" | "en";
+
+const units: Record<Locale, Record<ParticipantMode, { one: string; many: string }>> = {
+  es: {
+    teams: { one: "Equipo", many: "Equipos" },
+    groups: { one: "Grupo", many: "Grupos" },
+    individuals: { one: "Proyecto", many: "Proyectos" },
+    candidates: { one: "Candidatura", many: "Candidaturas" },
+  },
+  ca: {
+    teams: { one: "Equip", many: "Equips" },
+    groups: { one: "Grup", many: "Grups" },
+    individuals: { one: "Projecte", many: "Projectes" },
+    candidates: { one: "Candidatura", many: "Candidatures" },
+  },
+  en: {
+    teams: { one: "Team", many: "Teams" },
+    groups: { one: "Group", many: "Groups" },
+    individuals: { one: "Project", many: "Projects" },
+    candidates: { one: "Entry", many: "Entries" },
+  },
 };
 
 const defaultMode: Record<SpaceKind, ParticipantMode> = {
@@ -21,24 +37,72 @@ const defaultMode: Record<SpaceKind, ParticipantMode> = {
   custom: "individuals",
 };
 
-const stages: Record<"event" | "class", Record<EventStatus, string>> = {
-  event: {
-    setup: "Preparación",
-    building: "Desarrollo (notas)",
-    judging: "Defensas (evaluación)",
-    closed: "Cerrado",
+const roles: Record<Locale, { evaluator: Record<"academic" | "awards" | "event", string>; presentation: Record<"academic" | "event", string> }> = {
+  es: {
+    evaluator: { academic: "profesorado", awards: "comité", event: "jurado" },
+    presentation: { academic: "exposición", event: "defensa" },
   },
-  class: {
-    setup: "Preparación",
-    building: "Trabajo en grupos (notas)",
-    judging: "Exposiciones (evaluación)",
-    closed: "Cerrado",
+  ca: {
+    evaluator: { academic: "professorat", awards: "comité", event: "jurat" },
+    presentation: { academic: "exposició", event: "defensa" },
+  },
+  en: {
+    evaluator: { academic: "teaching staff", awards: "committee", event: "jury" },
+    presentation: { academic: "presentation", event: "pitch" },
+  },
+};
+
+const stages: Record<Locale, Record<"event" | "class", Record<EventStatus, string>>> = {
+  es: {
+    event: {
+      setup: "Preparación",
+      building: "Desarrollo (notas)",
+      judging: "Defensas (evaluación)",
+      closed: "Cerrado",
+    },
+    class: {
+      setup: "Preparación",
+      building: "Trabajo en grupos (notas)",
+      judging: "Exposiciones (evaluación)",
+      closed: "Cerrado",
+    },
+  },
+  ca: {
+    event: {
+      setup: "Preparació",
+      building: "Desenvolupament (notes)",
+      judging: "Defenses (avaluació)",
+      closed: "Tancat",
+    },
+    class: {
+      setup: "Preparació",
+      building: "Treball en grups (notes)",
+      judging: "Exposicions (avaluació)",
+      closed: "Tancat",
+    },
+  },
+  en: {
+    event: {
+      setup: "Setup",
+      building: "Building (notes)",
+      judging: "Pitches (evaluation)",
+      closed: "Closed",
+    },
+    class: {
+      setup: "Setup",
+      building: "Group work (notes)",
+      judging: "Presentations (evaluation)",
+      closed: "Closed",
+    },
   },
 };
 
 export type Vocabulary = ReturnType<typeof vocabulary>;
 
-export function vocabulary(event: { kind: SpaceKind; settings?: Record<string, unknown> | null }) {
+export function vocabulary(
+  event: { kind: SpaceKind; settings?: Record<string, unknown> | null },
+  locale: Locale = "es",
+) {
   const settings = event.settings ?? {};
   const mode = (settings.participant_mode as ParticipantMode | undefined) ?? defaultMode[event.kind];
   const academic = event.kind === "class" || event.kind === "project";
@@ -46,14 +110,19 @@ export function vocabulary(event: { kind: SpaceKind; settings?: Record<string, u
     ? (settings.modules as SpaceModule[])
     : null;
 
+  const unit = (units[locale] ?? units.es)[mode];
+  const role = roles[locale] ?? roles.es;
+
   return {
-    unit: units[mode].one,
-    units: units[mode].many,
-    unitLower: units[mode].one.toLowerCase(),
-    unitsLower: units[mode].many.toLowerCase(),
-    evaluator: academic ? "profesorado" : event.kind === "awards" ? "comité" : "jurado",
-    presentation: academic ? "exposición" : "defensa",
-    stageLabels: stages[academic ? "class" : "event"],
+    /** Para frases con género o artículo: `{mode, select, …}` en los mensajes. */
+    mode,
+    unit: unit.one,
+    units: unit.many,
+    unitLower: unit.one.toLowerCase(),
+    unitsLower: unit.many.toLowerCase(),
+    evaluator: role.evaluator[academic ? "academic" : event.kind === "awards" ? "awards" : "event"],
+    presentation: role.presentation[academic ? "academic" : "event"],
+    stageLabels: (stages[locale] ?? stages.es)[academic ? "class" : "event"],
     /** Los retos son propios de hackathons. */
     showChallenges: event.kind === "hackathon",
     /** Carpeta común de entregas e instrucciones (events.settings.materials). */

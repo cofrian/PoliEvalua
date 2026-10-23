@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
+
 const PUBLIC_ROUTES = new Set([
   "/",
   "/login",
@@ -68,7 +70,7 @@ export async function middleware(request: NextRequest) {
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("disabled")
+      .select("disabled, locale")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -78,6 +80,14 @@ export async function middleware(request: NextRequest) {
       loginUrl.pathname = "/login";
       loginUrl.search = "?reason=disabled";
       return copyResponseCookies(response, NextResponse.redirect(loginUrl));
+    }
+
+    // El idioma elegido en el perfil manda sobre el del navegador en cualquier dispositivo.
+    if (isLocale(profile.locale) && request.cookies.get(LOCALE_COOKIE)?.value !== profile.locale) {
+      request.cookies.set(LOCALE_COOKIE, profile.locale);
+      // Rehacer la respuesta para que el render vea la cookie sin perder las de sesión.
+      response = copyResponseCookies(response, NextResponse.next({ request }));
+      response.cookies.set(LOCALE_COOKIE, profile.locale, { maxAge: 60 * 60 * 24 * 365, path: "/" });
     }
 
     const isInvitationAccess =

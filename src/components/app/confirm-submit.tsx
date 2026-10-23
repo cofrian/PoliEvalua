@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ export function ConfirmSubmit({
   children,
   title,
   description,
-  confirmLabel = "Sí, continuar",
+  confirmLabel,
   className,
 }: {
   children: ReactNode;
@@ -31,6 +32,7 @@ export function ConfirmSubmit({
   confirmLabel?: string;
   className?: string;
 }) {
+  const t = useTranslations("common");
   const button = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -54,7 +56,7 @@ export function ConfirmSubmit({
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline">
-                Cancelar
+                {t("cancel")}
               </Button>
             </DialogClose>
             <Button
@@ -65,7 +67,7 @@ export function ConfirmSubmit({
               type="button"
               variant="destructive"
             >
-              {confirmLabel}
+              {confirmLabel ?? t("confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

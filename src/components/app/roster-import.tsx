@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState, useMemo, useState } from "react";
 
 import { importRosterAction, type RosterImportState } from "@/app/(app)/admin/actions";
@@ -16,6 +17,7 @@ import { assignGroups, parseRoster, type GroupingMode } from "@/lib/app/student-
  */
 export function RosterImport({ unit, units }: { unit: string; units: string }) {
   const [state, formAction] = useActionState<RosterImportState, FormData>(importRosterAction, null);
+  const t = useTranslations("roster");
   const [raw, setRaw] = useState("");
   const [mode, setMode] = useState<GroupingMode>("random");
   const [groupSize, setGroupSize] = useState(4);
@@ -26,8 +28,11 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
   const effectiveMode: GroupingMode = mode === "column" && !hasGroupColumn ? "random" : mode;
   // seed solo sirve para volver a barajar al pulsar «Repartir de nuevo».
   const assigned = useMemo(
-    () => (seed >= 0 ? assignGroups(students, effectiveMode, groupSize) : []),
-    [students, effectiveMode, groupSize, seed],
+    () =>
+      seed >= 0
+        ? assignGroups(students, effectiveMode, groupSize, (index) => t("groupName", { unit, index }))
+        : [],
+    [students, effectiveMode, groupSize, seed, t, unit],
   );
   const groups = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -45,42 +50,40 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Pega la lista o sube el CSV exportado de PoliformaT. Cada fila necesita nombre y correo; si
-        hay una columna «Grupo», se respeta. Quien entre en el espacio con ese correo quedará
-        vinculado a su {unit.toLowerCase()} automáticamente.
+        {t("help", { unit: unit.toLowerCase() })}
       </p>
       <input
         accept=".csv,.tsv,.txt,text/csv,text/plain"
-        aria-label="Archivo con la lista de alumnado"
+        aria-label={t("file")}
         className="block text-sm"
         onChange={(event) => void loadFile(event.target.files?.[0])}
         type="file"
       />
       <Textarea
-        aria-label="Lista de alumnado"
+        aria-label={t("list")}
         className="min-h-28 font-mono text-xs"
         onChange={(event) => setRaw(event.target.value)}
-        placeholder={"Nombre;Apellidos;Correo;Grupo\nAna;García López;agarlop@upv.edu.es;Grupo 1"}
+        placeholder={t("placeholder")}
         value={raw}
       />
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1">
-          <Label htmlFor="grouping">Formar {units.toLowerCase()}</Label>
+          <Label htmlFor="grouping">{t("form", { units: units.toLowerCase() })}</Label>
           <select
             className={selectClass}
             id="grouping"
             onChange={(event) => setMode(event.target.value as GroupingMode)}
             value={mode}
           >
-            <option disabled={!hasGroupColumn} value="column">Usar la columna «Grupo»</option>
-            <option value="random">Al azar</option>
-            <option value="alphabetical">Por orden alfabético</option>
+            <option disabled={!hasGroupColumn} value="column">{t("useColumn")}</option>
+            <option value="random">{t("random")}</option>
+            <option value="alphabetical">{t("alphabetical")}</option>
           </select>
         </div>
         {effectiveMode === "random" || effectiveMode === "alphabetical" ? (
           <div className="space-y-1">
-            <Label htmlFor="groupSize">Personas por {unit.toLowerCase()}</Label>
+            <Label htmlFor="groupSize">{t("perUnit", { unit: unit.toLowerCase() })}</Label>
             <Input
               className="h-9 w-24"
               id="groupSize"
@@ -98,22 +101,28 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
             onClick={() => setSeed((value) => value + 1)}
             type="button"
           >
-            Repartir de nuevo
+            {t("reshuffle")}
           </button>
         ) : null}
       </div>
 
       {errors.length ? (
         <ul className="rounded-lg border border-coral-400/50 bg-coral-400/10 px-4 py-2 text-sm" role="alert">
-          {errors.slice(0, 8).map((error) => <li key={error}>{error}</li>)}
-          {errors.length > 8 ? <li>… y {errors.length - 8} más.</li> : null}
+          {errors.slice(0, 8).map((error) => (
+            <li key={`${error.line}-${error.kind}`}>
+              {error.kind === "email"
+                ? t("errorEmail", { line: error.line })
+                : t("errorDuplicate", { line: error.line, email: error.email ?? "" })}
+            </li>
+          ))}
+          {errors.length > 8 ? <li>{t("more", { count: errors.length - 8 })}</li> : null}
         </ul>
       ) : null}
 
       {groups.length ? (
         <div>
           <p className="mb-2 text-sm font-semibold">
-            Vista previa: {students.length} estudiantes en {groups.length} {units.toLowerCase()}
+            {t("preview", { students: students.length, groups: groups.length, units: units.toLowerCase() })}
           </p>
           <div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
             {groups.map(([name, members]) => (
@@ -141,7 +150,7 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
       ) : null}
       {groups.length ? (
         <div className="max-w-xs">
-          <SubmitButton idleLabel={`Dar de alta ${students.length} estudiantes`} pendingLabel="Guardando…" />
+          <SubmitButton idleLabel={t("submit", { count: students.length })} pendingLabel={t("saving")} />
         </div>
       ) : null}
     </form>

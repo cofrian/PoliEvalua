@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { saveEvaluationSettingsAction } from "@/app/(app)/admin/evaluacion/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { SettingRow, SettingsForm } from "@/components/app/settings-form";
@@ -23,6 +25,7 @@ export default async function EvaluationSettingsPage({
 }) {
   const { applied } = await searchParams;
   const { supabase, event } = await getSession();
+  const t = await getTranslations("evalAdmin");
   const { data: page } = await supabase
     .from("evaluation_pages")
     .select("title, description, instructions, requirements, questions, status, aggregation_method, min_evaluations, current_round, opens_at, closes_at, version")
@@ -34,63 +37,66 @@ export default async function EvaluationSettingsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Cuándo se abre la evaluación, cuántas opiniones hacen falta y cómo se calcula la nota."
-        title="Evaluación"
+        description={t("description")}
+        title={t("title")}
       />
       {applied ? (
         <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 p-3 text-sm">
-          La propuesta se ha aplicado como borrador. Revísala y publícala cuando esté lista.
+          {t("applied")}
         </p>
       ) : null}
       <SettingsForm
         action={saveEvaluationSettingsAction}
-        description={`Versión ${page?.version ?? 1}. Mientras esté en borrador, nadie puede evaluar.`}
-        title="Página de evaluación"
+        description={t("formDescription", { version: page?.version ?? 1 })}
+        title={t("formTitle")}
       >
         <SettingRow
-          description="Publícala para que el jurado pueda puntuar. Al cerrarla, nadie puede modificar evaluaciones."
+          description={t("statusHint")}
           htmlFor="status"
-          label="Estado"
+          label={t("status")}
         >
           <select className={`${selectClass} w-full`} defaultValue={page?.status ?? "draft"} id="status" name="status">
-            <option value="draft">Borrador</option>
-            <option value="published">Publicada</option>
-            <option value="closed">Cerrada</option>
+            {(["draft", "published", "closed"] as const).map((value) => (
+              <option key={value} value={value}>
+                {t(`statuses.${value}`)}
+              </option>
+            ))}
           </select>
         </SettingRow>
-        <SettingRow description="Opcional. Se abre y se cierra sola en estas fechas." label="Apertura y cierre">
+        <SettingRow description={t("datesHint")} label={t("dates")}>
           <div className="grid gap-2">
-            <Input aria-label="Apertura" defaultValue={localDateTime(page?.opens_at)} name="opensAt" type="datetime-local" />
-            <Input aria-label="Cierre" defaultValue={localDateTime(page?.closes_at)} name="closesAt" type="datetime-local" />
+            <Input aria-label={t("opens")} defaultValue={localDateTime(page?.opens_at)} name="opensAt" type="datetime-local" />
+            <Input aria-label={t("closes")} defaultValue={localDateTime(page?.closes_at)} name="closesAt" type="datetime-local" />
           </div>
         </SettingRow>
-        <SettingRow description="Las rondas sirven para repartir paneles en varias tandas." htmlFor="currentRound" label="Ronda activa">
+        <SettingRow description={t("roundHint")} htmlFor="currentRound" label={t("round")}>
           <Input className="sm:ml-auto sm:w-24" defaultValue={page?.current_round ?? 1} id="currentRound" max={20} min={1} name="currentRound" type="number" />
         </SettingRow>
-        <SettingRow description="Cómo se combinan las puntuaciones de varias personas." htmlFor="aggregationMethod" label="Cálculo de la nota">
+        <SettingRow description={t("aggregationHint")} htmlFor="aggregationMethod" label={t("aggregation")}>
           <select className={`${selectClass} w-full`} defaultValue={page?.aggregation_method ?? "average"} id="aggregationMethod" name="aggregationMethod">
-            <option value="average">Media individual</option>
-            <option value="consensus">Media por panel (cada panel pesa igual)</option>
-            <option value="hybrid">Media individual + media por panel</option>
-            <option value="trimmed_mean">Media sin extremos</option>
+            {(["average", "consensus", "hybrid", "trimmed_mean"] as const).map((value) => (
+              <option key={value} value={value}>
+                {t(`methods.${value}`)}
+              </option>
+            ))}
           </select>
         </SettingRow>
-        <SettingRow description="Por debajo de este número, el Resumen lo marca como pendiente." htmlFor="minEvaluations" label="Evaluaciones mínimas por proyecto">
+        <SettingRow description={t("minHint")} htmlFor="minEvaluations" label={t("min")}>
           <Input className="sm:ml-auto sm:w-24" defaultValue={page?.min_evaluations ?? 1} id="minEvaluations" max={20} min={1} name="minEvaluations" type="number" />
         </SettingRow>
-        <SettingRow htmlFor="title" label="Nombre" stacked>
-          <Input defaultValue={page?.title ?? `Evaluación · ${event.name}`} id="title" name="title" required />
+        <SettingRow htmlFor="title" label={t("name")} stacked>
+          <Input defaultValue={page?.title ?? t("defaultName", { space: event.name })} id="title" name="title" required />
         </SettingRow>
-        <SettingRow htmlFor="description" label="Descripción" stacked>
+        <SettingRow htmlFor="description" label={t("descriptionLabel")} stacked>
           <Textarea defaultValue={page?.description ?? ""} id="description" maxLength={2000} name="description" />
         </SettingRow>
-        <SettingRow htmlFor="instructions" label="Instrucciones para evaluar" stacked>
+        <SettingRow htmlFor="instructions" label={t("instructions")} stacked>
           <Textarea className="min-h-28" defaultValue={page?.instructions ?? ""} id="instructions" maxLength={4000} name="instructions" />
         </SettingRow>
-        <SettingRow description="Uno por línea. El jurado debe marcarlos antes de enviar." htmlFor="requirements" label="Requisitos obligatorios" stacked>
+        <SettingRow description={t("requirementsHint")} htmlFor="requirements" label={t("requirements")} stacked>
           <Textarea className="min-h-28" defaultValue={requirements.map((item) => item.label).filter(Boolean).join("\n")} id="requirements" name="requirements" />
         </SettingRow>
-        <SettingRow description="Una por línea. Se responden con texto libre." htmlFor="questions" label="Preguntas adicionales" stacked>
+        <SettingRow description={t("questionsHint")} htmlFor="questions" label={t("questions")} stacked>
           <Textarea className="min-h-28" defaultValue={questions.map((item) => item.label).filter(Boolean).join("\n")} id="questions" name="questions" />
         </SettingRow>
       </SettingsForm>

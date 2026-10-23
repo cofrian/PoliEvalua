@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { importTeamsAction, type ImportState } from "@/app/(app)/admin/actions";
@@ -11,13 +12,12 @@ export function ImportTeamsForm() {
     importTeamsAction,
     null,
   );
+  const t = useTranslations("importTeams");
 
   return (
     <form action={formAction} className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Mismo formato que <code>equipos.txt</code>: Reto, Nº, Equipo, Miembro 1,
-        Miembro 2… (separado por tabuladores o comas). Crea o actualiza por nombre
-        de equipo y añade los integrantes que falten; no borra nada.
+        {t.rich("help", { code: (chunks) => <code>{chunks}</code> })}
       </p>
       <input
         accept=".txt,.csv,.tsv,text/plain,text/csv"
@@ -28,7 +28,7 @@ export function ImportTeamsForm() {
       <Textarea
         className="min-h-24 font-mono text-xs"
         name="content"
-        placeholder={"Reto 1\t1\tMi equipo\tAna García\tLuis Pérez"}
+        placeholder={t("placeholder")}
       />
       {state ? (
         <p
@@ -43,7 +43,7 @@ export function ImportTeamsForm() {
         </p>
       ) : null}
       <div className="max-w-xs">
-        <SubmitButton idleLabel="Importar" pendingLabel="Importando…" />
+        <SubmitButton idleLabel={t("submit")} pendingLabel={t("pending")} />
       </div>
     </form>
   );

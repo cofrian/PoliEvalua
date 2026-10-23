@@ -1,9 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Button } from "@/components/ui/button";
 
 // El PDF se genera con el diálogo de impresión del navegador ("Guardar como PDF").
 export function PrintButton() {
+  const t = useTranslations("results");
   return (
     <Button
       onClick={() => {
@@ -14,7 +17,7 @@ export function PrintButton() {
       type="button"
       variant="outline"
     >
-      Descargar PDF
+      {t("pdf")}
     </Button>
   );
 }

@@ -4,46 +4,63 @@ import {
   updateMaterialsSettingsAction,
   updateStudentVisibilityAction,
 } from "@/app/(app)/admin/actions";
+import { getTranslations } from "next-intl/server";
+
 import { PageHeader } from "@/components/app/page-header";
 import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
+import { LOCALES, localeNames } from "@/i18n/config";
 import { getSession } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
 export default async function AdminSettingsPage() {
   const { supabase, event, words } = await getSession();
   const statusLabels = words.stageLabels;
+  const [tLocale, t, tNav] = await Promise.all([
+    getTranslations("locale"),
+    getTranslations("settings"),
+    getTranslations("nav"),
+  ]);
   const enabledRoles = ((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? [];
   const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null } }).ai;
 
   const { data: eventSettings } = await supabase
     .from("events")
-    .select("id, name, status, signup_code, signup_open")
+    .select("id, name, status, signup_code, signup_open, locale")
     .eq("id", event.id)
     .single();
 
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Todo lo que define cómo funciona el espacio. Cada bloque se guarda por separado."
-        title="Ajustes del espacio"
+        description={t("pageDescription")}
+        title={t("pageTitle")}
       />
       {eventSettings ? (
         <SettingsForm
           action={updateEventAction}
-          description="Nombre, fase en la que estáis y cómo entra la gente."
-          title="General"
+          description={t("generalDescription")}
+          title={t("general")}
         >
           <input name="id" type="hidden" value={eventSettings.id} />
-          <SettingRow htmlFor="name" label="Nombre del espacio">
+          <SettingRow htmlFor="name" label={t("name")}>
             <Input defaultValue={eventSettings.name} id="name" name="name" />
           </SettingRow>
+          <SettingRow description={tLocale("spaceHint")} htmlFor="locale" label={tLocale("spaceLabel")}>
+            <select className={`${selectClass} w-full`} defaultValue={eventSettings.locale} id="locale" name="locale">
+              {LOCALES.map((value) => (
+                <option key={value} lang={value} value={value}>
+                  {localeNames[value]}
+                </option>
+              ))}
+            </select>
+          </SettingRow>
           <SettingRow
-            description="Al cerrar, nadie puede modificar evaluaciones y todo el profesorado y jurado ve los resultados."
+            description={t("phaseHint")}
             htmlFor="status"
-            label="Fase"
+            label={t("phase")}
           >
             <select className={`${selectClass} w-full`} defaultValue={eventSettings.status} id="status" name="status">
               {Object.entries(statusLabels).map(([value, label]) => (
@@ -54,9 +71,9 @@ export default async function AdminSettingsPage() {
             </select>
           </SettingRow>
           <SettingRow
-            description="Quien tenga este código puede unirse al espacio desde la pantalla de inicio."
+            description={t("codeHint")}
             htmlFor="signupCode"
-            label="Código de acceso"
+            label={t("code")}
           >
             <Input
               className="font-mono uppercase"
@@ -66,9 +83,9 @@ export default async function AdminSettingsPage() {
             />
           </SettingRow>
           <SettingRow
-            description="Si lo desactivas, el código deja de funcionar (las invitaciones individuales siguen valiendo)."
+            description={t("codeOpenHint")}
             htmlFor="signupOpen"
-            label="Permitir entrar con el código"
+            label={t("codeOpen")}
           >
             <SettingSwitch defaultChecked={eventSettings.signup_open} id="signupOpen" name="signupOpen" />
           </SettingRow>
@@ -78,20 +95,20 @@ export default async function AdminSettingsPage() {
       {enabledRoles.includes("student") ? (
         <SettingsForm
           action={updateStudentVisibilityAction}
-          description={`Qué ve cada estudiante en «Mi ${words.unitLower}».`}
-          title="Alumnado"
+          description={t("studentsDescription", { myUnit: tNav("myUnit", { mode: words.mode }) })}
+          title={t("students")}
         >
           <SettingRow
-            description={`Así saben cómo se les va a evaluar antes de su ${words.presentation}.`}
+            description={t("showRubricHint", { presentation: words.presentation })}
             htmlFor="showRubric"
-            label="Mostrar la rúbrica"
+            label={t("showRubric")}
           >
             <SettingSwitch defaultChecked={words.studentsSeeRubric} id="showRubric" name="showRubric" />
           </SettingRow>
           <SettingRow
-            description={`Cada ${words.unitLower} ve su propia nota y los comentarios; nunca los de los demás.`}
+            description={t("publishHint", { unit: words.unitLower })}
             htmlFor="publishResults"
-            label="Publicar notas y feedback"
+            label={t("publish")}
           >
             <SettingSwitch defaultChecked={words.resultsPublished} id="publishResults" name="publishResults" />
           </SettingRow>
@@ -100,13 +117,13 @@ export default async function AdminSettingsPage() {
 
       <SettingsForm
         action={updateMaterialsSettingsAction}
-        description={`Las entregas son enlaces: cada ${words.unitLower} añade su repositorio, web, vídeo o presentación desde su ficha.`}
-        title="Entregas"
+        description={t("materialsDescription", { unit: words.unitLower })}
+        title={t("materials")}
       >
         <SettingRow
-          description="Si usáis una carpeta común (Drive, OneDrive…), aparecerá a todo el mundo."
+          description={t("driveHint")}
           htmlFor="driveUrl"
-          label="Carpeta común (opcional)"
+          label={t("drive")}
           stacked
         >
           <Input
@@ -118,9 +135,9 @@ export default async function AdminSettingsPage() {
           />
         </SettingRow>
         <SettingRow
-          description="Qué entregar, dónde y hasta cuándo."
+          description={t("instructionsHint")}
           htmlFor="instructions"
-          label="Instrucciones (opcional)"
+          label={t("instructions")}
           stacked
         >
           <Textarea
@@ -128,20 +145,20 @@ export default async function AdminSettingsPage() {
             id="instructions"
             maxLength={2000}
             name="instructions"
-            placeholder="Sube el PDF de la memoria a la carpeta común y añade aquí el enlace al repositorio y al vídeo de demo antes del viernes a las 23:59."
+            placeholder={t("instructionsPlaceholder")}
             rows={3}
           />
         </SettingRow>
       </SettingsForm>
       <SettingsForm
         action={updateAiSettingsAction}
-        description="Afinan los informes de las exposiciones. Solo afectan a los análisis nuevos; puedes regenerar uno desde su grabación."
-        title="Inteligencia artificial"
+        description={t("aiDescription")}
+        title={t("ai")}
       >
         <SettingRow
-          description="Se añaden después de las reglas comunes, que siempre mandan: la IA nunca pondrá notas ni inventará contenido."
+          description={t("aiHint")}
           htmlFor="aiInstructions"
-          label={`Indicaciones para la IA (opcional, máx. ${INSTRUCTIONS_MAX})`}
+          label={t("aiLabel", { max: INSTRUCTIONS_MAX })}
           stacked
         >
           <Textarea
@@ -149,7 +166,7 @@ export default async function AdminSettingsPage() {
             id="aiInstructions"
             maxLength={INSTRUCTIONS_MAX}
             name="aiInstructions"
-            placeholder="Céntrate en la metodología y en si las conclusiones se apoyan en datos."
+            placeholder={t("aiPlaceholder")}
             rows={3}
           />
         </SettingRow>

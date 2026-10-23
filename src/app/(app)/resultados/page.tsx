@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { LiveVotes } from "@/components/app/live-votes";
@@ -16,6 +17,7 @@ const cell = "px-3 py-2";
 export default async function ResultsPage() {
   const { supabase, isAdmin, eventClosed, event, words } = await getSession();
   if (!isAdmin && !eventClosed) redirect("/equipos");
+  const t = await getTranslations("results");
 
   const [results, { data: evaluationPage }] = await Promise.all([
     loadResults(supabase, event.id),
@@ -36,10 +38,10 @@ export default async function ResultsPage() {
     <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Resultados</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Media de las evaluaciones enviadas, sobre 100, con la rúbrica actual.
-            {!eventClosed ? " Solo visible para admin hasta el cierre." : ""}
+            {t("subtitle")}
+            {!eventClosed ? t("adminOnly") : ""}
           </p>
           {isAdmin ? (
             <div className="mt-2 print:hidden">
@@ -49,15 +51,15 @@ export default async function ResultsPage() {
         </div>
         <div className="flex gap-2 print:hidden">
           <Button asChild variant="outline">
-            <a href="/resultados/csv?tipo=ranking">CSV ranking</a>
+            <a href="/resultados/csv?tipo=ranking">{t("csvRanking")}</a>
           </Button>
           <Button asChild variant="outline">
-            <a href="/resultados/csv">CSV por juez</a>
+            <a href="/resultados/csv">{t("csvJudge")}</a>
           </Button>
           {hasStudents ? (
             <Button asChild variant="outline">
-              <a href="/resultados/csv?tipo=acta" title="Una fila por estudiante con su nota sobre 10">
-                Acta (CSV)
+              <a href="/resultados/csv?tipo=acta" title={t("recordTitle")}>
+                {t("record")}
               </a>
             </Button>
           ) : null}
@@ -82,7 +84,7 @@ export default async function ResultsPage() {
         </div>
       ) : null}
 
-      {resultSections(results, words.units).map((challenge) => {
+      {resultSections(results, words.units, t("noChallenge")).map((challenge) => {
         const ranking = challenge.teams;
         let position = 0;
 
@@ -106,16 +108,16 @@ export default async function ResultsPage() {
                   <tr>
                     <th className={cell}>#</th>
                     <th className={cell}>{words.unit}</th>
-                    <th className={`${cell} text-right`}>Media</th>
+                    <th className={`${cell} text-right`}>{t("average")}</th>
                     {peer ? (
                       <>
-                        <th className={`${cell} text-right`} title="Media de la coevaluación sobre 100">Compañeros</th>
-                        <th className={`${cell} text-right`} title="Autoevaluación sobre 100">Auto</th>
+                        <th className={`${cell} text-right`} title={t("peersTitle")}>{t("peers")}</th>
+                        <th className={`${cell} text-right`} title={t("selfTitle")}>{t("self")}</th>
                         <th
                           className={`${cell} text-right`}
-                          title={`Ponderada: ${words.evaluator} ${peerSettings.weights.teacher} %, compañeros ${peerSettings.weights.peer} %, auto ${peerSettings.weights.self} %`}
+                          title={t("finalTitle", { evaluator: words.evaluator, teacher: peerSettings.weights.teacher, peer: peerSettings.weights.peer, self: peerSettings.weights.self })}
                         >
-                          Final
+                          {t("final")}
                         </th>
                       </>
                     ) : null}
@@ -124,9 +126,9 @@ export default async function ResultsPage() {
                         {c.title.split(/[\s/]+/)[0]} ({c.weight}%)
                       </th>
                     ))}
-                    <th className={`${cell} text-right`}>Dispersión</th>
-                    <th className={`${cell} text-right`}>Mín–Máx</th>
-                    <th className={`${cell} text-right`}>Jueces</th>
+                    <th className={`${cell} text-right`}>{t("dispersion")}</th>
+                    <th className={`${cell} text-right`}>{t("minMax")}</th>
+                    <th className={`${cell} text-right`}>{t("judges")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -148,7 +150,7 @@ export default async function ResultsPage() {
                               className="ml-2 text-xs font-semibold underline print:hidden"
                               href={`/resultados/grupo/${team.teamId}`}
                             >
-                              Feedback
+                              {t("feedback")}
                             </Link>
                           ) : null}
                         </td>
@@ -160,7 +162,7 @@ export default async function ResultsPage() {
                             <td className={`${cell} text-right`}>
                               {peer.teams.get(team.teamId)?.peer ?? "–"}
                               <span className="block text-xs text-muted-foreground">
-                                {peer.teams.get(team.teamId)?.peerCount ?? 0} rev.
+                                {t("reviews", { count: peer.teams.get(team.teamId)?.peerCount ?? 0 })}
                               </span>
                             </td>
                             <td className={`${cell} text-right`}>{peer.teams.get(team.teamId)?.self ?? "–"}</td>
@@ -186,12 +188,11 @@ export default async function ResultsPage() {
               </table>
             </div>
             <p className="text-xs text-muted-foreground">
-              Columnas de criterio: media sobre {scaleMax}. Dispersión: desviación
-              típica del total entre jueces (cuanto más alta, más desacuerdo).
+              {t("legend", { scale: scaleMax })}
             </p>
 
             <div className="space-y-2">
-              <h3 className="font-display text-xl">Evaluaciones por juez</h3>
+              <h3 className="font-display text-xl">{t("byJudge")}</h3>
               {ranking
                 .filter((t) => t.evaluations.length)
                 .map((team) => (
@@ -200,7 +201,7 @@ export default async function ResultsPage() {
                     key={team.teamId}
                   >
                     <summary className="cursor-pointer font-semibold">
-                      {team.name} · media {team.average}
+                      {t("teamAverage", { name: team.name, average: team.average ?? "–" })}
                     </summary>
                     <div className="mt-3 space-y-4">
                       {team.evaluations.map((evaluation) => (

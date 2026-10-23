@@ -1,4 +1,5 @@
 import { TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { JuryWeakness } from "@/lib/ai/presentation-insights";
 
@@ -13,6 +14,7 @@ export function JuryWeaknesses({
   weaknesses: JuryWeakness[];
   compact?: boolean;
 }) {
+  const t = useTranslations("weaknesses");
   if (!weaknesses.length) return null;
   const groups = new Map<string, JuryWeakness[]>();
   for (const item of weaknesses) {
@@ -22,7 +24,7 @@ export function JuryWeaknesses({
   return (
     <div>
       <p className={compact ? "mb-1 font-semibold" : "mb-2 font-bold"}>
-        Puntos débiles según la rúbrica
+        {t("title")}
       </p>
       <div className="space-y-2">
         {[...groups].map(([criterion, items]) => (
@@ -34,7 +36,7 @@ export function JuryWeaknesses({
             <summary className="flex cursor-pointer items-center justify-between gap-2 font-semibold">
               <span>{criterion}</span>
               <span className="shrink-0 rounded-full bg-orange-500/15 px-2 py-0.5 text-xs text-orange-600 dark:text-orange-400">
-                {items.length} {items.length === 1 ? "punto" : "puntos"}
+                {t("count", { count: items.length })}
               </span>
             </summary>
             <ul className="mt-2 space-y-3 text-sm">
@@ -52,10 +54,10 @@ export function JuryWeaknesses({
                       «{item.quote}»
                     </blockquote>
                   ) : (
-                    <p className="ml-6 mt-1 text-xs text-muted-foreground">No se trató en la exposición.</p>
+                    <p className="ml-6 mt-1 text-xs text-muted-foreground">{t("notCovered")}</p>
                   )}
                   <p className="ml-6 mt-1 text-xs">
-                    <span className="font-semibold">Pregunta:</span> {item.question}
+                    <span className="font-semibold">{t("question")}</span> {item.question}
                   </p>
                 </li>
               ))}
