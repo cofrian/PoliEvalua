@@ -1538,5 +1538,114 @@
     "done": "Fet",
     "hide": "Amagar la benvinguda",
     "assistantHint": "Prefereixes que t'ho prepare la IA? Explica-li-ho a l'<link>assistent</link>."
+  },
+  "tour": {
+    "skip": "Saltar",
+    "back": "Arrere",
+    "next": "Següent",
+    "start": "Començar!",
+    "step": "Pas {current} de {total}",
+    "replay": "Veure el tutorial",
+    "scene": {
+      "rubric": "Rúbrica",
+      "group": "Grup {n}",
+      "criterion1": "Anàlisi del problema",
+      "criterion2": "Solució i prototip",
+      "criterion3": "Presentació",
+      "send": "Enviar",
+      "summary": "Resum",
+      "question": "Quant costa el kit?",
+      "repo": "Repositori",
+      "web": "Web o demo",
+      "deliverables": "Lliuraments"
+    },
+    "admin": {
+      "welcome": {
+        "title": "Et donem la benvinguda a {space}",
+        "text": "En un parell de minuts t'ensenyem com preparar una avaluació de principi a fi. Pots saltar-ho i tornar-ho a veure quan vulgues des del teu menú."
+      },
+      "rubric": {
+        "title": "Primer, la rúbrica",
+        "text": "Definix què s'avalua, quant pesa cada criteri i què significa cada nivell. Tens pressa? L'assistent IA te'n proposa una de completa."
+      },
+      "people": {
+        "title": "Afig {units} i convida",
+        "text": "Importa la llista de PoliformaT o crea'ls a mà, i comparteix el codi perquè el {evaluator} i l'alumnat entren sols."
+      },
+      "live": {
+        "title": "L'avaluació, en directe",
+        "text": "Cada persona puntua des del mòbil o el portàtil i tu veus el progrés al moment: qui falta, qui no ha començat i on hi ha desacord."
+      },
+      "ai": {
+        "title": "La IA escolta per tu",
+        "text": "Grava les exposicions: es transcriuen, es resumixen i el {evaluator} rep preguntes i punts febles. L'àudio no es guarda mai."
+      },
+      "done": {
+        "title": "Tot llest!",
+        "text": "Comença per la guia de tres passos de l'Inici. Si et perds, el menú de l'esquerra ho agrupa tot per seccions."
+      }
+    },
+    "judge": {
+      "welcome": {
+        "title": "Et donem la benvinguda a {space}",
+        "text": "Avaluaràs {units}. T'ensenyem en mig minut com fer-ho."
+      },
+      "groups": {
+        "title": "Els teus {units}",
+        "text": "En «{units}» tens tots els que et toquen, amb els seus integrants, lliuraments i les teues notes privades o compartides."
+      },
+      "score": {
+        "title": "Puntuar és tocar un número",
+        "text": "Tria un nivell en cada criteri, afig un comentari si vols i envia. Es guarda sol mentre escrius, fins i tot sense connexió."
+      },
+      "ai": {
+        "title": "Suport de la IA",
+        "text": "Si l'exposició es grava, veuràs cites per criteri, punts febles i preguntes suggerides. Mai et diu quina nota posar."
+      },
+      "done": {
+        "title": "A avaluar!",
+        "text": "Durant les exposicions, «Sala» t'ho posa tot en una pantalla: el torn, el cronòmetre, la rúbrica i les teues notes."
+      }
+    },
+    "student": {
+      "welcome": {
+        "title": "Et donem la benvinguda a {space}",
+        "text": "Ací tens tot el del teu grup en un lloc. T'ho ensenyem en un moment."
+      },
+      "deliverables": {
+        "title": "Els teus lliuraments, amb un enllaç",
+        "text": "Afig el repositori, la web, el vídeo o les diapositives des d'«El meu grup». No cal pujar arxius."
+      },
+      "rubric": {
+        "title": "Saps com t'avaluen",
+        "text": "Consulta la rúbrica: els criteris, quant pesa cadascun i què s'espera en cada nivell."
+      },
+      "agenda": {
+        "title": "El teu torn, al minut",
+        "text": "L'agenda et diu quan exposes i avisa si hi ha retard, en directe."
+      },
+      "done": {
+        "title": "Molta sort!",
+        "text": "Quan es publiquen els resultats, veuràs la teua nota i els comentaris en «El meu grup»."
+      }
+    },
+    "viewer": {
+      "welcome": {
+        "title": "Et donem la benvinguda a {space}",
+        "text": "Tens accés de consulta. T'ensenyem on està cada cosa."
+      },
+      "groups": {
+        "title": "Tots els {units}",
+        "text": "Consulta cadascun amb els seus integrants i lliuraments."
+      },
+      "agenda": {
+        "title": "L'agenda en directe",
+        "text": "Mira qui exposa ara i qui va després."
+      },
+      "done": {
+        "title": "Llest!",
+        "text": "Pots tornar a veure este tutorial quan vulgues des del teu menú."
+      }
+    }
   }
 }

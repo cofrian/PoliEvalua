@@ -32,7 +32,8 @@ async function createUser(who: { name: string; email: string }) {
     email: who.email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: who.name },
+    // El tutorial se prueba en su propio test; aquí taparía la pantalla.
+    user_metadata: { full_name: who.name, tour_seen: { admin: true, judge: true, student: true, viewer: true } },
   });
   if (error) throw error;
   await db.from("profiles").update({ disabled: false, full_name: who.name }).eq("id", data.user.id);
@@ -335,4 +336,31 @@ test("11. Duplicar el espacio para otro curso", async () => {
   const { count } = await db.from("rubric_criteria").select("id", { count: "exact", head: true }).eq("event_id", copy!.id);
   expect(count).toBe(2);
   await db.from("events").delete().eq("id", copy!.id);
+});
+
+test("13. Quien entra por primera vez ve el tutorial, y puede volver a verlo", async ({ browser }) => {
+  // El tribunal ya entró antes con el tutorial marcado como visto: se le quita.
+  await db.auth.admin.updateUserById(userIds.judge!, { user_metadata: { full_name: people.judge.name, tour_seen: {} } });
+  const page = await enter(browser, "judge");
+  await expect(page.getByRole("dialog", { name: /Te damos la bienvenida/ })).toBeVisible();
+  // El título cambia en cada pantalla: a partir de aquí, el diálogo sin nombre.
+  const tour = page.getByRole("dialog");
+  // Se recorre entero con «Siguiente» hasta «¡Empezar!».
+  for (let step = 0; step < 6; step += 1) {
+    const start = tour.getByRole("button", { name: "¡Empezar!" });
+    if (await start.isVisible()) break;
+    await tour.getByRole("button", { name: /Siguiente/ }).click();
+  }
+  await tour.getByRole("button", { name: "¡Empezar!" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  // No vuelve a salir solo…
+  await page.reload();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // …pero se puede abrir desde el menú de usuario.
+  await page.getByRole("button", { name: "Menú de usuario" }).click();
+  await page.getByRole("menuitem", { name: "Ver el tutorial" }).click();
+  await expect(page.getByRole("dialog", { name: /Te damos la bienvenida/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });

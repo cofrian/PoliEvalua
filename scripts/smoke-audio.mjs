@@ -40,7 +40,7 @@ async function api(page, path, body) {
 }
 
 try {
-  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: "Prueba Audio" } });
+  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: "Prueba Audio", tour_seen: { admin: true, judge: true, student: true, viewer: true } } });
   if (error) throw error;
   userId = data.user.id;
   await db.from("profiles").update({ disabled: false, full_name: "Prueba Audio" }).eq("id", userId);

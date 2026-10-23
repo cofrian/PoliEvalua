@@ -27,7 +27,7 @@ let eventId = "";
 async function createPerson(key) {
   const email = `ux-${key}-${stamp}@test.local`;
   const password = `Prueba-${stamp}!`;
-  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: people[key].name } });
+  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: people[key].name, tour_seen: process.env.SHOTS_TOUR === "1" ? {} : { admin: true, judge: true, student: true, viewer: true } } });
   if (error) throw error;
   await db.from("profiles").update({ disabled: false, full_name: people[key].name, locale }).eq("id", data.user.id);
   ids[key] = { id: data.user.id, email, password };
@@ -90,6 +90,20 @@ try {
       if (page.url().includes("/espacios")) {
         await page.locator("article", { hasText: "Proyectos de Ingeniería 2026" }).locator("form button").first().click();
         await page.waitForURL(/\/(equipos|admin|mi-grupo)/);
+      }
+      // SHOTS_TOUR=1: captura cada pantalla del tutorial de bienvenida y lo cierra.
+      if (process.env.SHOTS_TOUR === "1") {
+        const tour = page.getByRole("dialog");
+        await tour.waitFor({ timeout: 15_000 });
+        for (let step = 1; step <= 8; step += 1) {
+          await page.waitForTimeout(1600); // deja terminar las animaciones
+          await page.screenshot({ path: `${out}/${size}-${key}-tutorial-${step}.png` });
+          const next = tour.getByRole("button", { name: /Siguiente/ });
+          if (!(await next.isVisible().catch(() => false))) break;
+          await next.click();
+        }
+        await tour.getByRole("button", { name: "¡Empezar!" }).click();
+        continue;
       }
       for (const path of people[key].pages) {
         const url = path.replace("{team}", team);
