@@ -10,7 +10,7 @@ export const PROMPT_HASHES: Record<string, string> = {
   "2026.10.1": "54dff2db863f5145",
   "2026.10.2": "a2daf877e4ec40d4",
   "2026.10.3": "3eec9a604a05744b",
-  "2026.10.4": "59c91c882917b0d7",
+  "2026.10.4": "902d97487e556830",
 };
 
 export type SpaceKind = "hackathon" | "class" | "awards" | "project" | "custom";
@@ -166,12 +166,37 @@ function normalizeEcho(text: string) {
 }
 
 /**
- * En segmentos sin voz Whisper a veces repite la pista. Si todo el texto está
- * contenido en ella, se descarta.
+ * Whisper a veces repite la pista: en segmentos sin voz (todo el texto está en
+ * ella) o al final del audio, pegando dos o más términos seguidos de la pista
+ * («… 20 more gardens Impacto y problema, Viabilidad.»). En ambos casos se quita.
  */
 export function dropPromptEcho(transcript: string, asrPrompt: string | null | undefined) {
   if (!asrPrompt) return transcript;
   const text = normalizeEcho(transcript);
   if (!text) return transcript;
-  return normalizeEcho(asrPrompt).includes(text) ? "" : transcript;
+  if (normalizeEcho(asrPrompt).includes(text)) return "";
+
+  // Términos de la pista como listas de palabras normalizadas.
+  const terms = asrPrompt
+    .split(/[.,·«»]+/)
+    .map((term) => normalizeEcho(term).split(" ").filter(Boolean))
+    .filter((words) => words.length);
+  const words = transcript.trimEnd().split(/\s+/);
+  const used = new Set<string[]>();
+  let removed = 0;
+  for (;;) {
+    const tail = words.map(normalizeEcho);
+    // Cada término cuenta una sola vez: «la viabilidad. Viabilidad.» se respeta.
+    const match = terms.find(
+      (term) =>
+        !used.has(term) &&
+        term.length <= tail.length && term.every((word, index) => tail[tail.length - term.length + index] === word),
+    );
+    if (!match) break;
+    words.splice(words.length - match.length);
+    used.add(match);
+    removed += 1;
+  }
+  // Con un solo término podría ser lo que de verdad se dijo al terminar.
+  return removed >= 2 ? words.join(" ").replace(/[\s,;:·-]+$/, "") + "." : transcript;
 }

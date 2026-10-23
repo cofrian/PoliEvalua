@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import type { AuthActionState } from "@/lib/auth/types";
@@ -10,11 +11,12 @@ import { clearAttempts, clientIp, isBlocked, recordAttempt } from "@/lib/auth/ra
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-const emailSchema = z.string().trim().toLowerCase().email("Introduce un correo electrónico válido.");
+// Los mensajes de zod son claves de auth.errors; se traducen al devolverlos.
+const emailSchema = z.string().trim().toLowerCase().email("email");
 const passwordSchema = z
   .string()
-  .min(8, "La contraseña debe tener al menos 8 caracteres.")
-  .max(72, "La contraseña no puede superar los 72 caracteres.");
+  .min(8, "passwordMin")
+  .max(72, "passwordMax");
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -26,9 +28,21 @@ const registerSchema = loginSchema.extend({
   fullName: z
     .string()
     .trim()
-    .min(2, "Escribe tu nombre completo.")
-    .max(100, "El nombre es demasiado largo."),
+    .min(2, "nameMin")
+    .max(100, "nameMax"),
 });
+
+async function authT() {
+  return getTranslations("auth.errors");
+}
+
+type AuthT = Awaited<ReturnType<typeof authT>>;
+
+function translateFieldErrors(errors: Record<string, string[] | undefined>, t: AuthT) {
+  return Object.fromEntries(
+    Object.entries(errors).map(([field, keys]) => [field, (keys ?? []).map((key) => t(key as never))]),
+  );
+}
 
 function value(formData: FormData, key: string) {
   const field = formData.get(key);
@@ -64,7 +78,7 @@ async function acceptInvitation(
   if (error || !result?.accepted_event_id) {
     return {
       ok: false as const,
-      message: "La invitación no es válida, ha caducado o pertenece a otro correo.",
+      message: (await authT())("invitation"),
     };
   }
 
@@ -88,6 +102,7 @@ export async function loginAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const t = await authT();
   const parsed = loginSchema.safeParse({
     email: value(formData, "email"),
     password: value(formData, "password"),
@@ -97,8 +112,8 @@ export async function loginAction(
   if (!parsed.success) {
     return {
       status: "error",
-      message: "Revisa los campos marcados.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
+      message: t("checkFields"),
+      fieldErrors: translateFieldErrors(parsed.error.flatten().fieldErrors, t),
     };
   }
 
@@ -112,7 +127,7 @@ export async function loginAction(
   if (await isBlocked(admin, "bad_password", [emailKey, ipKey])) {
     return {
       status: "error",
-      message: "Demasiados intentos. Espera unos minutos antes de volver a probar.",
+      message: t("tooMany"),
       values,
     };
   }
@@ -122,8 +137,8 @@ export async function loginAction(
     await recordAttempt(admin, "bad_password", [emailKey, ipKey]);
     return {
       status: "error",
-      message: "Correo o contraseña incorrectos.",
-      fieldErrors: { password: ["Comprueba la contraseña."] },
+      message: t("wrongCredentials"),
+      fieldErrors: { password: [t("checkPassword")] },
       values,
     };
   }
@@ -132,7 +147,7 @@ export async function loginAction(
     await supabase.auth.signOut({ scope: "local" });
     return {
       status: "error",
-      message: "Cuenta desactivada. Contacta con la organización.",
+      message: t("disabled"),
       values,
     };
   }
@@ -152,6 +167,7 @@ export async function registerAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const t = await authT();
   const parsed = registerSchema.safeParse({
     fullName: value(formData, "fullName"),
     email: value(formData, "email"),
@@ -162,8 +178,8 @@ export async function registerAction(
   if (!parsed.success) {
     return {
       status: "error",
-      message: "Revisa los campos marcados.",
-      fieldErrors: parsed.error.flatten().fieldErrors,
+      message: t("checkFields"),
+      fieldErrors: translateFieldErrors(parsed.error.flatten().fieldErrors, t),
     };
   }
 
@@ -183,8 +199,8 @@ export async function registerAction(
       status: "error",
       message:
         createError?.code === "email_exists"
-          ? "Ya existe una cuenta con ese correo. Entra con tu contraseña."
-          : "No se ha podido crear la cuenta. Inténtalo de nuevo.",
+          ? t("exists")
+          : t("createFailed"),
       values,
     };
   }
@@ -198,7 +214,7 @@ export async function registerAction(
     await admin.auth.admin.deleteUser(created.user.id);
     return {
       status: "error",
-      message: "No se ha podido activar la cuenta. Inténtalo de nuevo.",
+      message: t("activateFailed"),
       values,
     };
   }
@@ -212,7 +228,7 @@ export async function registerAction(
   if (signInError || !session.user) {
     return {
       status: "error",
-      message: "La cuenta se ha creado, pero no se ha podido iniciar sesión.",
+      message: t("signInFailed"),
       values,
     };
   }

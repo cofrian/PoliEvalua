@@ -95,5 +95,48 @@
       "save": "Your vote couldn't be recorded. Try again."
     },
     "saved": "Vote recorded! You can change it while voting is open."
+  },
+  "auth": {
+    "loginMeta": "Sign in",
+    "loginTitle": "Sign in to Evalúa",
+    "loginDescription": "Sign in to view, create or manage all your spaces.",
+    "disabledNotice": "Account disabled, contact the admin.",
+    "registerMeta": "Create account",
+    "registerTitle": "Create account",
+    "registerDescription": "Create a single account to take part in projects, courses, awards or hackathons.",
+    "footer": "Evalúa UPV · Secure access to your evaluation spaces",
+    "invitation": "This invitation will add the space and its role to your account.",
+    "email": "Email",
+    "emailPlaceholder": "you@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "passwordHint": "You can use this account in all your spaces.",
+    "login": "Sign in",
+    "loggingIn": "Signing in…",
+    "noAccount": "Don't have an account yet?",
+    "createAccount": "Create account",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "First and last name",
+    "register": "Create my account",
+    "registering": "Creating account…",
+    "haveAccount": "Already have an account?",
+    "enter": "Sign in",
+    "errors": {
+      "email": "Enter a valid email address.",
+      "passwordMin": "The password must be at least 8 characters.",
+      "passwordMax": "The password can't be longer than 72 characters.",
+      "nameMin": "Enter your full name.",
+      "nameMax": "The name is too long.",
+      "invitation": "The invitation is invalid, has expired or belongs to another email.",
+      "checkFields": "Check the highlighted fields.",
+      "tooMany": "Too many attempts. Wait a few minutes before trying again.",
+      "wrongCredentials": "Wrong email or password.",
+      "checkPassword": "Check the password.",
+      "disabled": "Account disabled. Contact the organizers.",
+      "exists": "An account with that email already exists. Sign in with your password.",
+      "createFailed": "The account couldn't be created. Try again.",
+      "activateFailed": "The account couldn't be activated. Try again.",
+      "signInFailed": "The account was created, but signing in failed."
+    }
   }
 }

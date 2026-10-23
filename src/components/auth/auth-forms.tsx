@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { loginAction, registerAction } from "@/app/(auth)/actions";
@@ -32,20 +33,22 @@ function StatusMessage({ state }: { state: AuthActionState }) {
 }
 
 function InvitationNotice() {
+  const t = useTranslations("auth");
   return (
     <div
       className="rounded-lg border border-upv-blue/50 bg-upv-blue/10 px-3 py-2.5 text-sm"
       role="status"
     >
-      Esta invitación añadirá el espacio y el rol correspondiente a tu cuenta.
+      {t("invitation")}
     </div>
   );
 }
 
 function EmailField({ state }: { state: AuthActionState }) {
+  const t = useTranslations("auth");
   return (
     <div className="space-y-2">
-      <Label htmlFor="email">Correo electrónico</Label>
+      <Label htmlFor="email">{t("email")}</Label>
       <Input
         aria-describedby={state.fieldErrors?.email ? "email-error" : undefined}
         aria-invalid={Boolean(state.fieldErrors?.email)}
@@ -54,7 +57,7 @@ function EmailField({ state }: { state: AuthActionState }) {
         defaultValue={state.values?.email}
         id="email"
         name="email"
-        placeholder="tu@correo.com"
+        placeholder={t("emailPlaceholder")}
         required
         type="email"
       />
@@ -64,9 +67,10 @@ function EmailField({ state }: { state: AuthActionState }) {
 }
 
 function PasswordField({ state, registering = false }: { state: AuthActionState; registering?: boolean }) {
+  const t = useTranslations("auth");
   return (
     <div className="space-y-2">
-      <Label htmlFor="password">Contraseña</Label>
+      <Label htmlFor="password">{t("password")}</Label>
       <Input
         aria-describedby={state.fieldErrors?.password ? "password-error" : "password-hint"}
         aria-invalid={Boolean(state.fieldErrors?.password)}
@@ -76,13 +80,13 @@ function PasswordField({ state, registering = false }: { state: AuthActionState;
         maxLength={72}
         minLength={8}
         name="password"
-        placeholder="Mínimo 8 caracteres"
+        placeholder={t("passwordPlaceholder")}
         required
         type="password"
       />
       {registering ? (
         <p className="text-xs text-muted-foreground" id="password-hint">
-          Podrás usar esta cuenta en todos tus espacios.
+          {t("passwordHint")}
         </p>
       ) : null}
       <FieldError name="password" state={state} />
@@ -92,6 +96,7 @@ function PasswordField({ state, registering = false }: { state: AuthActionState;
 
 export function LoginForm({ inviteToken, notice }: { inviteToken?: string; notice?: string }) {
   const [state, formAction] = useActionState(loginAction, initialAuthActionState);
+  const t = useTranslations("auth");
   const registerHref = inviteToken
     ? `/registro?invite=${encodeURIComponent(inviteToken)}`
     : "/registro";
@@ -108,11 +113,11 @@ export function LoginForm({ inviteToken, notice }: { inviteToken?: string; notic
       <input name="inviteToken" type="hidden" value={inviteToken ?? ""} />
       <EmailField state={state} />
       <PasswordField state={state} />
-      <SubmitButton idleLabel="Entrar en la plataforma" pendingLabel="Entrando…" />
+      <SubmitButton idleLabel={t("login")} pendingLabel={t("loggingIn")} />
       <p className="text-center text-sm text-muted-foreground">
-        ¿Todavía no tienes cuenta?{" "}
+        {t("noAccount")}{" "}
         <Link className="font-semibold text-foreground underline underline-offset-4" href={registerHref}>
-          Crear cuenta
+          {t("createAccount")}
         </Link>
       </p>
     </form>
@@ -121,6 +126,7 @@ export function LoginForm({ inviteToken, notice }: { inviteToken?: string; notic
 
 export function RegisterForm({ inviteToken }: { inviteToken?: string }) {
   const [state, formAction] = useActionState(registerAction, initialAuthActionState);
+  const t = useTranslations("auth");
   const loginHref = inviteToken ? `/login?invite=${encodeURIComponent(inviteToken)}` : "/login";
 
   return (
@@ -129,7 +135,7 @@ export function RegisterForm({ inviteToken }: { inviteToken?: string }) {
       {inviteToken ? <InvitationNotice /> : null}
       <input name="inviteToken" type="hidden" value={inviteToken ?? ""} />
       <div className="space-y-2">
-        <Label htmlFor="fullName">Nombre completo</Label>
+        <Label htmlFor="fullName">{t("fullName")}</Label>
         <Input
           aria-describedby={state.fieldErrors?.fullName ? "fullName-error" : undefined}
           aria-invalid={Boolean(state.fieldErrors?.fullName)}
@@ -138,18 +144,18 @@ export function RegisterForm({ inviteToken }: { inviteToken?: string }) {
           defaultValue={state.values?.fullName}
           id="fullName"
           name="fullName"
-          placeholder="Nombre y apellidos"
+          placeholder={t("fullNamePlaceholder")}
           required
         />
         <FieldError name="fullName" state={state} />
       </div>
       <EmailField state={state} />
       <PasswordField registering state={state} />
-      <SubmitButton idleLabel="Crear mi cuenta" pendingLabel="Creando cuenta…" />
+      <SubmitButton idleLabel={t("register")} pendingLabel={t("registering")} />
       <p className="text-center text-sm text-muted-foreground">
-        ¿Ya tienes cuenta?{" "}
+        {t("haveAccount")}{" "}
         <Link className="font-semibold text-foreground underline underline-offset-4" href={loginHref}>
-          Entrar
+          {t("enter")}
         </Link>
       </p>
     </form>

@@ -95,5 +95,48 @@
       "save": "No se ha podido registrar el voto. Inténtalo de nuevo."
     },
     "saved": "¡Voto registrado! Puedes cambiarlo mientras la votación siga abierta."
+  },
+  "auth": {
+    "loginMeta": "Entrar",
+    "loginTitle": "Entrar en Evalúa",
+    "loginDescription": "Entra con tu cuenta para consultar, crear o administrar todos tus espacios.",
+    "disabledNotice": "Cuenta desactivada, contacta con el admin.",
+    "registerMeta": "Crear cuenta",
+    "registerTitle": "Crear cuenta",
+    "registerDescription": "Crea una única cuenta para participar en varios proyectos, asignaturas, premios o hackathones.",
+    "footer": "Evalúa UPV · Acceso seguro a tus espacios de evaluación",
+    "invitation": "Esta invitación añadirá el espacio y el rol correspondiente a tu cuenta.",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu@correo.com",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "passwordHint": "Podrás usar esta cuenta en todos tus espacios.",
+    "login": "Entrar en la plataforma",
+    "loggingIn": "Entrando…",
+    "noAccount": "¿Todavía no tienes cuenta?",
+    "createAccount": "Crear cuenta",
+    "fullName": "Nombre completo",
+    "fullNamePlaceholder": "Nombre y apellidos",
+    "register": "Crear mi cuenta",
+    "registering": "Creando cuenta…",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "enter": "Entrar",
+    "errors": {
+      "email": "Introduce un correo electrónico válido.",
+      "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordMax": "La contraseña no puede superar los 72 caracteres.",
+      "nameMin": "Escribe tu nombre completo.",
+      "nameMax": "El nombre es demasiado largo.",
+      "invitation": "La invitación no es válida, ha caducado o pertenece a otro correo.",
+      "checkFields": "Revisa los campos marcados.",
+      "tooMany": "Demasiados intentos. Espera unos minutos antes de volver a probar.",
+      "wrongCredentials": "Correo o contraseña incorrectos.",
+      "checkPassword": "Comprueba la contraseña.",
+      "disabled": "Cuenta desactivada. Contacta con la organización.",
+      "exists": "Ya existe una cuenta con ese correo. Entra con tu contraseña.",
+      "createFailed": "No se ha podido crear la cuenta. Inténtalo de nuevo.",
+      "activateFailed": "No se ha podido activar la cuenta. Inténtalo de nuevo.",
+      "signInFailed": "La cuenta se ha creado, pero no se ha podido iniciar sesión."
+    }
   }
 }

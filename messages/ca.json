@@ -95,5 +95,48 @@
       "save": "No s'ha pogut registrar el vot. Torna-ho a provar."
     },
     "saved": "Vot registrat! Pots canviar-lo mentre la votació continue oberta."
+  },
+  "auth": {
+    "loginMeta": "Entrar",
+    "loginTitle": "Entrar en Evalúa",
+    "loginDescription": "Entra amb el teu compte per a consultar, crear o administrar tots els teus espais.",
+    "disabledNotice": "Compte desactivat, contacta amb l'administració.",
+    "registerMeta": "Crear un compte",
+    "registerTitle": "Crear un compte",
+    "registerDescription": "Crea un únic compte per a participar en diversos projectes, assignatures, premis o hackatons.",
+    "footer": "Evalúa UPV · Accés segur als teus espais d'avaluació",
+    "invitation": "Esta invitació afegirà l'espai i el rol corresponent al teu compte.",
+    "email": "Correu electrònic",
+    "emailPlaceholder": "tu@correu.com",
+    "password": "Contrasenya",
+    "passwordPlaceholder": "Mínim 8 caràcters",
+    "passwordHint": "Podràs usar este compte en tots els teus espais.",
+    "login": "Entrar en la plataforma",
+    "loggingIn": "Entrant…",
+    "noAccount": "Encara no tens compte?",
+    "createAccount": "Crear un compte",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Nom i cognoms",
+    "register": "Crear el meu compte",
+    "registering": "Creant el compte…",
+    "haveAccount": "Ja tens compte?",
+    "enter": "Entrar",
+    "errors": {
+      "email": "Introduïx un correu electrònic vàlid.",
+      "passwordMin": "La contrasenya ha de tindre almenys 8 caràcters.",
+      "passwordMax": "La contrasenya no pot superar els 72 caràcters.",
+      "nameMin": "Escriu el teu nom complet.",
+      "nameMax": "El nom és massa llarg.",
+      "invitation": "La invitació no és vàlida, ha caducat o pertany a un altre correu.",
+      "checkFields": "Revisa els camps marcats.",
+      "tooMany": "Massa intents. Espera uns minuts abans de tornar-ho a provar.",
+      "wrongCredentials": "Correu o contrasenya incorrectes.",
+      "checkPassword": "Comprova la contrasenya.",
+      "disabled": "Compte desactivat. Contacta amb l'organització.",
+      "exists": "Ja hi ha un compte amb eixe correu. Entra amb la teua contrasenya.",
+      "createFailed": "No s'ha pogut crear el compte. Torna-ho a provar.",
+      "activateFailed": "No s'ha pogut activar el compte. Torna-ho a provar.",
+      "signInFailed": "El compte s'ha creat, però no s'ha pogut iniciar la sessió."
+    }
   }
 }

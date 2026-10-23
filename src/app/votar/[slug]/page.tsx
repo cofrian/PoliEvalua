@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 
 import { PublicVoteForm } from "@/components/app/public-vote-form";
+import { LocaleSwitcher } from "@/components/app/locale-switcher";
 import { UpvBrand } from "@/components/brand/upv-brand";
 import { publicVoteSettings } from "@/lib/app/public-vote";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
@@ -50,7 +51,10 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
     <main lang={locale} className="mx-auto min-h-svh max-w-xl bg-background px-4 py-6 text-upv-ink dark:bg-ink-950 dark:text-upv-100">
-      <UpvBrand className="mb-6" href="/" />
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <UpvBrand href="/" />
+        <LocaleSwitcher />
+      </div>
       <p className="text-sm font-semibold text-muted-foreground">{event.name}</p>
       <h1 className="font-display text-3xl">{settings.title}</h1>
       {settings.open ? (
