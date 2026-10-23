@@ -8,7 +8,6 @@ import { z } from "zod";
 
 import {
   cleanAdminText,
-  GLOSSARY_MAX,
   INSTRUCTIONS_MAX,
 } from "@/lib/ai/prompts/presentation";
 import { logAudit } from "@/lib/app/audit";
@@ -234,16 +233,11 @@ export async function updateMaterialsSettingsAction(formData: FormData) {
 export async function updateAiSettingsAction(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const rawInstructions = text(formData, "aiInstructions");
-  const rawGlossary = text(formData, "aiGlossary");
   if (rawInstructions.length > INSTRUCTIONS_MAX) {
     throw new Error(`Las indicaciones no pueden pasar de ${INSTRUCTIONS_MAX} caracteres.`);
   }
-  if (rawGlossary.length > GLOSSARY_MAX) {
-    throw new Error(`El glosario no puede pasar de ${GLOSSARY_MAX} caracteres.`);
-  }
   const ai = {
     instructions: cleanAdminText(rawInstructions, INSTRUCTIONS_MAX) || null,
-    glossary: cleanAdminText(rawGlossary, GLOSSARY_MAX) || null,
   };
   const { data: current } = await supabase
     .from("events")

@@ -109,7 +109,7 @@ try {
   while (Date.now() < deadline) {
     ({ data: recording } = await db
       .from("presentation_recordings")
-      .select("status, transcript, summary, error_message, audio_deleted_at")
+      .select("status, transcript, summary, error_message, audio_deleted_at, asr_prompt, prompt_version")
       .eq("id", id)
       .single());
     if (recording.status !== last) {
@@ -130,6 +130,7 @@ try {
     db.from("presentation_jury_reports").select("criteria_evidence, questions, risks").eq("recording_id", id).maybeSingle(),
     db.storage.from("presentation-audio").list(`events/${eventId}/presentations/${team.id}/${id}`),
   ]);
+  console.log(`\n— Pista de Whisper — ${recording.asr_prompt ?? "(ninguna)"}\n— Prompts — v${recording.prompt_version ?? "?"}`);
   console.log("\n— Transcripción —\n" + (recording.transcript ?? "(ninguna)").slice(0, 600));
   console.log("\n— Resumen —\n" + (recording.summary ?? "(ninguno)").slice(0, 600));
   console.log(`\n— Informe del jurado — ${report ? `${(report.criteria_evidence ?? []).length} criterios con evidencias, ${(report.questions ?? []).length} preguntas, ${(report.risks ?? []).length} riesgos` : "(ninguno)"}`);

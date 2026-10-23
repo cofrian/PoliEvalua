@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { GLOSSARY_MAX, INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
+import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
 import { getSession } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
@@ -16,7 +16,7 @@ export default async function AdminSettingsPage() {
   const { supabase, event, words } = await getSession();
   const statusLabels = words.stageLabels;
   const enabledRoles = ((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? [];
-  const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null; glossary?: string | null } }).ai;
+  const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null } }).ai;
 
   const { data: eventSettings } = await supabase
     .from("events")
@@ -135,7 +135,7 @@ export default async function AdminSettingsPage() {
       </SettingsForm>
       <SettingsForm
         action={updateAiSettingsAction}
-        description="Afinan la transcripción y los informes de las exposiciones. Solo afectan a los análisis nuevos; puedes regenerar uno desde su grabación."
+        description="Afinan los informes de las exposiciones. Solo afectan a los análisis nuevos; puedes regenerar uno desde su grabación."
         title="Inteligencia artificial"
       >
         <SettingRow
@@ -151,20 +151,6 @@ export default async function AdminSettingsPage() {
             name="aiInstructions"
             placeholder="Céntrate en la metodología y en si las conclusiones se apoyan en datos."
             rows={3}
-          />
-        </SettingRow>
-        <SettingRow
-          description="Siglas y nombres que suelen salir en las exposiciones, separados por comas. El nombre del equipo, el título y los criterios de la rúbrica ya se usan solos."
-          htmlFor="aiGlossary"
-          label={`Glosario para la transcripción (opcional, máx. ${GLOSSARY_MAX})`}
-          stacked
-        >
-          <Input
-            defaultValue={ai?.glossary ?? ""}
-            id="aiGlossary"
-            maxLength={GLOSSARY_MAX}
-            name="aiGlossary"
-            placeholder="TFG, ODS, Arduino, LoRaWAN"
           />
         </SettingRow>
       </SettingsForm>

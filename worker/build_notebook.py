@@ -56,7 +56,7 @@ def build(platform: str) -> list[dict]:
     code(f"""
 APP_URL = "https://valencia-hack-jurado.vercel.app"
 WORKER_PREFIX = "{platform}"
-WHISPER_MODEL = "large-v3-turbo"  # en GPU: máxima calidad y ~1 min por 15 min de audio
+WHISPER_MODEL = "large-v3"  # en GPU: máxima calidad (turbo confundía términos como «kit»)
 """),
     code("""
 !pip install -q faster-whisper==1.1.1 av==18.1.0 requests nvidia-cudnn-cu12==9.* nvidia-cublas-cu12
