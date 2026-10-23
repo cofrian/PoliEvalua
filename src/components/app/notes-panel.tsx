@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Trash2, Users } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -50,13 +51,6 @@ function writeQueue(queue: PendingNote[]) {
   }
 }
 
-const timeFormat = new Intl.DateTimeFormat("es-ES", {
-  hour: "2-digit",
-  minute: "2-digit",
-  day: "2-digit",
-  month: "short",
-});
-
 export function NotesPanel({
   eventId,
   teamId,
@@ -69,6 +63,8 @@ export function NotesPanel({
   initialNotes: Note[];
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const t = useTranslations("notes");
+  const format = useFormatter();
   const [notes, setNotes] = useState(initialNotes);
   const [body, setBody] = useState("");
   const [shared, setShared] = useState(false);
@@ -111,7 +107,7 @@ export function NotesPanel({
     writeQueue(remaining);
     setPending(remaining.filter((n) => n.event_id === eventId && n.team_id === teamId));
     if (remaining.length < queue.length) {
-      toast.success("Notas pendientes sincronizadas.");
+      toast.success(t("synced"));
       void reload();
     }
   }, [supabase, eventId, teamId, reload]);
@@ -150,7 +146,7 @@ export function NotesPanel({
               .select("full_name")
               .eq("id", note.author_id!)
               .maybeSingle();
-            toast.info(`${author?.full_name ?? "Alguien"} ha compartido una nota`);
+            toast.info(t("sharedToast", { name: author?.full_name ?? t("someone") }));
           }
           void reload();
         },
@@ -175,7 +171,7 @@ export function NotesPanel({
     writeQueue([...readQueue(), note]);
     setPending((current) => [...current, note]);
     setBody("");
-    toast.warning("Sin conexión: la nota se enviará al recuperar la cobertura.");
+    toast.warning(t("offline"));
   }
 
   async function addNote(event: React.FormEvent) {
@@ -204,7 +200,7 @@ export function NotesPanel({
       if (!navigator.onLine || /fetch|network/i.test(error.message)) {
         queueNote(text);
       } else {
-        toast.error("No se ha podido guardar la nota.");
+        toast.error(t("saveError"));
         setBody((current) => current || text);
       }
       return;
@@ -218,13 +214,13 @@ export function NotesPanel({
       .update({ is_shared: !note.is_shared })
       .eq("event_id", eventId)
       .eq("id", note.id);
-    if (error) toast.error("No se ha podido cambiar la visibilidad.");
+    if (error) toast.error(t("visibilityError"));
     else void reload();
   }
 
   async function deleteNote(note: Note) {
     const { error } = await supabase.from("notes").delete().eq("id", note.id).eq("event_id", eventId);
-    if (error) toast.error("No se ha podido borrar la nota.");
+    if (error) toast.error(t("deleteError"));
     else void reload();
   }
 
@@ -240,7 +236,7 @@ export function NotesPanel({
     <section className="space-y-4">
       <form className="space-y-3" onSubmit={addNote}>
         <Textarea
-          aria-label="Nueva nota"
+          aria-label={t("new")}
           className="min-h-24 bg-card"
           onChange={(event) => setBody(event.target.value)}
           onKeyDown={(event) => {
@@ -248,7 +244,7 @@ export function NotesPanel({
               void addNote(event);
             }
           }}
-          placeholder="Escribe una nota…"
+          placeholder={t("placeholder")}
           value={body}
         />
         <div className="flex items-center justify-between gap-3">
@@ -265,16 +261,16 @@ export function NotesPanel({
           >
             {shared ? (
               <>
-                <Users className="size-4" /> Compartida con el jurado
+                <Users className="size-4" /> {t("sharedWithJury")}
               </>
             ) : (
               <>
-                <Lock className="size-4" /> Privada
+                <Lock className="size-4" /> {t("private")}
               </>
             )}
           </button>
           <Button disabled={saving || !body.trim()} type="submit">
-            {saving ? "Guardando…" : "Añadir nota"}
+            {saving ? t("saving") : t("add")}
           </Button>
         </div>
       </form>
@@ -282,9 +278,9 @@ export function NotesPanel({
       <div className="flex gap-2 text-sm">
         {(
           [
-            ["all", "Todas"],
-            ["mine", "Mías"],
-            ["shared", "De otros"],
+            ["all", t("filterAll")],
+            ["mine", t("filterMine")],
+            ["shared", t("filterShared")],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -311,7 +307,7 @@ export function NotesPanel({
               key={note.tempId}
             >
               <p className="mb-1 text-xs font-semibold text-muted-foreground">
-                ⏳ Pendiente de enviar (sin conexión)
+                {t("pending")}
               </p>
               <p className="whitespace-pre-wrap">{note.body}</p>
             </li>
@@ -321,7 +317,7 @@ export function NotesPanel({
 
       {visible.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          Todavía no hay notas.
+          {t("empty")}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -335,10 +331,10 @@ export function NotesPanel({
                 <div className="mb-1.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span>
                     <strong className="text-foreground">
-                      {mine ? "Tú" : (note.author?.full_name ?? "Usuario")}
+                      {mine ? t("you") : (note.author?.full_name ?? t("user"))}
                     </strong>{" "}
-                    · {timeFormat.format(new Date(note.created_at))} ·{" "}
-                    {note.is_shared ? "👥 Compartida" : "🔒 Privada"}
+                    · {format.dateTime(new Date(note.created_at), { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })} ·{" "}
+                    {note.is_shared ? t("badgeShared") : t("badgePrivate")}
                   </span>
                   {mine ? (
                     <span className="flex gap-1">
@@ -349,10 +345,10 @@ export function NotesPanel({
                         type="button"
                         variant="ghost"
                       >
-                        {note.is_shared ? "Hacer privada" : "Compartir"}
+                        {note.is_shared ? t("makePrivate") : t("share")}
                       </Button>
                       <Button
-                        aria-label="Borrar nota"
+                        aria-label={t("delete")}
                         className="h-7 px-2"
                         onClick={() => void deleteNote(note)}
                         size="sm"

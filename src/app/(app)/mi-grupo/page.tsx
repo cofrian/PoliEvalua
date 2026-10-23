@@ -1,5 +1,6 @@
 import { CalendarClock, ClipboardList, Mic2, Users } from "lucide-react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/components/app/team-feedback-view";
 import { peerReviewSettings } from "@/lib/app/peer-review";
 import { TeamLinks, type TeamLink } from "@/components/app/team-links";
-import { scheduleRoom, slotStatusLabels, timeFormat } from "@/lib/app/agenda";
+import { scheduleRoom, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
 import { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
@@ -18,6 +19,11 @@ import { cardClass } from "@/lib/app/ui";
 /** Punto de partida del alumnado: su grupo, sus entregas y lo que necesita saber. */
 export default async function MyGroupPage() {
   const { supabase, user, event, words, recording, eventClosed } = await getSession();
+  const [t, tNav, tAgenda] = await Promise.all([
+    getTranslations("myGroup"),
+    getTranslations("nav"),
+    getTranslations("agenda"),
+  ]);
 
   const { data: membership } = await supabase
     .from("team_members")
@@ -43,10 +49,9 @@ export default async function MyGroupPage() {
   if (!team) {
     return (
       <div className={`${cardClass} mx-auto max-w-xl space-y-2`}>
-        <h1 className="font-display text-xl">Todavía no tienes {words.unitLower}</h1>
+        <h1 className="font-display text-xl">{t("noneTitle", { mode: words.mode })}</h1>
         <p className="text-sm text-muted-foreground">
-          Cuando la gestión del espacio te añada con tu correo, aparecerá aquí. Si ya lo ha hecho,
-          comprueba que has entrado con ese mismo correo.
+          {t("noneText")}
         </p>
       </div>
     );
@@ -84,7 +89,7 @@ export default async function MyGroupPage() {
       {mySlot ? <AgendaLiveRefresh eventId={event.id} /> : null}
       <header>
         <p className="text-sm font-bold text-muted-foreground">
-          Mi {words.unitLower} · #{team.number}
+          {tNav("myUnit", { mode: words.mode })} · #{team.number}
         </p>
         <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{team.name}</h1>
         {team.project_title ? <p className="mt-1 text-lg">{team.project_title}</p> : null}
@@ -98,19 +103,19 @@ export default async function MyGroupPage() {
           href="/agenda"
         >
           <span className="flex items-center gap-2 font-semibold">
-            <CalendarClock aria-hidden="true" className="size-5 text-primary" /> Tu turno
+            <CalendarClock aria-hidden="true" className="size-5 text-primary" /> {t("yourSlot")}
           </span>
           <span className="font-mono text-2xl font-bold">
             {myScheduled.status === "live"
-              ? "¡Ahora!"
+              ? t("now")
               : myScheduled.expectedStart
                 ? timeFormat.format(myScheduled.expectedStart)
-                : "Por confirmar"}
+                : t("tbc")}
           </span>
           <span className="text-sm text-muted-foreground">
-            {myScheduled.room} · {myScheduled.duration_minutes} min · {slotStatusLabels[myScheduled.status]}
+            {myScheduled.room} · {myScheduled.duration_minutes} min · {tAgenda(`status.${myScheduled.status}`)}
             {myScheduled.delayMinutes && myScheduled.status === "pending"
-              ? ` · ${myScheduled.delayMinutes} min de retraso`
+              ? ` · ${t("delay", { minutes: myScheduled.delayMinutes })}`
               : ""}
           </span>
         </Link>
@@ -119,20 +124,20 @@ export default async function MyGroupPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <section className={cardClass}>
           <h2 className="mb-2 flex items-center gap-2 font-display text-lg">
-            <Users aria-hidden="true" className="size-4" /> Integrantes
+            <Users aria-hidden="true" className="size-4" /> {t("members")}
           </h2>
           <ul className="space-y-1 text-sm">
             {team.team_members.map((member) => (
               <li key={member.id}>
                 {member.full_name}
-                {member.user_id === user.id ? " (tú)" : ""}
+                {member.user_id === user.id ? t("you") : ""}
               </li>
             ))}
           </ul>
         </section>
 
         <section className={cardClass}>
-          <h2 className="mb-2 font-display text-lg">Entregas</h2>
+          <h2 className="mb-2 font-display text-lg">{t("deliverables")}</h2>
           <TeamLinks
             canEdit={!eventClosed}
             driveUrl={words.materials.driveUrl}
@@ -146,21 +151,21 @@ export default async function MyGroupPage() {
 
       {feedback ? (
         <section className={cardClass}>
-          <h2 className="mb-4 font-display text-xl">Resultados y feedback</h2>
+          <h2 className="mb-4 font-display text-xl">{t("feedback")}</h2>
           <TeamFeedbackView feedback={feedback} />
         </section>
       ) : null}
 
       {peerSummary ? (
         <section className={cardClass}>
-          <h2 className="mb-4 font-display text-xl">Coevaluación</h2>
+          <h2 className="mb-4 font-display text-xl">{t("peerReview")}</h2>
           <PeerSummaryView criteria={rubricCriteria} scaleMax={rubric?.scale_max ?? 10} summary={peerSummary} />
         </section>
       ) : null}
 
       {peerSettings.enabled && !eventClosed ? (
         <Link className={`${cardClass} block font-semibold hover:bg-muted`} href="/coevaluacion">
-          Ir a la coevaluación →
+          {t("goPeerReview")}
         </Link>
       ) : null}
 
@@ -169,9 +174,9 @@ export default async function MyGroupPage() {
           <Link className={`${cardClass} flex items-start gap-3 hover:bg-muted`} href="/rubrica">
             <ClipboardList aria-hidden="true" className="mt-0.5 size-5 text-primary" />
             <span>
-              <strong className="block">Cómo te evaluarán</strong>
+              <strong className="block">{t("howEvaluated")}</strong>
               <span className="text-sm text-muted-foreground">
-                Criterios, pesos y lo que se espera en cada nivel.
+                {t("howEvaluatedText")}
               </span>
             </span>
           </Link>
@@ -180,9 +185,9 @@ export default async function MyGroupPage() {
           <Link className={`${cardClass} flex items-start gap-3 hover:bg-muted`} href={`/equipos/${team.id}/presentaciones`}>
             <Mic2 aria-hidden="true" className="mt-0.5 size-5 text-primary" />
             <span>
-              <strong className="block">Tu {words.presentation}</strong>
+              <strong className="block">{t("yourPresentation", { presentation: words.presentation })}</strong>
               <span className="text-sm text-muted-foreground">
-                Se grabará y transcribirá; el audio no se guarda. Aquí verás el texto y el resumen cuando estén compartidos.
+                {t("recordingText")}
               </span>
             </span>
           </Link>

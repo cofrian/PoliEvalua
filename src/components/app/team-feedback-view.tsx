@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 export type TeamFeedback = {
   team: { id: string; name: string; number: number | null };
   scaleMax: number;
@@ -35,13 +37,14 @@ export function PeerSummaryView({
   scaleMax: number;
 }) {
   const own = summary.contribution[0];
+  const t = useTranslations("feedback");
   return (
     <div className="space-y-4 text-sm">
       {summary.peer.count ? (
         <div>
           <p className="mb-2 font-semibold">
-            Media de {summary.peer.count} {summary.peer.count === 1 ? "revisión" : "revisiones"} de compañeros
-            {summary.self.count ? " y vuestra autoevaluación" : ""}
+            {t("peerAverage", { count: summary.peer.count })}
+            {summary.self.count ? t("andSelf") : ""}
           </p>
           <ul className="space-y-1">
             {criteria.map((criterion) => (
@@ -49,18 +52,18 @@ export function PeerSummaryView({
                 <span>{criterion.title}</span>
                 <span className="font-mono">
                   {summary.peer.criteria[criterion.id] ?? "–"}
-                  {summary.self.count ? ` · auto ${summary.self.criteria[criterion.id] ?? "–"}` : ""} / {scaleMax}
+                  {summary.self.count ? ` · ${t("self", { value: summary.self.criteria[criterion.id] ?? "–" })}` : ""} / {scaleMax}
                 </span>
               </li>
             ))}
           </ul>
         </div>
       ) : (
-        <p className="text-muted-foreground">Todavía no hay coevaluaciones de otros grupos.</p>
+        <p className="text-muted-foreground">{t("noPeer")}</p>
       )}
       {summary.peerComments.length ? (
         <div>
-          <p className="mb-1 font-semibold">Comentarios de compañeros</p>
+          <p className="mb-1 font-semibold">{t("peerComments")}</p>
           <ul className="space-y-1">
             {summary.peerComments.map((comment, index) => (
               <li className="rounded-lg bg-muted p-2 italic" key={index}>«{comment}»</li>
@@ -70,8 +73,11 @@ export function PeerSummaryView({
       ) : null}
       {own?.count ? (
         <p>
-          Tus compañeros valoran tu aportación con un <strong>{own.average}</strong> sobre 5 ({own.count}{" "}
-          {own.count === 1 ? "valoración" : "valoraciones"}).
+          {t.rich("contribution", {
+            average: own.average ?? "–",
+            count: own.count,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
       ) : null}
     </div>
@@ -94,23 +100,24 @@ export function feedbackGrade(feedback: TeamFeedback) {
  */
 export function TeamFeedbackView({ feedback }: { feedback: TeamFeedback }) {
   const grade = feedbackGrade(feedback);
+  const t = useTranslations("feedback");
 
   if (!feedback.evaluations) {
-    return <p className="text-sm text-muted-foreground">Todavía no hay evaluaciones enviadas.</p>;
+    return <p className="text-sm text-muted-foreground">{t("noEvaluations")}</p>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end gap-6">
         <div>
-          <p className="text-sm text-muted-foreground">Nota</p>
+          <p className="text-sm text-muted-foreground">{t("grade")}</p>
           <p className="font-display text-5xl leading-none">
             {grade?.toFixed(1)}
             <span className="text-xl text-muted-foreground"> / 10</span>
           </p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Media de {feedback.evaluations} evaluación{feedback.evaluations === 1 ? "" : "es"}.
+          {t("evaluationsAverage", { count: feedback.evaluations })}
         </p>
       </div>
 
@@ -147,7 +154,7 @@ export function TeamFeedbackView({ feedback }: { feedback: TeamFeedback }) {
 
       {feedback.generalComments.length ? (
         <section className="break-inside-avoid">
-          <h3 className="mb-2 font-display text-xl">Comentarios generales</h3>
+          <h3 className="mb-2 font-display text-xl">{t("generalComments")}</h3>
           <ul className="space-y-2 text-sm">
             {feedback.generalComments.map((comment, index) => (
               <li className="rounded-lg bg-muted p-3 italic" key={index}>«{comment}»</li>
@@ -158,14 +165,14 @@ export function TeamFeedbackView({ feedback }: { feedback: TeamFeedback }) {
 
       {feedback.presentation?.summary ? (
         <section className="break-inside-avoid space-y-2">
-          <h3 className="font-display text-xl">Resumen de vuestra exposición</h3>
+          <h3 className="font-display text-xl">{t("summaryTitle")}</h3>
           <p className="whitespace-pre-line text-sm leading-6">{feedback.presentation.summary}</p>
           {feedback.presentation.key_points?.length ? (
             <ul className="list-disc space-y-1 pl-5 text-sm">
               {feedback.presentation.key_points.map((point) => <li key={point}>{point}</li>)}
             </ul>
           ) : null}
-          <p className="text-xs text-muted-foreground">Generado automáticamente a partir de la transcripción; no influye en la nota.</p>
+          <p className="text-xs text-muted-foreground">{t("summaryNote")}</p>
         </section>
       ) : null}
     </div>

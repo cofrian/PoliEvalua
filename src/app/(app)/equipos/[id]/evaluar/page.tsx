@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AiEvidencePanel } from "@/components/app/ai-evidence-panel";
 import { EvaluationForm } from "@/components/app/evaluation-form";
@@ -17,6 +18,7 @@ export default async function EvaluatePage({
 }) {
   const { id } = await params;
   const session = await getSession();
+  const t = await getTranslations("evaluate");
   const { supabase, user, event } = session;
 
   const { data: team } = await supabase
@@ -62,10 +64,10 @@ export default async function EvaluatePage({
   return (
     <div className="space-y-6">
       {back}
-      <h1 className="font-display text-2xl tracking-tight sm:text-3xl">Evaluar · {team.name}</h1>
+      <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title", { team: team.name })}</h1>
 
       <details className="rounded-xl border border-border bg-white p-4 lg:hidden dark:bg-card">
-        <summary className="cursor-pointer font-semibold">Apoyo de la IA</summary>
+        <summary className="cursor-pointer font-semibold">{t("aiSupport")}</summary>
         <div className="mt-3">{aiPanel}</div>
       </details>
 
@@ -86,7 +88,7 @@ export default async function EvaluatePage({
           <div className="mb-6 rounded-xl border border-border bg-white p-4 dark:bg-card">
             {aiPanel}
           </div>
-          <h2 className="mb-3 font-display text-xl">Notas</h2>
+          <h2 className="mb-3 font-display text-xl">{t("notes")}</h2>
           <NotesPanel
             eventId={event.id}
             initialNotes={context.notes}

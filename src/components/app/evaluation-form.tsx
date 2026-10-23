@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -76,6 +77,7 @@ export function EvaluationForm({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const t = useTranslations("evalForm");
   const evaluationId = useRef<string | null>(initial?.id ?? null);
   const [status, setStatus] = useState(initial?.status ?? "draft");
   const [generalComment, setGeneralComment] = useState(
@@ -202,11 +204,11 @@ export function EvaluationForm({
       setGeneralComment(draft.generalComment);
       setFormAnswers(draft.formAnswers);
       setDirty(true);
-      toast.info("Hemos recuperado cambios que no se llegaron a guardar.");
+      toast.info(t("restored"));
     } catch {
       // Sin almacenamiento local (modo privado): solo autoguardado en servidor.
     }
-  }, [draftKey, locked]);
+  }, [draftKey, locked, t]);
 
   useEffect(() => {
     if (!dirty || locked) return;
@@ -261,42 +263,34 @@ export function EvaluationForm({
 
   async function submit() {
     if (!complete) {
-      toast.error("Completa los requisitos, las preguntas obligatorias y todos los criterios.");
+      toast.error(t("incomplete"));
       return;
     }
     const ok = await save("submitted");
     if (ok) {
-      toast.success("Evaluación enviada. ¡Gracias!");
+      toast.success(t("sent"));
       router.push("/equipos");
       router.refresh();
     } else {
-      toast.error("No se ha podido enviar. Revisa tu conexión.");
+      toast.error(t("sendError"));
     }
   }
 
-  const saveLabel = {
-    idle: "",
-    pending: "Cambios sin guardar…",
-    saving: "Guardando…",
-    saved: "Guardado",
-    error: "Sin conexión: guardado en este dispositivo, se reintentará",
-  }[saveState];
+  const saveLabel = saveState === "idle" ? "" : t(`save.${saveState}`);
 
   return (
     <div className="space-y-6">
       {locked ? (
         <p className="rounded-lg border border-coral-400/50 bg-coral-400/10 px-3 py-2.5 text-sm">
-          La votación está cerrada. Ya no se pueden modificar evaluaciones.
+          {t("locked")}
         </p>
       ) : status === "submitted" && !complete ? (
         <p className="rounded-lg border border-orange-500/60 bg-orange-500/10 px-3 py-2.5 text-sm">
-          ⚠ La rúbrica ha cambiado desde que enviaste esta evaluación: puntúa los
-          criterios nuevos y vuelve a enviarla.
+          {t("rubricChanged")}
         </p>
       ) : status === "submitted" ? (
         <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 px-3 py-2.5 text-sm">
-          Ya has enviado esta evaluación. Puedes corregirla hasta que se cierre la
-          votación.
+          {t("alreadySent")}
         </p>
       ) : null}
 
@@ -314,7 +308,7 @@ export function EvaluationForm({
 
           {page.requirements.length ? (
             <fieldset className="space-y-2">
-              <legend className="font-display text-lg">Comprobación de requisitos</legend>
+              <legend className="font-display text-lg">{t("requirements")}</legend>
               {page.requirements.map((requirement) => (
                 <label
                   className="flex gap-3 rounded-lg border border-border p-3 text-sm"
@@ -343,7 +337,7 @@ export function EvaluationForm({
 
           {page.questions.length ? (
             <fieldset className="space-y-4">
-              <legend className="font-display text-lg">Preguntas adicionales</legend>
+              <legend className="font-display text-lg">{t("questions")}</legend>
               {page.questions.map((question) => {
                 const key = `question:${question.key}`;
                 const answer = formAnswers[key];
@@ -371,7 +365,7 @@ export function EvaluationForm({
                           onChange={(event) => updateAnswer(key, event.target.checked)}
                           type="checkbox"
                         />
-                        Sí
+                        {t("yes")}
                       </span>
                     ) : question.type === "select" ? (
                       <select
@@ -380,7 +374,7 @@ export function EvaluationForm({
                         onChange={(event) => updateAnswer(key, event.target.value)}
                         value={typeof answer === "string" ? answer : ""}
                       >
-                        <option value="">Selecciona una opción</option>
+                        <option value="">{t("chooseOption")}</option>
                         {question.options.map((option) => (
                           <option key={option} value={option}>{option}</option>
                         ))}
@@ -457,18 +451,18 @@ export function EvaluationForm({
                   <strong className="text-foreground">{selected.label}:</strong>{" "}
                   {selected.descriptor}
                   {selected.example ? (
-                    <span className="mt-1 block text-xs italic">Ejemplo: {selected.example}</span>
+                    <span className="mt-1 block text-xs italic">{t("example", { example: selected.example })}</span>
                   ) : null}
                 </p>
               ) : null}
               <Textarea
-                aria-label={`Comentario sobre ${criterion.title}`}
+                aria-label={t("commentOn", { criterion: criterion.title })}
                 className="mt-3 min-h-16"
                 disabled={locked}
                 onChange={(event) =>
                   update(criterion.id, { comment: event.target.value })
                 }
-                placeholder="Comentario (opcional)"
+                placeholder={t("commentPlaceholder")}
                 value={current?.comment ?? ""}
               />
             </li>
@@ -478,7 +472,7 @@ export function EvaluationForm({
 
       <div className="space-y-2">
         <label className="text-sm font-semibold" htmlFor="generalComment">
-          Comentario general
+          {t("generalComment")}
         </label>
         <Textarea
           disabled={locked}
@@ -502,9 +496,9 @@ export function EvaluationForm({
               type="checkbox"
             />
             <span>
-              Compartir mis comentarios con el grupo cuando se publiquen los resultados
+              {t("shareWithTeam")}
               <span className="block text-xs text-muted-foreground">
-                Se mostrarán sin tu nombre. Las puntuaciones siempre se muestran como media.
+                {t("shareHint")}
               </span>
             </span>
           </label>
@@ -518,7 +512,7 @@ export function EvaluationForm({
             <span className="text-base text-muted-foreground"> / 100</span>
           </p>
           <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-            {scoredCount}/{criteria.length} criterios · {requiredAnswersComplete ? "requisitos completos" : "faltan requisitos"} · {saveLabel}
+            {t("progress", { scored: scoredCount, total: criteria.length })} · {requiredAnswersComplete ? t("requirementsDone") : t("requirementsMissing")} · {saveLabel}
           </p>
         </div>
         {!locked ? (
@@ -528,7 +522,7 @@ export function EvaluationForm({
             onClick={() => void submit()}
             type="button"
           >
-            {status === "submitted" ? "Reenviar evaluación" : "Enviar evaluación"}
+            {status === "submitted" ? t("resend") : t("send")}
           </Button>
         ) : null}
       </div>
