@@ -20,17 +20,6 @@ export type SpaceRole =
 
 export type Role = SpaceRole;
 
-export const roleLabels: Record<SpaceRole, string> = {
-  owner: "Propietario",
-  manager: "Gestor",
-  judge: "Juez",
-  mentor: "Mentor",
-  teacher: "Docente",
-  student: "Estudiante",
-  reviewer: "Evaluador",
-  viewer: "Consulta",
-};
-
 type EventSummary = {
   id: string;
   name: string;

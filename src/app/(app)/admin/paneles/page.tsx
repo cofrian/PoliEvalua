@@ -1,4 +1,6 @@
 import { Layers } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+
 import {
   autoAssignPanelsAction,
   deactivatePanelAction,
@@ -11,7 +13,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
+import { getSession, type SpaceRole } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
 
 type Profile = { full_name: string };
@@ -27,6 +29,7 @@ function profileOf(value: Membership["profile"]) {
 
 export default async function PanelsPage() {
   const { supabase, event, words } = await getSession();
+  const [t, tRoles] = await Promise.all([getTranslations("panels"), getTranslations("roles")]);
   const [{ data: panels }, { data: memberships }, { data: teams }, { data: panelMembers }, { data: assignments }, { data: evaluationPage }] =
     await Promise.all([
       supabase.from("jury_panels").select("id, name, description, order, active").eq("event_id", event.id).order("order"),
@@ -48,29 +51,29 @@ export default async function PanelsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Reparte qué personas evalúan a qué grupos."
-        title={`Paneles de ${words.evaluator}`}
+        description={t("description")}
+        title={t("title", { evaluator: words.evaluator })}
       />
       <section className={cardClass}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-display text-lg">Reparto automático</h2>
+            <h2 className="font-display text-lg">{t("autoTitle")}</h2>
             <p className="text-sm text-muted-foreground">
-              Cada juez solo podrá votar los proyectos asignados a alguno de sus paneles. Propietarios y gestores mantienen acceso de supervisión.
+              {t("autoText")}
             </p>
           </div>
           <form action={autoAssignPanelsAction} className="flex items-end gap-2">
-            <label className="space-y-1 text-sm font-semibold"><span className="block">Ronda</span><Input className="w-20" defaultValue={currentRound} max={20} min={1} name="round" type="number" /></label>
-            <Button disabled={!activePanels.length} type="submit" variant="outline">Repartir equilibradamente</Button>
+            <label className="space-y-1 text-sm font-semibold"><span className="block">{t("round")}</span><Input className="w-20" defaultValue={currentRound} max={20} min={1} name="round" type="number" /></label>
+            <Button disabled={!activePanels.length} type="submit" variant="outline">{t("autoButton")}</Button>
           </form>
         </div>
       </section>
 
       {activePanels.length === 0 ? (
         <EmptyState
-          description="Sin paneles, cualquier persona evaluadora puede puntuar a todos. Crea paneles abajo si queréis repartir el trabajo por salas o especialidades."
+          description={t("emptyText")}
           icon={<Layers aria-hidden="true" />}
-          title="Todavía no hay paneles"
+          title={t("emptyTitle")}
         />
       ) : null}
       {activePanels.map((panel) => {
@@ -81,19 +84,19 @@ export default async function PanelsPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <form action={savePanelAction} className="grid flex-1 gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
                 <input name="id" type="hidden" value={panel.id} />
-                <Input aria-label="Nombre del panel" defaultValue={panel.name} name="name" required />
-                <Input aria-label="Descripción del panel" defaultValue={panel.description ?? ""} name="description" placeholder="Sala, turno o especialidad" />
-                <Input aria-label="Orden" defaultValue={panel.order} min={0} name="order" type="number" />
-                <Button type="submit" variant="outline">Guardar</Button>
+                <Input aria-label={t("name")} defaultValue={panel.name} name="name" required />
+                <Input aria-label={t("descriptionLabel")} defaultValue={panel.description ?? ""} name="description" placeholder={t("descriptionPlaceholder")} />
+                <Input aria-label={t("order")} defaultValue={panel.order} min={0} name="order" type="number" />
+                <Button type="submit" variant="outline">{t("save")}</Button>
               </form>
               <form action={deactivatePanelAction}>
                 <input name="id" type="hidden" value={panel.id} />
                 <ConfirmSubmit
-                  confirmLabel="Desactivar"
-                  description="Deja de usarse para repartir. Sus evaluaciones se conservan."
-                  title={`¿Desactivar «${panel.name}»?`}
+                  confirmLabel={t("deactivate")}
+                  description={t("deactivateText")}
+                  title={t("deactivateTitle", { name: panel.name })}
                 >
-                  Desactivar
+                  {t("deactivate")}
                 </ConfirmSubmit>
               </form>
             </div>
@@ -101,26 +104,26 @@ export default async function PanelsPage() {
             <div className="mt-5 grid gap-6 lg:grid-cols-2">
               <form action={updatePanelMembersAction}>
                 <input name="panelId" type="hidden" value={panel.id} />
-                <h3 className="font-display text-lg">Personas del panel</h3>
+                <h3 className="font-display text-lg">{t("members")}</h3>
                 <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-border p-3">
                   {eligible.map((membership) => {
                     const profile = profileOf(membership.profile);
                     return (
                       <label className="flex items-center gap-2 text-sm" key={membership.user_id}>
                         <input defaultChecked={selectedMembers.has(membership.user_id)} name="members" type="checkbox" value={membership.user_id} />
-                        <span>{profile?.full_name ?? "Usuario"} <span className="text-muted-foreground">· {roleLabels[membership.role]}</span></span>
+                        <span>{profile?.full_name ?? t("user")} <span className="text-muted-foreground">· {tRoles(membership.role)}</span></span>
                       </label>
                     );
                   })}
                 </div>
-                <Button className="mt-3" type="submit" variant="outline">Guardar jurado</Button>
+                <Button className="mt-3" type="submit" variant="outline">{t("saveMembers")}</Button>
               </form>
 
               <form action={updatePanelTeamsAction}>
                 <input name="panelId" type="hidden" value={panel.id} />
                 <div className="flex items-end justify-between gap-2">
-                  <h3 className="font-display text-lg">Proyectos asignados</h3>
-                  <label className="space-y-1 text-xs font-semibold"><span className="block">Ronda</span><Input className="w-20" defaultValue={currentRound} max={20} min={1} name="round" type="number" /></label>
+                  <h3 className="font-display text-lg">{t("teams")}</h3>
+                  <label className="space-y-1 text-xs font-semibold"><span className="block">{t("round")}</span><Input className="w-20" defaultValue={currentRound} max={20} min={1} name="round" type="number" /></label>
                 </div>
                 <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-border p-3">
                   {(teams ?? []).map((team) => (
@@ -130,7 +133,7 @@ export default async function PanelsPage() {
                     </label>
                   ))}
                 </div>
-                <Button className="mt-3" type="submit" variant="outline">Guardar proyectos</Button>
+                <Button className="mt-3" type="submit" variant="outline">{t("saveTeams")}</Button>
               </form>
             </div>
           </section>
@@ -138,12 +141,12 @@ export default async function PanelsPage() {
       })}
 
       <section className={cardClass}>
-        <h2 className="font-display text-lg">Nuevo panel</h2>
+        <h2 className="font-display text-lg">{t("newTitle")}</h2>
         <form action={savePanelAction} className="mt-3 grid gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
-          <Input aria-label="Nombre del nuevo panel" name="name" placeholder="Panel A" required />
-          <Input aria-label="Descripción del nuevo panel" name="description" placeholder="Sala o especialidad" />
-          <Input aria-label="Orden" defaultValue={activePanels.length + 1} min={0} name="order" type="number" />
-          <Button type="submit">Crear panel</Button>
+          <Input aria-label={t("newName")} name="name" placeholder={t("newNamePlaceholder")} required />
+          <Input aria-label={t("newDescription")} name="description" placeholder={t("newDescriptionPlaceholder")} />
+          <Input aria-label={t("order")} defaultValue={activePanels.length + 1} min={0} name="order" type="number" />
+          <Button type="submit">{t("create")}</Button>
         </form>
       </section>
     </div>
