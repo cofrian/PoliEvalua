@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Lanzar aunque no haya audio en cola (prueba)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -36,6 +41,7 @@ jobs:
           fi
           pending=$(curl -fsS -H "Authorization: Bearer $WORKER_TOKEN" "${APP_URL%/}/api/worker/backlog" | jq -r .pending)
           echo "Trozos en cola: $pending"
+          if [ "${{ inputs.force }}" = "true" ]; then pending=forzado; fi
           echo "pending=$pending" >> "$GITHUB_OUTPUT"
       - name: Checkout
         if: steps.backlog.outputs.pending != '0'
