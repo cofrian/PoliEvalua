@@ -1,5 +1,4 @@
 import {
-  updateAiSettingsAction,
   updateEventAction,
   updateMaterialsSettingsAction,
   updateStudentVisibilityAction,
@@ -7,10 +6,9 @@ import {
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/app/page-header";
-import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
+import { AdvancedSettings, SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
 import { LOCALES, localeNames } from "@/i18n/config";
 import { getSession } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
@@ -24,7 +22,6 @@ export default async function AdminSettingsPage() {
     getTranslations("nav"),
   ]);
   const enabledRoles = ((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? [];
-  const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null } }).ai;
 
   const { data: eventSettings } = await supabase
     .from("events")
@@ -70,25 +67,27 @@ export default async function AdminSettingsPage() {
               ))}
             </select>
           </SettingRow>
-          <SettingRow
-            description={t("codeHint")}
-            htmlFor="signupCode"
-            label={t("code")}
-          >
-            <Input
-              className="font-mono uppercase"
-              defaultValue={eventSettings.signup_code}
-              id="signupCode"
-              name="signupCode"
-            />
-          </SettingRow>
-          <SettingRow
-            description={t("codeOpenHint")}
-            htmlFor="signupOpen"
-            label={t("codeOpen")}
-          >
-            <SettingSwitch defaultChecked={eventSettings.signup_open} id="signupOpen" name="signupOpen" />
-          </SettingRow>
+          <AdvancedSettings hint={t("advancedHint")}>
+            <SettingRow
+              description={t("codeHint")}
+              htmlFor="signupCode"
+              label={t("code")}
+            >
+              <Input
+                className="font-mono uppercase"
+                defaultValue={eventSettings.signup_code}
+                id="signupCode"
+                name="signupCode"
+              />
+            </SettingRow>
+            <SettingRow
+              description={t("codeOpenHint")}
+              htmlFor="signupOpen"
+              label={t("codeOpen")}
+            >
+              <SettingSwitch defaultChecked={eventSettings.signup_open} id="signupOpen" name="signupOpen" />
+            </SettingRow>
+          </AdvancedSettings>
         </SettingsForm>
       ) : null}
 
@@ -146,27 +145,6 @@ export default async function AdminSettingsPage() {
             maxLength={2000}
             name="instructions"
             placeholder={t("instructionsPlaceholder")}
-            rows={3}
-          />
-        </SettingRow>
-      </SettingsForm>
-      <SettingsForm
-        action={updateAiSettingsAction}
-        description={t("aiDescription")}
-        title={t("ai")}
-      >
-        <SettingRow
-          description={t("aiHint")}
-          htmlFor="aiInstructions"
-          label={t("aiLabel", { max: INSTRUCTIONS_MAX })}
-          stacked
-        >
-          <Textarea
-            defaultValue={ai?.instructions ?? ""}
-            id="aiInstructions"
-            maxLength={INSTRUCTIONS_MAX}
-            name="aiInstructions"
-            placeholder={t("aiPlaceholder")}
             rows={3}
           />
         </SettingRow>

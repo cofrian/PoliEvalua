@@ -512,7 +512,8 @@ export function EvaluationForm({
             <span className="text-base text-muted-foreground"> / 100</span>
           </p>
           <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-            {t("progress", { scored: scoredCount, total: criteria.length })} · {requiredAnswersComplete ? t("requirementsDone") : t("requirementsMissing")} · {saveLabel}
+            {t("progress", { scored: scoredCount, total: criteria.length })} · {requiredAnswersComplete ? t("requirementsDone") : t("requirementsMissing")}
+            {saveLabel ? ` · ${saveLabel}` : ""}
           </p>
         </div>
         {!locked ? (

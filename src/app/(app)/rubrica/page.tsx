@@ -1,6 +1,11 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
+import { ListChecks, Sparkles } from "lucide-react";
+import Link from "next/link";
+
+import { EmptyState } from "@/components/app/empty-state";
 import { Presence } from "@/components/app/presence";
+import { Button } from "@/components/ui/button";
 import {
   RubricEditor,
   type EditableCriterion,
@@ -62,7 +67,9 @@ export default async function RubricPage() {
         <div>
           <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("meta", { name: rubric.name, version: rubric.version, min: rubric.scale_min, max: rubric.scale_max })}
+            {isAdmin
+              ? t("meta", { name: rubric.name, min: rubric.scale_min, max: rubric.scale_max })
+              : t("scale", { min: rubric.scale_min, max: rubric.scale_max })}
             {rubric.locked ? t("locked") : ""}
           </p>
         </div>
@@ -76,12 +83,29 @@ export default async function RubricPage() {
         />
       </div>
 
-      {!canEdit ? (
+      {!canEdit && criteria.length ? (
         <p className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm dark:bg-card">
           {isStudent
             ? t("studentHint", { evaluator: words.evaluator, presentation: words.presentation })
             : t("readOnlyHint")}
         </p>
+      ) : null}
+
+      {criteria.length === 0 ? (
+        <EmptyState
+          action={
+            canEdit ? (
+              <Button asChild variant="outline">
+                <Link href="/admin/asistente">
+                  <Sparkles aria-hidden="true" /> {t("emptyAssistant")}
+                </Link>
+              </Button>
+            ) : null
+          }
+          description={canEdit ? t("emptyAdmin") : t("emptyOther")}
+          icon={<ListChecks aria-hidden="true" />}
+          title={t("emptyTitle")}
+        />
       ) : null}
 
       <RubricEditor
@@ -93,7 +117,7 @@ export default async function RubricPage() {
         userId={user.id}
       />
 
-      {isStudent ? null : <section>
+      {!isAdmin ? null : <section>
         <h2 className="mb-3 font-display text-xl">{t("history")}</h2>
         {changes?.length ? (
           <ul className="divide-y divide-border rounded-xl border border-border bg-white text-sm dark:bg-card">

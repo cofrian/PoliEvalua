@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useActionState, useEffect, useState } from "react";
 
+import { FileField } from "@/components/app/file-field";
 import { updateProfileAction, type ProfileState } from "@/app/(app)/perfil/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
@@ -51,19 +52,16 @@ export function ProfileForm({
           </span>
         )}
         <div className="space-y-2 text-sm">
-          <label className="block font-semibold">
-            {t("photo")}
-            <input
-              accept="image/*"
-              className="mt-1 block text-sm font-normal"
-              name="avatar"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) setPreview(URL.createObjectURL(file));
-              }}
-              type="file"
-            />
-          </label>
+          <p className="font-semibold">{t("photo")}</p>
+          <FileField
+            accept="image/*"
+            label={t("photo")}
+            name="avatar"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) setPreview(URL.createObjectURL(file));
+            }}
+          />
           {avatarUrl ? (
             <label className="flex items-center gap-2">
               <input name="removeAvatar" type="checkbox" /> {t("removePhoto")}

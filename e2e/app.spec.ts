@@ -358,7 +358,7 @@ test("10. El propietario entra con su cuenta y ve lo privado", async ({
   await adminPage.goto(`/equipos/${team.id}`);
   await expect(adminPage.getByText(privateText)).toBeVisible();
   await expect(adminPage.getByText(sharedText)).toBeVisible();
-  await expect(adminPage.getByText("Editar equipo (admin)")).toBeVisible();
+  await expect(adminPage.getByText("Editar equipo")).toBeVisible();
 });
 
 test("11. El admin ve las votaciones en directo", async () => {

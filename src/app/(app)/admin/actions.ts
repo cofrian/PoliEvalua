@@ -474,12 +474,13 @@ export async function saveTeamAction(formData: FormData) {
   const values = {
     name: text(formData, "name"),
     number: Number(text(formData, "number")) || null,
-    challenge_id: text(formData, "challengeId"),
+    // En asignaturas no hay retos: el grupo va sin reto.
+    challenge_id: text(formData, "challengeId") || null,
     project_title: optional(formData, "projectTitle"),
     description: optional(formData, "description"),
     table_location: optional(formData, "tableLocation"),
   };
-  if (!values.name || !values.challenge_id) return;
+  if (!values.name) return;
 
   if (id) {
     await supabase.from("teams").update(values).eq("id", id).eq("event_id", event.id);

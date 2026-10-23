@@ -138,7 +138,7 @@ test("1. La profesora ve el panel de inicio adaptado a una asignatura", async ({
   const page = await enter(browser, "teacher");
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Preparación" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Grupos", exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Participantes", exact: true }).first()).toBeVisible();
   // En una asignatura no hay retos ni patrocinadores.
   await expect(page.getByRole("link", { name: "Retos" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Patrocinadores" })).toHaveCount(0);
@@ -148,7 +148,8 @@ test("2. Activa la grabación y el aviso aparece al entrar", async () => {
   const page = pages.teacher!;
   await page.goto("/admin/grabaciones");
   await page.getByRole("switch", { name: "Grabar exposiciones en este espacio" }).click();
-  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  // La página tiene dos bloques (grabación e IA): se guarda el primero.
+  await page.getByRole("button", { name: "Guardar cambios" }).first().click();
   await acknowledgeNotice(page);
   await expect(page.getByRole("heading", { name: /Confirmaciones/ })).toBeVisible();
 });
@@ -180,7 +181,7 @@ test("4. Genera la agenda", async () => {
   await page.goto("/admin/agenda");
   await page.getByLabel("Salas (separadas por comas)").fill("Aula 1");
   await page.getByRole("button", { name: "Generar agenda" }).click();
-  await expect(page.getByText("Agenda creada: 2 turnos en 1 sala(s).")).toBeVisible();
+  await expect(page.getByText(/Agenda creada: 2 turnos en 1 sala/)).toBeVisible();
 });
 
 test("5. La estudiante confirma el aviso y ve su grupo, turno y rúbrica", async ({ browser }) => {

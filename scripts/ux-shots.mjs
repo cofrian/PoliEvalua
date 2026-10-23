@@ -17,7 +17,7 @@ const slug = `ux-${stamp}`;
 const locale = process.env.SHOTS_LOCALE || "es";
 
 const people = {
-  teacher: { name: "Profesora Demo", pages: ["/espacios", "/admin", "/admin/ajustes", "/admin/personas", "/admin/evaluacion", "/admin/agenda", "/equipos", "/resultados"] },
+  teacher: { name: "Profesora Demo", pages: ["/espacios", "/admin", "/admin/ajustes", "/admin/personas", "/admin/equipos", "/rubrica", "/admin/evaluacion", "/admin/agenda", "/admin/grabaciones", "/admin/publico", "/admin/asistente", "/equipos", "/resultados"] },
   judge: { name: "Jurado Demo", pages: ["/equipos", "/equipos/{team}", "/equipos/{team}/evaluar", "/agenda", "/rubrica"] },
   student: { name: "Estudiante Demo", pages: ["/mi-grupo", "/agenda", "/rubrica", "/coevaluacion"] },
 };
@@ -60,6 +60,19 @@ try {
     { event_id: eventId, team_id: teams[0].id, full_name: "Marta López" },
     { event_id: eventId, team_id: teams[1].id, full_name: "Pablo Ruiz" },
   ]);
+  // Rúbrica de ejemplo para que se vean el formulario de evaluación y la rúbrica.
+  if (process.env.SHOTS_EMPTY_RUBRIC !== "1") {
+    const { data: rubric } = await db.from("rubrics").select("id").eq("event_id", eventId).eq("is_active", true).single();
+    const { data: criteria } = await db.from("rubric_criteria").insert([
+      { event_id: eventId, rubric_id: rubric.id, title: "Análisis del problema", description: "Se entiende qué problema resuelven y para quién", weight: 40, order: 1 },
+      { event_id: eventId, rubric_id: rubric.id, title: "Solución y prototipo", description: "Lo construido funciona y responde al problema", weight: 40, order: 2 },
+      { event_id: eventId, rubric_id: rubric.id, title: "Presentación", description: "Claridad, tiempo y respuesta a preguntas", weight: 20, order: 3 },
+    ]).select("id");
+    const labels = ["Muy insuficiente", "Insuficiente", "Adecuado", "Muy bueno", "Excelente"];
+    await db.from("rubric_levels").insert(criteria.flatMap((criterion) =>
+      labels.map((label, index) => ({ event_id: eventId, criterion_id: criterion.id, score: index + 1, label, descriptor: `${label}.` })),
+    ));
+  }
   await db.from("evaluation_pages").update({ status: "published" }).eq("event_id", eventId);
   const team = teams[0].id;
 

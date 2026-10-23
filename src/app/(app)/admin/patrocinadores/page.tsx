@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
+import { FileField } from "@/components/app/file-field";
 import { deleteSponsorAction, saveSponsorAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
@@ -64,11 +65,11 @@ function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-3">
         <span className="block">{t("logoLight")}</span>
-        <input accept="image/*" className="block text-sm" name="logoLight" type="file" />
+        <FileField accept="image/*" label={t("logoLight")} name="logoLight" />
       </label>
       <label className="space-y-1 text-sm font-semibold sm:col-span-3">
         <span className="block">{t("logoDark")}</span>
-        <input accept="image/*" className="block text-sm" name="logoDark" type="file" />
+        <FileField accept="image/*" label={t("logoDark")} name="logoDark" />
       </label>
       <div className="sm:col-span-6">
         <Button type="submit">{sponsor ? t("save") : t("add")}</Button>

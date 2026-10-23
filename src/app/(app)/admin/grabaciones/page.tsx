@@ -1,9 +1,10 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { updateRecordingSettingsAction } from "@/app/(app)/admin/actions";
+import { updateAiSettingsAction, updateRecordingSettingsAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Textarea } from "@/components/ui/textarea";
+import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
 import { getSession, type SpaceRole } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
@@ -15,6 +16,8 @@ export default async function RecordingSettingsPage() {
     getTranslations("recordingNotice"),
     getFormatter(),
   ]);
+  const tSettings = await getTranslations("settings");
+  const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null } }).ai;
   const { data: members } = await supabase
     .from("event_members")
     .select(
@@ -82,6 +85,28 @@ export default async function RecordingSettingsPage() {
             name="noticeText"
             placeholder={tNotice("default")}
             rows={5}
+          />
+        </SettingRow>
+      </SettingsForm>
+
+      <SettingsForm
+        action={updateAiSettingsAction}
+        description={tSettings("aiDescription")}
+        title={tSettings("ai")}
+      >
+        <SettingRow
+          description={tSettings("aiHint")}
+          htmlFor="aiInstructions"
+          label={tSettings("aiLabel", { max: INSTRUCTIONS_MAX })}
+          stacked
+        >
+          <Textarea
+            defaultValue={ai?.instructions ?? ""}
+            id="aiInstructions"
+            maxLength={INSTRUCTIONS_MAX}
+            name="aiInstructions"
+            placeholder={tSettings("aiPlaceholder")}
+            rows={3}
           />
         </SettingRow>
       </SettingsForm>

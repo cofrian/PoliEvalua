@@ -43,7 +43,17 @@
     "organizeAgenda": "Organizar agenda",
     "recordings": "Grabaciones",
     "publicVote": "Voto del público",
-    "audit": "Auditoría"
+    "audit": "Auditoría",
+    "home": "Inicio",
+    "participants": "Participantes",
+    "recordingsAndPublic": "Grabaciones y público",
+    "sections": "Secciones de esta parte",
+    "tabs": {
+      "list": "Ver {units}",
+      "edit": "Editar e importar",
+      "form": "Formulario de evaluación",
+      "general": "General"
+    }
   },
   "userMenu": {
     "open": "Menú de usuario",
@@ -151,7 +161,7 @@
     "count": "{count} {units}",
     "evaluatedByYou": "{count} evaluados por ti",
     "mentorHint": "como mentor puedes tomar notas, no votar",
-    "searchLabel": "Buscar",
+    "searchLabel": "Buscar {mode, select, teams {equipo} groups {grupo} candidates {candidatura} other {proyecto}}",
     "searchPlaceholder": "Buscar por nombre o número",
     "createOrImport": "Crear o importar {units}",
     "emptyAdmin": "Crea la lista a mano o impórtala desde una hoja de cálculo. Aparecerán aquí para evaluarlos.",
@@ -172,10 +182,14 @@
     "evaluate": "Evaluar",
     "members": "Integrantes",
     "noMembers": "Sin integrantes.",
-    "edit": "Editar (gestión)",
+    "edit": "Editar {mode, select, teams {equipo} groups {grupo} candidates {candidatura} other {proyecto}}",
     "deliverables": "Entregas",
     "project": "Proyecto",
-    "notes": "Notas"
+    "notes": "Notas",
+    "notReadyRubric": "Todavía no se puede evaluar: falta preparar la rúbrica.",
+    "notReadyRubricAdmin": "Todavía no se puede evaluar: <link>prepara la rúbrica</link>.",
+    "notReadyPage": "La evaluación aún no está abierta.",
+    "notReadyPageAdmin": "La evaluación está en borrador: <link>publícala</link> para que el jurado pueda puntuar."
   },
   "notes": {
     "synced": "Notas pendientes sincronizadas.",
@@ -273,7 +287,10 @@
     "plannedBefore": "previsto antes a las {time}",
     "live": "En directo",
     "moveUp": "Adelantar {name}",
-    "moveDown": "Retrasar {name}"
+    "moveDown": "Retrasar {name}",
+    "emptyAction": "Preparar la agenda",
+    "emptyAdmin": "Reparte los turnos de exposición entre las salas en un minuto; el jurado y el alumnado los verán aquí al momento.",
+    "emptyOther": "La organización todavía no la ha preparado. Aquí verás la hora de cada turno, con los retrasos al día."
   },
   "evaluate": {
     "title": "Evaluar · {team}",
@@ -284,13 +301,18 @@
     "hiddenForStudents": "La rúbrica de este espacio todavía no está visible para el alumnado.",
     "none": "No hay ninguna rúbrica activa.",
     "title": "Rúbrica",
-    "meta": "{name} · versión {version} · escala {min}–{max}",
+    "meta": "{name} · puntuación de {min} a {max}",
     "locked": " · 🔒 Bloqueada",
     "studentHint": "Así te evaluará el {evaluator}: revisa cada criterio y lo que se espera en cada nivel antes de tu {presentation}.",
     "readOnlyHint": "Solo las personas propietarias y gestoras pueden cambiar la estructura de la rúbrica.",
     "history": "Historial de cambios",
     "someone": "Alguien",
-    "noChanges": "Todavía no se ha cambiado nada."
+    "noChanges": "Todavía no se ha cambiado nada.",
+    "scale": "Puntuación de {min} a {max}",
+    "emptyTitle": "La rúbrica todavía no tiene criterios",
+    "emptyAdmin": "Añade los criterios con «Añadir criterio» o pide al asistente que te proponga una rúbrica completa.",
+    "emptyOther": "La organización todavía no la ha preparado. Aquí verás cada criterio y lo que se espera en cada nivel.",
+    "emptyAssistant": "Pedírsela al asistente"
   },
   "myGroup": {
     "noneTitle": "{mode, select, teams {Todavía no tienes equipo} groups {Todavía no tienes grupo} candidates {Todavía no tienes candidatura} other {Todavía no tienes proyecto}}",
@@ -569,12 +591,12 @@
     "selfTitle": "Autoevaluación sobre 100",
     "final": "Final",
     "finalTitle": "Ponderada: {evaluator} {teacher} %, compañeros {peer} %, auto {self} %",
-    "dispersion": "Dispersión",
+    "dispersion": "Desacuerdo",
     "minMax": "Mín–Máx",
     "judges": "Jueces",
     "feedback": "Feedback",
     "reviews": "{count} rev.",
-    "legend": "Columnas de criterio: media sobre {scale}. Dispersión: desviación típica del total entre jueces (cuanto más alta, más desacuerdo).",
+    "legend": "Columnas de criterio: media sobre {scale}. «Desacuerdo» indica cuánto difieren las notas de los jueces: cuanto más alto, menos de acuerdo están.",
     "byJudge": "Evaluaciones por juez",
     "teamAverage": "{name} · media {average}",
     "chartLabel": "Media por proyecto",
@@ -844,7 +866,10 @@
     "currentSpace": "Espacio actual: {name}. Cambiar de espacio",
     "yourSpaces": "Tus espacios",
     "allSpaces": "Ver todos los espacios",
-    "newSpace": "Nuevo espacio"
+    "newSpace": "Nuevo espacio",
+    "advanced": "Opciones avanzadas",
+    "chooseFile": "Elegir archivo",
+    "noFile": "Ningún archivo elegido"
   },
   "adminHome": {
     "title": "Resumen",
@@ -853,11 +878,11 @@
   "overview": {
     "rubric": "Rúbrica",
     "rubricDetail": "{count, plural, one {# criterio} other {# criterios}} · pesos {weight} %",
-    "noCriteria": "Sin criterios",
+    "noCriteria": "Sin criterios: añádelos para poder evaluar",
     "page": "Página de evaluación",
     "published": "Publicada",
     "closed": "Cerrada",
-    "draft": "En preparación",
+    "draft": "En borrador: nadie puede evaluar todavía",
     "unitsDetail": "{count} · {empty} sin integrantes",
     "noneYet": "Ninguno todavía",
     "students": "Alumnado con cuenta",
@@ -866,13 +891,13 @@
     "evaluatorsDetail": "{people, plural, one {# persona} other {# personas}} · {panels, plural, one {# panel} other {# paneles}}",
     "agenda": "Agenda",
     "slots": "{count} turnos",
-    "noAgenda": "Sin agenda",
+    "noAgenda": "Sin agenda (puedes evaluar sin ella)",
     "notice": "Aviso de grabación",
     "noticePending": "{count, plural, one {# persona aún no lo ha confirmado} other {# personas aún no lo han confirmado}}",
     "noticeDone": "Todos lo han confirmado",
-    "recordingOff": "Grabación desactivada",
+    "recordingOff": "Desactivada (actívala si vais a grabar)",
     "prep": "Preparación",
-    "stepsDone": "{done} de {total} pasos",
+    "stepsDone": "{done} de {total} pasos imprescindibles",
     "progress": "Progreso de la preparación",
     "next": "Siguiente paso",
     "allReady": "{academic, select, true {Todo listo. Cuando empiecen las exposiciones, sigue el progreso aquí.} other {Todo listo. Cuando empiecen las defensas, sigue el progreso aquí.}}",
@@ -880,20 +905,21 @@
     "pending": "Pendiente",
     "optional": " · opcional",
     "evaluation": "Evaluación",
-    "sent": "enviadas",
-    "withMin": "{units} con ≥ {min}",
+    "sent": "evaluaciones enviadas",
+    "withMin": "{units} con suficientes evaluaciones",
     "notStarted": "evaluadores sin empezar",
     "missing": "Les faltan evaluaciones",
     "drafts": " (+{count} borrador)",
     "more": "… y {count} más",
     "recordings": "Grabaciones: {ready} listas · {processing} en proceso",
     "failed": "{count} requieren atención",
-    "results": "Ver resultados"
+    "results": "Ver resultados",
+    "publishedNoRubric": "Publicada, pero falta completar la rúbrica"
   },
   "settings": {
     "pageDescription": "Todo lo que define cómo funciona el espacio. Cada bloque se guarda por separado.",
     "pageTitle": "Ajustes del espacio",
-    "generalDescription": "Nombre, fase en la que estáis y cómo entra la gente.",
+    "generalDescription": "Nombre, idioma y fase del espacio.",
     "general": "General",
     "name": "Nombre del espacio",
     "phaseHint": "Al cerrar, nadie puede modificar evaluaciones y todo el profesorado y jurado ve los resultados.",
@@ -919,7 +945,8 @@
     "ai": "Inteligencia artificial",
     "aiHint": "Se añaden después de las reglas comunes, que siempre mandan: la IA nunca pondrá notas ni inventará contenido.",
     "aiLabel": "Indicaciones para la IA (opcional, máx. {max})",
-    "aiPlaceholder": "Céntrate en la metodología y en si las conclusiones se apoyan en datos."
+    "aiPlaceholder": "Céntrate en la metodología y en si las conclusiones se apoyan en datos.",
+    "advancedHint": "Código para unirse al espacio y si se puede usar"
   },
   "recordingsAdmin": {
     "noName": "(sin nombre)",
@@ -1083,7 +1110,7 @@
     "description": "Cuándo se abre la evaluación, cuántas opiniones hacen falta y cómo se calcula la nota.",
     "title": "Evaluación",
     "applied": "La propuesta se ha aplicado como borrador. Revísala y publícala cuando esté lista.",
-    "formDescription": "Versión {version}. Mientras esté en borrador, nadie puede evaluar.",
+    "formDescription": "Mientras esté en borrador, nadie puede evaluar.",
     "formTitle": "Página de evaluación",
     "statusHint": "Publícala para que el jurado pueda puntuar. Al cerrarla, nadie puede modificar evaluaciones.",
     "status": "Estado",
@@ -1115,7 +1142,10 @@
     "requirementsHint": "Uno por línea. El jurado debe marcarlos antes de enviar.",
     "requirements": "Requisitos obligatorios",
     "questionsHint": "Una por línea. Se responden con texto libre.",
-    "questions": "Preguntas adicionales"
+    "questions": "Preguntas adicionales",
+    "advancedHint": "Fechas, nota mínima, cálculo, rondas, requisitos y preguntas extra",
+    "rubricMissing": "Para poder publicar, primero <link>añade los criterios de la rúbrica</link>.",
+    "rubricWeights": "Los pesos de la rúbrica suman {total} %: <link>ajústalos a 100 %</link> para poder publicar."
   },
   "challengesAdmin": {
     "order": "Orden",
@@ -1300,7 +1330,9 @@
     "panelTeamsFailed": "No se han podido asignar los proyectos.",
     "panelNone": "Crea al menos un panel activo.",
     "panelAutoFailed": "No se ha podido completar el reparto automático.",
-    "assistantGroupsFailed": "No se han podido crear los grupos."
+    "assistantGroupsFailed": "No se han podido crear los grupos.",
+    "publishNoCriteria": "Antes de publicar, añade los criterios de la rúbrica (Evaluación → Rúbrica).",
+    "publishWeights": "Los pesos de la rúbrica suman {total} %; deben sumar 100 % para publicar."
   },
   "rubricEditor": {
     "levels": {

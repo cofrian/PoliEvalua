@@ -74,7 +74,7 @@ export default async function SpacesPage() {
                       </p>
                     ) : null}
                   </div>
-                  {active ? <span className="rounded-full bg-upv-blue/20 px-2.5 py-1 text-xs font-semibold">{t("last")}</span> : null}
+                  {active ? <span className="shrink-0 whitespace-nowrap rounded-full bg-upv-blue/20 px-2.5 py-1 text-xs font-semibold">{t("last")}</span> : null}
                 </div>
                 <form action={selectSpaceAction} className="mt-5">
                   <input name="eventId" type="hidden" value={space.id} />
