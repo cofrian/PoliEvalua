@@ -13,6 +13,10 @@ on:
         description: "Lanzar aunque no haya audio en cola (prueba)"
         type: boolean
         default: false
+      logs:
+        description: "Solo mostrar el registro de la última ejecución en Kaggle"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -33,7 +37,15 @@ jobs:
       # Token nuevo de Kaggle (Settings → API → Create New Token).
       KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
     steps:
+      - name: Registro de la última ejecución en Kaggle
+        if: inputs.logs
+        run: |
+          pip install -q --upgrade kaggle
+          kaggle kernels status "$KAGGLE_USERNAME/transcriptor-upv" || true
+          mkdir -p salida && kaggle kernels output "$KAGGLE_USERNAME/transcriptor-upv" -p salida || true
+          for f in salida/*.log salida/*.txt; do [ -f "$f" ] && tail -c 20000 "$f"; done
       - name: ¿Hay audio esperando?
+        if: ${{ !inputs.logs }}
         id: backlog
         run: |
           if [ -z "$KAGGLE_API_TOKEN" ] || [ -z "$KAGGLE_USERNAME" ] || [ -z "$WORKER_TOKEN" ]; then
@@ -44,10 +56,10 @@ jobs:
           if [ "${{ inputs.force }}" = "true" ]; then pending=forzado; fi
           echo "pending=$pending" >> "$GITHUB_OUTPUT"
       - name: Checkout
-        if: steps.backlog.outputs.pending != '0'
+        if: ${{ !inputs.logs && steps.backlog.outputs.pending != '0' }}
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: Lanzar en Kaggle si no está ya en marcha
-        if: steps.backlog.outputs.pending != '0'
+        if: ${{ !inputs.logs && steps.backlog.outputs.pending != '0' }}
         run: |
           pip install -q --upgrade kaggle
           status=$(kaggle kernels status "$KAGGLE_USERNAME/transcriptor-upv" 2>&1 || true)
