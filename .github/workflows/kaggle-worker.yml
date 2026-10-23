@@ -43,7 +43,7 @@ jobs:
           pip install -q --upgrade kaggle
           kaggle kernels status "$KAGGLE_USERNAME/transcriptor-upv" || true
           mkdir -p salida && kaggle kernels output "$KAGGLE_USERNAME/transcriptor-upv" -p salida || true
-          for f in salida/*.log salida/*.txt; do [ -f "$f" ] && tail -c 20000 "$f"; done
+          for f in salida/*.log salida/*.txt; do if [ -f "$f" ]; then tail -c 20000 "$f"; fi; done
       - name: ¿Hay audio esperando?
         if: ${{ !inputs.logs }}
         id: backlog
