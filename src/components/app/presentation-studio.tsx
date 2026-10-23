@@ -24,12 +24,17 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { JuryWeaknesses } from "@/components/app/jury-weaknesses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSegmentedRecorder, type RecordedSegment } from "@/hooks/use-segmented-recorder";
-import type { CriterionEvidence, PresentationInsights } from "@/lib/ai/presentation-insights";
+import type {
+  CriterionEvidence,
+  JuryWeakness,
+  PresentationInsights,
+} from "@/lib/ai/presentation-insights";
 import {
   createRecording,
   finalizeRecording,
@@ -76,6 +81,7 @@ export type PresentationRecord = {
   mind_map: PresentationInsights["mindMap"] | null;
   error_message: string | null;
   audio_deleted_at: string | null;
+  prompt_version: string | null;
   created_at: string;
   created_by: string;
   creator: { full_name: string } | null;
@@ -87,6 +93,7 @@ export type JuryReportRecord = {
   criteria_evidence: CriterionEvidence[];
   questions: string[];
   risks: string[];
+  weaknesses?: JuryWeakness[];
 };
 
 const MAX_SECONDS = 60 * 60;
@@ -294,6 +301,12 @@ function JuryReport({ report }: { report: JuryReportRecord }) {
               ) : null}
             </article>
           ))}
+        </div>
+      ) : null}
+
+      {report.weaknesses?.length ? (
+        <div className="mt-4">
+          <JuryWeaknesses weaknesses={report.weaknesses} />
         </div>
       ) : null}
 
@@ -980,6 +993,31 @@ export function PresentationStudio({
                           {record.transcript}
                         </p>
                       </details>
+                    ) : null}
+
+                    {record.status === "ready" ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span>
+                          {record.prompt_version
+                            ? `Análisis generado con los prompts v${record.prompt_version}.`
+                            : "Análisis generado con una versión de los prompts anterior a 2026.10."}
+                        </span>
+                        {canEdit && record.transcript ? (
+                          <Button
+                            disabled={activeId === record.id}
+                            onClick={() => {
+                              if (window.confirm("¿Regenerar el análisis? Se sustituirá el actual con los ajustes de IA vigentes.")) {
+                                void processRecord(record, true);
+                              }
+                            }}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            <Sparkles /> Regenerar análisis
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : null}
 
                     {canEdit && !processing && record.status !== "ready" ? (

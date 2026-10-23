@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { buildAsrPrompt, cleanAdminText, GLOSSARY_MAX } from "@/lib/ai/prompts/presentation";
 import {
   getPresentationApiSession,
   PresentationAccessError,
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     const [{ data: team }, { data: event }] = await Promise.all([
       session.supabase
         .from("teams")
-        .select("id")
+        .select("id, name, project_title, challenge:challenges(name)")
         .eq("id", parsed.data.teamId)
         .eq("event_id", session.eventId)
         .maybeSingle(),
@@ -60,6 +61,26 @@ export async function POST(request: Request) {
     await recordAttempt(admin, "transcription", rateKeys);
 
     const id = crypto.randomUUID();
+    // Pista de vocabulario para Whisper: se calcula una vez por grabación.
+    const { data: rubric } = await admin
+      .from("rubrics")
+      .select("rubric_criteria(title, deleted_at)")
+      .eq("event_id", session.eventId)
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const challenge = team.challenge as unknown as { name: string } | { name: string }[] | null;
+    const settings = event?.settings as { ai?: { glossary?: unknown } } | null;
+    const asrPrompt = buildAsrPrompt({
+      teamName: team.name,
+      projectTitle: team.project_title,
+      challengeName: (Array.isArray(challenge) ? challenge[0] : challenge)?.name,
+      criteria: ((rubric?.rubric_criteria ?? []) as { title: string; deleted_at: string | null }[])
+        .filter((criterion) => !criterion.deleted_at)
+        .map((criterion) => criterion.title),
+      glossary: cleanAdminText(settings?.ai?.glossary, GLOSSARY_MAX),
+    });
     const { error } = await session.supabase.from("presentation_recordings").insert({
       id,
       event_id: session.eventId,
@@ -71,6 +92,7 @@ export async function POST(request: Request) {
       language: process.env.TRANSCRIPTION_LANGUAGE || "es",
       visibility: parsed.data.visibility,
       status: "uploading",
+      asr_prompt: asrPrompt,
     });
     if (error) {
       console.error("No se pudo crear la grabación:", error.message);

@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     .from("presentation_segments")
     .update({ status: "transcribing" })
     .eq("id", job.segment_id)
-    .select("storage_path, mime_type, start_ms, end_ms, recording:presentation_recordings(language)")
+    .select("storage_path, mime_type, start_ms, end_ms, recording:presentation_recordings(language, asr_prompt)")
     .maybeSingle();
   if (!segment) {
     await admin.from("processing_jobs").update({ status: "failed" }).eq("id", job.id);
@@ -58,13 +58,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "Audio no disponible." }, { status: 500 });
   }
 
-  const recording = segment.recording as unknown as { language: string } | null;
+  const recording = segment.recording as unknown as { language: string; asr_prompt: string | null } | null;
   return Response.json({
     jobId: job.id,
     attempt: job.attempts,
     audioUrl: signed.signedUrl,
     mimeType: segment.mime_type,
     language: (recording?.language ?? "es").split("-")[0],
+    // Los trabajadores antiguos ignoran este campo.
+    prompt: recording?.asr_prompt ?? null,
     durationSeconds: Math.round((segment.end_ms - segment.start_ms) / 1000),
     leaseSeconds: EXTERNAL_LEASE_SECONDS,
   });

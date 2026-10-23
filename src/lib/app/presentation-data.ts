@@ -14,7 +14,7 @@ export async function loadPresentationData(
     supabase
       .from("presentation_recordings")
       .select(
-        "id, title, status, visibility, duration_seconds, size_bytes, segments_expected, transcript, summary, key_points, outline, action_items, mind_map, error_message, audio_deleted_at, created_at, created_by, creator:profiles!presentation_recordings_created_by_fkey(full_name), segments:presentation_segments(seq, status, transcript)",
+        "id, title, status, visibility, duration_seconds, size_bytes, segments_expected, transcript, summary, key_points, outline, action_items, mind_map, error_message, audio_deleted_at, prompt_version, created_at, created_by, creator:profiles!presentation_recordings_created_by_fkey(full_name), segments:presentation_segments(seq, status, transcript)",
       )
       .eq("event_id", eventId)
       .eq("team_id", teamId)
@@ -23,7 +23,7 @@ export async function loadPresentationData(
       .order("seq", { referencedTable: "presentation_segments" }),
     supabase
       .from("presentation_jury_reports")
-      .select("recording_id, criteria_evidence, questions, risks")
+      .select("recording_id, criteria_evidence, questions, risks, weaknesses")
       .eq("event_id", eventId)
       .eq("team_id", teamId),
   ]);
