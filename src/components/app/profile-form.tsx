@@ -58,8 +58,11 @@ export function ProfileForm({
             label={t("photo")}
             name="avatar"
             onChange={(event) => {
+              // Vista previa local: solo imágenes y solo URLs blob: creadas por el navegador.
               const file = event.target.files?.[0];
-              if (file) setPreview(URL.createObjectURL(file));
+              if (!file || !file.type.startsWith("image/")) return;
+              const url = URL.createObjectURL(file);
+              if (url.startsWith("blob:")) setPreview(url);
             }}
           />
           {avatarUrl ? (
