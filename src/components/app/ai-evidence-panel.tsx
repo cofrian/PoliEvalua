@@ -1,13 +1,15 @@
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
-import type { CriterionEvidence } from "@/lib/ai/presentation-insights";
+import { JuryWeaknesses } from "@/components/app/jury-weaknesses";
+import type { CriterionEvidence, JuryWeakness } from "@/lib/ai/presentation-insights";
 
 export type AiEvidence = {
   recordingTitle: string;
   criteria: CriterionEvidence[];
   questions: string[];
   risks: string[];
+  weaknesses: JuryWeakness[];
 } | null;
 
 const coverageLabels: Record<CriterionEvidence["coverage"], string> = {
@@ -76,6 +78,7 @@ export function AiEvidencePanel({
               )}
             </details>
           ))}
+          <JuryWeaknesses compact weaknesses={evidence.weaknesses} />
           {evidence.questions.length ? (
             <div>
               <p className="mb-1 font-semibold">Preguntas sugeridas</p>

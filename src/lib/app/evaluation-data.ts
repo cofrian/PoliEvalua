@@ -3,7 +3,7 @@ import "server-only";
 import type { AiEvidence } from "@/components/app/ai-evidence-panel";
 import type { Criterion, EvaluationPageConfig } from "@/components/app/evaluation-form";
 import type { Note } from "@/components/app/notes-panel";
-import type { CriterionEvidence } from "@/lib/ai/presentation-insights";
+import type { CriterionEvidence, JuryWeakness } from "@/lib/ai/presentation-insights";
 import type { getSession } from "@/lib/app/session";
 
 type Session = Awaited<ReturnType<typeof getSession>>;
@@ -100,7 +100,7 @@ export async function loadEvaluationContext(
       supabase
         .from("presentation_jury_reports")
         .select(
-          "criteria_evidence, questions, risks, created_at, recording:presentation_recordings!inner(title, status, deleted_at)",
+          "criteria_evidence, questions, risks, weaknesses, created_at, recording:presentation_recordings!inner(title, status, deleted_at)",
         )
         .eq("event_id", event.id)
         .eq("team_id", teamId)
@@ -127,6 +127,7 @@ export async function loadEvaluationContext(
         criteria: (report.criteria_evidence ?? []) as CriterionEvidence[],
         questions: (report.questions ?? []) as string[],
         risks: (report.risks ?? []) as string[],
+        weaknesses: (report.weaknesses ?? []) as JuryWeakness[],
       }
     : null;
 

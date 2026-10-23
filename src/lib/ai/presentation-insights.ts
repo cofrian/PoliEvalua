@@ -52,9 +52,24 @@ export const juryQuestionsSchema = z.object({
   risks: z.array(z.string().trim().min(5).max(400)).max(8),
 });
 
+export const juryWeaknessSchema = z.object({
+  /** Criterio de la rúbrica, o «General» si no encaja en ninguno. */
+  criterion: z.string().trim().min(2).max(200),
+  weakness: z.string().trim().min(5).max(500),
+  /** Cita literal que lo muestra; null si el punto débil es que no se trató. */
+  quote: z.string().trim().min(3).max(600).nullable(),
+  question: z.string().trim().min(5).max(400),
+});
+
+export const juryWeaknessesSchema = z.object({
+  weaknesses: z.array(juryWeaknessSchema).max(16),
+});
+
 export type CriterionEvidence = z.infer<typeof criterionEvidenceSchema>;
+export type JuryWeakness = z.infer<typeof juryWeaknessSchema>;
 export type JuryReport = {
   criteria: CriterionEvidence[];
   questions: string[];
   risks: string[];
+  weaknesses: JuryWeakness[];
 };
