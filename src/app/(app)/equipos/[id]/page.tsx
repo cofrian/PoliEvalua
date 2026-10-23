@@ -170,6 +170,7 @@ export default async function TeamPage({
               </summary>
               <div className="mt-4">
                 <AdminTeamEditor
+                  individual={words.mode === "individuals"}
                   allowDelete={false}
                   challenges={challenges ?? []}
                   team={team as unknown as AdminTeam}
