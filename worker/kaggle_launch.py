@@ -35,7 +35,8 @@ open("worker.py", "w", encoding="utf-8").write(WORKER_SOURCE)
 
 import nvidia.cublas.lib, nvidia.cudnn.lib
 
-libs = [os.path.dirname(nvidia.cublas.lib.__file__), os.path.dirname(nvidia.cudnn.lib.__file__)]
+# Son paquetes de espacio de nombres: no tienen __file__, sí __path__.
+libs = [list(nvidia.cublas.lib.__path__)[0], list(nvidia.cudnn.lib.__path__)[0]]
 try:
     gpus = len(subprocess.check_output(["nvidia-smi", "-L"], text=True).strip().splitlines())
 except Exception:

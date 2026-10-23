@@ -71,7 +71,7 @@ import time
 import nvidia.cublas.lib
 import nvidia.cudnn.lib
 """ + (KAGGLE_SECRET if kaggle else COLAB_SECRET) + """
-libs = [os.path.dirname(nvidia.cublas.lib.__file__), os.path.dirname(nvidia.cudnn.lib.__file__)]
+libs = [list(nvidia.cublas.lib.__path__)[0], list(nvidia.cudnn.lib.__path__)[0]]
 try:
     gpu_count = len(subprocess.check_output(["nvidia-smi", "-L"], text=True).strip().splitlines())
 except Exception:
