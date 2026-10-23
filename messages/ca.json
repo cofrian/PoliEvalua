@@ -811,7 +811,9 @@
     "code": "Codi inicial",
     "codeHint": "Tria quins perfils poden donar-se d'alta amb el codi. La resta necessitarà una invitació personal.",
     "creating": "Creant l'espai…",
-    "create": "Crear l'espai"
+    "create": "Crear l'espai",
+    "questionsTitle": "Per a preparar-ho millor necessite saber:",
+    "questionsHint": "Afig les respostes a la descripció de dalt i torna a prémer «Preparar amb IA»."
   },
   "recordingNotice": {
     "default": "Les exposicions d'este espai es gravaran per a transcriure-les automàticament i preparar un resum i materials de suport per a l'avaluació. L'àudio no es guarda: s'esborra tan prompte com es convertix en text. Només es conserven la transcripció i els materials generats, que veuen únicament les persones autoritzades de l'espai.",
@@ -996,7 +998,7 @@
     "autoText": "Cada jutge només podrà votar els projectes assignats a algun dels seus panells. Propietaris i gestors mantenen l'accés de supervisió.",
     "round": "Ronda",
     "autoButton": "Repartir equilibradament",
-    "emptyText": "Sense panells, qualsevol persona avaluadora pot puntuar-los tots. Crea panells a baix si voleu repartir la faena per sales o especialitats.",
+    "emptyText": "Sense panells, qualsevol persona avaluadora pot puntuar-los tots. Crea panells més avall si voleu repartir la faena per sales o especialitats.",
     "emptyTitle": "Encara no hi ha panells",
     "name": "Nom del panell",
     "descriptionLabel": "Descripció del panell",
@@ -1145,7 +1147,7 @@
     "clear": "Esborrar l'agenda",
     "clearText": "S'eliminen tots els torns. Les avaluacions i gravacions no es toquen.",
     "clearTitle": "Vols esborrar tota l'agenda?",
-    "emptyText": "Tria sales, durada i hora d'inici a dalt i es repartiran els {units} en torns. Després podràs reordenar-los.",
+    "emptyText": "Tria sales, durada i hora d'inici més amunt i es repartiran els {units} en torns. Després podràs reordenar-los.",
     "emptyTitle": "Encara no hi ha torns",
     "rooms": "Sales (separades per comes)",
     "defaultRoom": "Aula 1",
@@ -1297,7 +1299,8 @@
     "panelMembersFailed": "No s'han pogut assignar les persones del panell.",
     "panelTeamsFailed": "No s'han pogut assignar els projectes.",
     "panelNone": "Crea almenys un panell actiu.",
-    "panelAutoFailed": "No s'ha pogut completar el repartiment automàtic."
+    "panelAutoFailed": "No s'ha pogut completar el repartiment automàtic.",
+    "assistantGroupsFailed": "No s'han pogut crear els grups."
   },
   "rubricEditor": {
     "levels": {
@@ -1367,5 +1370,65 @@
   "spaceDefaults": {
     "rubric": "Rúbrica principal",
     "evaluationPage": "Avaluació · {space}"
+  },
+  "assistant": {
+    "title": "Assistent de l'espai",
+    "intro": "Demana-li que prepare l'avaluació i la rúbrica, cree els grups o munte l'agenda. Si li falta alguna cosa, t'ho preguntarà.",
+    "notConfigured": "Falta configurar <code>NVIDIA_API_KEY</code> en el servidor. La interfície ja està preparada.",
+    "examplesTitle": "Per exemple:",
+    "example1": "Crea una rúbrica per a Projectes d'IA de 2n: cinc criteris, escala de l'1 al 5 i requisits de demostració, memòria i repositori.",
+    "example2": "Crea 8 grups numerats per a l'assignatura.",
+    "example3": "Munta l'agenda del dijous que ve a les 9:00 en les aules 1.1 i 1.2, torns de 12 minuts.",
+    "questionsTitle": "Per a preparar-ho necessite saber:",
+    "apply": "Confirmar i aplicar",
+    "discard": "Descartar",
+    "applied": "Aplicada",
+    "discarded": "Descartada",
+    "thinking": "Pensant… pot tardar fins a un minut.",
+    "inputLabel": "Missatge per a l'assistent",
+    "placeholder": "Què vols preparar en este espai?",
+    "replyPlaceholder": "Respon o demana un canvi…",
+    "safety": "Només prepara propostes: no s'aplica res fins que ho confirmes. Ctrl+Intro per a enviar.",
+    "sending": "Enviant…",
+    "send": "Enviar",
+    "newThread": "Conversa nova",
+    "threads": "Converses",
+    "errors": {
+      "noAnswer": "No s'ha pogut obtindre una resposta.",
+      "generic": "S'ha produït un error.",
+      "length": "Escriu un missatge d'entre 3 i 4.000 caràcters.",
+      "login": "Has d'iniciar la sessió.",
+      "chooseSpace": "Selecciona primer un espai.",
+      "onlyManagers": "Només una persona propietària o gestora pot usar l'assistent.",
+      "rateLimit": "Has arribat al límit temporal de l'assistent. Espera deu minuts.",
+      "notConfigured": "L'assistent està preparat, però falta configurar NVIDIA_API_KEY en el servidor.",
+      "agendaNeedsGroups": "Per a muntar l'agenda primer calen {units}. Vols que els cree?",
+      "saveFailed": "La resposta s'ha generat, però no s'ha pogut guardar.",
+      "invalid": "La IA no ha pogut preparar una resposta vàlida. Torna-ho a provar amb més detall."
+    },
+    "preview": {
+      "page": "Pàgina proposada",
+      "rubric": "Rúbrica · {name}",
+      "scale": "Escala:",
+      "requirements": "Requisits:",
+      "questions": "Preguntes:",
+      "minEvaluations": "Avaluacions mínimes:",
+      "subject": "Assignatura:",
+      "panels": "Panells:",
+      "panelsLater": "per configurar",
+      "evaluationNote": "Aplicar crea un esborrany nou de la pàgina i una versió activa nova de la rúbrica. Les avaluacions antigues es conserven.",
+      "groupsTitle": "{groups, plural, one {# grup nou} other {# grups nous}} · {members, plural, one {# integrant} other {# integrants}}",
+      "noMembers": "Encara sense integrants",
+      "groupsNote": "S'afigen als que ja hi ha; si algun es diu igual que un existent, no es duplica. Els correus s'afigen després en Gestionar grups.",
+      "agendaTitle": "Agenda d'exposicions",
+      "rooms": "Sales:",
+      "start": "Comença:",
+      "slots": "Torns:",
+      "slotsValue": "{duration} min, amb {gap} min de descans",
+      "order": "Orde:",
+      "random": "a l'atzar",
+      "byNumber": "per número",
+      "agendaNote": "Substituïx l'agenda actual si ja n'hi ha una. Després pots reordenar els torns en Organitzar l'agenda."
+    }
   }
 }

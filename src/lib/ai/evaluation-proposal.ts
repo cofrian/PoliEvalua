@@ -81,7 +81,57 @@ export const assistantResponseSchema = z.object({
   proposal: evaluationProposalSchema.nullable(),
 });
 
+/** Crear grupos o equipos con sus integrantes (solo nombres; los correos se añaden después). */
+export const groupsActionSchema = z.object({
+  type: z.literal("groups"),
+  groups: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(120),
+        projectTitle: z.string().trim().max(200).nullable(),
+        members: z.array(z.string().trim().min(2).max(120)).max(20),
+      }),
+    )
+    .min(1)
+    .max(80),
+});
+
+/** Generar la agenda de exposiciones con los grupos que ya existen. */
+export const agendaActionSchema = z.object({
+  type: z.literal("agenda"),
+  rooms: z.array(z.string().trim().min(1).max(80)).min(1).max(20),
+  /** Hora de Valencia, «AAAA-MM-DDTHH:MM». */
+  start: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+  durationMinutes: z.number().int().min(1).max(240),
+  gapMinutes: z.number().int().min(0).max(120),
+  order: z.enum(["number", "random"]),
+});
+
+export const evaluationActionSchema = z.object({
+  type: z.literal("evaluation"),
+  proposal: evaluationProposalSchema,
+});
+
+export const assistantActionSchema = z.discriminatedUnion("type", [
+  evaluationActionSchema,
+  groupsActionSchema,
+  agendaActionSchema,
+]);
+
+/**
+ * Respuesta del asistente en una conversación. Si falta algo imprescindible
+ * para la acción, `questions` lo pide y `action` es null: nunca se inventa.
+ */
+export const assistantChatSchema = z.object({
+  scope: z.enum(["space", "out_of_scope"]),
+  reply: z.string().trim().min(2).max(2000),
+  questions: z.array(z.string().trim().min(3).max(300)).max(5),
+  action: assistantActionSchema.nullable(),
+});
+
 export type EvaluationProposal = z.infer<typeof evaluationProposalSchema>;
+export type AssistantAction = z.infer<typeof assistantActionSchema>;
+export type AssistantChat = z.infer<typeof assistantChatSchema>;
 export type AssistantResponse = z.infer<typeof assistantResponseSchema>;
 
 function safeKey(value: string | undefined, prefix: string, index: number) {

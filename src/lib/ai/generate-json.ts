@@ -44,6 +44,7 @@ export async function generateJson<T>({
   system,
   prompt,
   abortSignal,
+  history = [],
   maxOutputTokens = 5000,
 }: {
   provider: Provider;
@@ -52,9 +53,11 @@ export async function generateJson<T>({
   system: string;
   prompt: string;
   abortSignal: AbortSignal;
+  /** Turnos anteriores de la conversación, del más antiguo al más reciente. */
+  history?: ModelMessage[];
   maxOutputTokens?: number;
 }): Promise<T> {
-  const messages: ModelMessage[] = [{ role: "user", content: prompt }];
+  const messages: ModelMessage[] = [...history, { role: "user", content: prompt }];
   let lastProblem = "";
 
   for (let attempt = 0; attempt < 2; attempt += 1) {

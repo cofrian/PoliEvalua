@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LOCALE_RULE, type SpaceLocale } from "@/lib/ai/prompts/presentation";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -24,6 +24,8 @@ const requestSchema = z.object({
 
 const spaceDraftSchema = z.object({
   reply: z.string().trim().min(2).max(2000),
+  /** Lo imprescindible que falta; si hay preguntas, space puede ser null. */
+  questions: z.array(z.string().trim().min(3).max(300)).max(5),
   space: z.object({
     kind: z.enum(["hackathon", "class", "awards", "project", "custom"]),
     name: z.string().trim().min(3).max(100),
@@ -37,7 +39,7 @@ const spaceDraftSchema = z.object({
       .array(z.enum(["judge", "mentor", "teacher", "student", "reviewer", "viewer"]))
       .min(1),
     joinRoles: z.array(z.enum(["judge", "mentor", "student", "reviewer", "viewer"])),
-  }),
+  }).nullable(),
   proposal: evaluationProposalSchema.nullable(),
 });
 
@@ -59,17 +61,16 @@ Reglas obligatorias:
 - Si es docencia, rellena academic con institución (por defecto Universitat Politècnica de València), asignatura y lo que indique el usuario.
 - Si la evaluación es solo de comentarios o no hay datos para una rúbrica, devuelve proposal null.
 - No incluyas datos personales ni otorgues notas o ganadores.
-- En reply resume en dos o tres frases lo que has configurado y qué conviene revisar.`;
+- En reply resume en dos o tres frases lo que has configurado y qué conviene revisar.
+- Si no queda claro qué tipo de actividad es, quién participa o qué se evalúa, NO lo inventes: devuelve space null y proposal null y pregunta en questions (máximo 5 preguntas cortas). Si con lo que hay ya puedes configurar el espacio pero no la rúbrica, configura el espacio, deja proposal null y pregunta lo que falta para la rúbrica.`;
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
   const locale = (await getLocale()) as SpaceLocale;
+  const t = await getTranslations("assistant.errors");
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Escribe una descripción de entre 3 y 4.000 caracteres." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: t("length") }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -77,24 +78,18 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Debes iniciar sesión." }, { status: 401 });
+    return NextResponse.json({ error: t("login") }, { status: 401 });
   }
 
   const admin = createAdminClient();
   const rateKeys = [`assistant:user:${user.id}`, `assistant:ip:${await clientIp()}`];
   if (await isBlocked(admin, "assistant", rateKeys)) {
-    return NextResponse.json(
-      { error: "Has alcanzado el límite temporal del asistente. Espera diez minutos." },
-      { status: 429 },
-    );
+    return NextResponse.json({ error: t("rateLimit") }, { status: 429 });
   }
   await recordAttempt(admin, "assistant", rateKeys);
 
   if (!aiConfigured()) {
-    return NextResponse.json(
-      { error: "Falta configurar NVIDIA_API_KEY en el servidor." },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: t("notConfigured") }, { status: 503 });
   }
 
   const provider = createOpenAICompatible({
@@ -119,23 +114,23 @@ export async function POST(request: Request) {
       { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 60_000 },
     );
 
-    const space = {
-      ...output.space,
-      joinRoles: output.space.joinRoles.filter((role) =>
-        (output.space.enabledRoles as string[]).includes(role),
-      ),
-    };
+    const space = output.space
+      ? {
+          ...output.space,
+          joinRoles: output.space.joinRoles.filter((role) =>
+            (output.space!.enabledRoles as string[]).includes(role),
+          ),
+        }
+      : null;
 
     return NextResponse.json({
       reply: output.reply,
+      questions: output.questions,
       space,
       proposal: output.proposal ? normalizeEvaluationProposal(output.proposal) : null,
       model: modelId,
     });
   } catch (error) {
-    return aiErrorResponse(
-      error,
-      "NVIDIA no ha podido generar una configuración válida. Prueba con una descripción más concreta.",
-    );
+    return aiErrorResponse(error, t("invalid"));
   }
 }

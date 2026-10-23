@@ -811,7 +811,9 @@
     "code": "Código inicial",
     "codeHint": "Elige qué perfiles pueden darse de alta con el código. Los demás necesitarán una invitación personal.",
     "creating": "Creando espacio…",
-    "create": "Crear espacio"
+    "create": "Crear espacio",
+    "questionsTitle": "Para prepararlo mejor necesito saber:",
+    "questionsHint": "Añade las respuestas a la descripción de arriba y vuelve a pulsar «Preparar con IA»."
   },
   "recordingNotice": {
     "default": "Las exposiciones de este espacio se grabarán para transcribirlas automáticamente y preparar un resumen y materiales de apoyo para la evaluación. El audio no se guarda: se borra en cuanto se convierte en texto. Se conservan solo la transcripción y los materiales generados, que ven únicamente las personas autorizadas del espacio.",
@@ -1297,7 +1299,8 @@
     "panelMembersFailed": "No se han podido asignar las personas del panel.",
     "panelTeamsFailed": "No se han podido asignar los proyectos.",
     "panelNone": "Crea al menos un panel activo.",
-    "panelAutoFailed": "No se ha podido completar el reparto automático."
+    "panelAutoFailed": "No se ha podido completar el reparto automático.",
+    "assistantGroupsFailed": "No se han podido crear los grupos."
   },
   "rubricEditor": {
     "levels": {
@@ -1367,5 +1370,65 @@
   "spaceDefaults": {
     "rubric": "Rúbrica principal",
     "evaluationPage": "Evaluación · {space}"
+  },
+  "assistant": {
+    "title": "Asistente del espacio",
+    "intro": "Pídele que prepare la evaluación y la rúbrica, cree los grupos o monte la agenda. Si le falta algo, te lo preguntará.",
+    "notConfigured": "Falta configurar <code>NVIDIA_API_KEY</code> en el servidor. La interfaz ya está preparada.",
+    "examplesTitle": "Por ejemplo:",
+    "example1": "Crea una rúbrica para Proyectos de IA de 2.º: cinco criterios, escala del 1 al 5 y requisitos de demo, memoria y repositorio.",
+    "example2": "Crea 8 grupos numerados para la asignatura.",
+    "example3": "Monta la agenda del jueves que viene a las 9:00 en las aulas 1.1 y 1.2, turnos de 12 minutos.",
+    "questionsTitle": "Para prepararlo necesito saber:",
+    "apply": "Confirmar y aplicar",
+    "discard": "Descartar",
+    "applied": "Aplicada",
+    "discarded": "Descartada",
+    "thinking": "Pensando… puede tardar hasta un minuto.",
+    "inputLabel": "Mensaje para el asistente",
+    "placeholder": "¿Qué quieres preparar en este espacio?",
+    "replyPlaceholder": "Responde o pide un cambio…",
+    "safety": "Solo prepara propuestas: nada se aplica hasta que confirmes. Ctrl+Intro para enviar.",
+    "sending": "Enviando…",
+    "send": "Enviar",
+    "newThread": "Nueva conversación",
+    "threads": "Conversaciones",
+    "errors": {
+      "noAnswer": "No se ha podido obtener una respuesta.",
+      "generic": "Ha ocurrido un error.",
+      "length": "Escribe un mensaje de entre 3 y 4.000 caracteres.",
+      "login": "Debes iniciar sesión.",
+      "chooseSpace": "Selecciona primero un espacio.",
+      "onlyManagers": "Solo una persona propietaria o gestora puede usar el asistente.",
+      "rateLimit": "Has alcanzado el límite temporal del asistente. Espera diez minutos.",
+      "notConfigured": "El asistente está preparado, pero falta configurar NVIDIA_API_KEY en el servidor.",
+      "agendaNeedsGroups": "Para montar la agenda primero hacen falta {units}. ¿Quieres que los cree?",
+      "saveFailed": "La respuesta se generó, pero no se pudo guardar.",
+      "invalid": "La IA no ha podido preparar una respuesta válida. Inténtalo de nuevo con más detalle."
+    },
+    "preview": {
+      "page": "Página propuesta",
+      "rubric": "Rúbrica · {name}",
+      "scale": "Escala:",
+      "requirements": "Requisitos:",
+      "questions": "Preguntas:",
+      "minEvaluations": "Evaluaciones mínimas:",
+      "subject": "Asignatura:",
+      "panels": "Paneles:",
+      "panelsLater": "por configurar",
+      "evaluationNote": "Aplicar crea un nuevo borrador de página y una nueva versión activa de la rúbrica. Las evaluaciones antiguas se conservan.",
+      "groupsTitle": "{groups, plural, one {# grupo nuevo} other {# grupos nuevos}} · {members, plural, one {# integrante} other {# integrantes}}",
+      "noMembers": "Sin integrantes todavía",
+      "groupsNote": "Se añaden a los que ya hay; si alguno se llama igual que uno existente, no se duplica. Los correos se añaden después en Gestionar grupos.",
+      "agendaTitle": "Agenda de exposiciones",
+      "rooms": "Salas:",
+      "start": "Empieza:",
+      "slots": "Turnos:",
+      "slotsValue": "{duration} min, con {gap} min de descanso",
+      "order": "Orden:",
+      "random": "al azar",
+      "byNumber": "por número",
+      "agendaNote": "Sustituye la agenda actual si ya hay una. Después puedes reordenar los turnos en Organizar agenda."
+    }
   }
 }

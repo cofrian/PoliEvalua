@@ -111,6 +111,7 @@ export function CreateSpaceForm() {
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [draftReply, setDraftReply] = useState<string | null>(null);
+  const [draftQuestions, setDraftQuestions] = useState<string[]>([]);
   const [draftVersion, setDraftVersion] = useState(0);
   const [identity, setIdentity] = useState({ name: "", description: "" });
   const [draftAcademic, setDraftAcademic] = useState<EvaluationProposal["academic"]>(null);
@@ -128,8 +129,14 @@ export function CreateSpaceForm() {
         body: JSON.stringify({ message: prompt }),
       });
       const body = await response.json().catch(() => null);
-      if (!response.ok || !body?.space) {
+      if (!response.ok || !body?.reply) {
         setDraftError(body?.error ?? t("draftError"));
+        return;
+      }
+      setDraftQuestions(Array.isArray(body.questions) ? body.questions : []);
+      // Demasiado vago: el asistente pregunta y el formulario no se toca.
+      if (!body.space) {
+        setDraftReply(body.reply);
         return;
       }
       const space = body.space;
@@ -207,7 +214,18 @@ export function CreateSpaceForm() {
           ) : null}
         </div>
         {draftError ? <p className="text-sm text-destructive" role="alert">{draftError}</p> : null}
-        {draftReply ? <p className="text-sm">{t("reviewAndCreate", { reply: draftReply })}</p> : null}
+        {draftReply ? (
+          <p className="text-sm">{draftQuestions.length ? draftReply : t("reviewAndCreate", { reply: draftReply })}</p>
+        ) : null}
+        {draftQuestions.length ? (
+          <div className="rounded-lg bg-upv-yellow/15 p-3 text-sm" role="status">
+            <p className="font-semibold">{t("questionsTitle")}</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              {draftQuestions.map((question) => <li key={question}>{question}</li>)}
+            </ul>
+            <p className="mt-2 text-xs text-muted-foreground">{t("questionsHint")}</p>
+          </div>
+        ) : null}
       </section>
       {proposal ? <input name="assistantProposal" type="hidden" value={JSON.stringify(proposal)} /> : null}
       {proposal ? <input name="assistantPrompt" type="hidden" value={prompt} /> : null}

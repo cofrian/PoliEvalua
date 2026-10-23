@@ -811,7 +811,9 @@
     "code": "Initial code",
     "codeHint": "Choose which roles can sign up with the code. The rest will need a personal invitation.",
     "creating": "Creating space…",
-    "create": "Create space"
+    "create": "Create space",
+    "questionsTitle": "To prepare it better I need to know:",
+    "questionsHint": "Add your answers to the description above and press “Prepare with AI” again."
   },
   "recordingNotice": {
     "default": "Presentations in this space will be recorded to transcribe them automatically and prepare a summary and support materials for the evaluation. The audio isn't kept: it's deleted as soon as it becomes text. Only the transcript and the generated materials are kept, and only authorized people in the space can see them.",
@@ -1297,7 +1299,8 @@
     "panelMembersFailed": "The panel members couldn't be assigned.",
     "panelTeamsFailed": "The projects couldn't be assigned.",
     "panelNone": "Create at least one active panel.",
-    "panelAutoFailed": "The automatic assignment couldn't be completed."
+    "panelAutoFailed": "The automatic assignment couldn't be completed.",
+    "assistantGroupsFailed": "The groups couldn't be created."
   },
   "rubricEditor": {
     "levels": {
@@ -1367,5 +1370,65 @@
   "spaceDefaults": {
     "rubric": "Main rubric",
     "evaluationPage": "Evaluation · {space}"
+  },
+  "assistant": {
+    "title": "Space assistant",
+    "intro": "Ask it to prepare the evaluation and rubric, create the groups or build the schedule. If something is missing, it will ask you.",
+    "notConfigured": "<code>NVIDIA_API_KEY</code> isn't configured on the server yet. The interface is ready.",
+    "examplesTitle": "For example:",
+    "example1": "Create a rubric for 2nd-year AI Projects: five criteria, a 1–5 scale and demo, report and repository requirements.",
+    "example2": "Create 8 numbered groups for the course.",
+    "example3": "Build next Thursday's schedule at 9:00 in rooms 1.1 and 1.2, 12-minute slots.",
+    "questionsTitle": "To prepare it I need to know:",
+    "apply": "Confirm and apply",
+    "discard": "Discard",
+    "applied": "Applied",
+    "discarded": "Discarded",
+    "thinking": "Thinking… it can take up to a minute.",
+    "inputLabel": "Message for the assistant",
+    "placeholder": "What do you want to set up in this space?",
+    "replyPlaceholder": "Answer or ask for a change…",
+    "safety": "It only prepares proposals: nothing is applied until you confirm. Ctrl+Enter to send.",
+    "sending": "Sending…",
+    "send": "Send",
+    "newThread": "New conversation",
+    "threads": "Conversations",
+    "errors": {
+      "noAnswer": "No answer could be obtained.",
+      "generic": "Something went wrong.",
+      "length": "Write a message between 3 and 4,000 characters.",
+      "login": "You need to sign in.",
+      "chooseSpace": "Choose a space first.",
+      "onlyManagers": "Only an owner or manager can use the assistant.",
+      "rateLimit": "You've reached the assistant's temporary limit. Wait ten minutes.",
+      "notConfigured": "The assistant is ready, but NVIDIA_API_KEY isn't configured on the server.",
+      "agendaNeedsGroups": "To build the schedule you need {units} first. Do you want me to create them?",
+      "saveFailed": "The answer was generated but couldn't be saved.",
+      "invalid": "The AI couldn't prepare a valid answer. Try again with more detail."
+    },
+    "preview": {
+      "page": "Proposed page",
+      "rubric": "Rubric · {name}",
+      "scale": "Scale:",
+      "requirements": "Requirements:",
+      "questions": "Questions:",
+      "minEvaluations": "Minimum evaluations:",
+      "subject": "Course:",
+      "panels": "Panels:",
+      "panelsLater": "to be set up",
+      "evaluationNote": "Applying creates a new draft page and a new active rubric version. Older evaluations are kept.",
+      "groupsTitle": "{groups, plural, one {# new group} other {# new groups}} · {members, plural, one {# member} other {# members}}",
+      "noMembers": "No members yet",
+      "groupsNote": "They're added to the existing ones; any with the same name as an existing one isn't duplicated. Emails are added later in Manage groups.",
+      "agendaTitle": "Presentation schedule",
+      "rooms": "Rooms:",
+      "start": "Starts:",
+      "slots": "Slots:",
+      "slotsValue": "{duration} min, with {gap} min break",
+      "order": "Order:",
+      "random": "at random",
+      "byNumber": "by number",
+      "agendaNote": "Replaces the current schedule if there is one. You can reorder slots afterwards in Organize schedule."
+    }
   }
 }

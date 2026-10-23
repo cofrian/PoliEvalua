@@ -1,6 +1,7 @@
 "use server";
 
 import { adminMessage } from "@/lib/app/admin-messages";
+import { buildAgenda } from "@/lib/app/agenda-builder";
 import { isLocale } from "@/i18n/config";
 import { isSpokenLanguage } from "@/lib/app/recording-notice";
 import { createHash, randomBytes } from "node:crypto";
@@ -260,26 +261,14 @@ export async function updateAiSettingsAction(formData: FormData) {
 
 // ========== AGENDA ==========
 
-/** Convierte «2026-11-05T09:30» (hora de Valencia) a un instante UTC. */
-function madridLocalToUtc(value: string) {
-  const asUtc = new Date(`${value}:00Z`);
-  if (Number.isNaN(asUtc.getTime())) return null;
-  const madrid = new Date(asUtc.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
-  const utc = new Date(asUtc.toLocaleString("en-US", { timeZone: "UTC" }));
-  return new Date(asUtc.getTime() - (madrid.getTime() - utc.getTime()));
-}
-
 export type AgendaState = { ok: boolean; message: string } | null;
 
-/**
- * Genera la agenda completa: reparte los grupos entre las salas (por número o
- * al azar) y calcula la hora de cada turno. Sustituye la agenda anterior.
- */
+/** Genera la agenda desde Admin → Agenda (la lógica vive en buildAgenda). */
 export async function generateAgendaAction(
   _previous: AgendaState,
   formData: FormData,
 ): Promise<AgendaState> {
-  const { supabase, user, event, words } = await requireAdmin();
+  const session = await requireAdmin();
   const parsed = z
     .object({
       rooms: z.string().trim().min(1).max(400),
@@ -297,45 +286,9 @@ export async function generateAgendaAction(
     });
   if (!parsed.success) return { ok: false, message: await adminMessage("agendaInvalid") };
 
-  const start = madridLocalToUtc(parsed.data.start);
-  if (!start) return { ok: false, message: await adminMessage("agendaStart") };
-  const rooms = [...new Set(parsed.data.rooms.split(",").map((room) => room.trim()).filter(Boolean))].slice(0, 20);
-
-  const { data: teams } = await supabase
-    .from("teams")
-    .select("id, number")
-    .eq("event_id", event.id)
-    .order("number");
-  if (!teams?.length) return { ok: false, message: await adminMessage("agendaNoTeams", { units: words.unitsLower }) };
-
-  const ordered =
-    parsed.data.order === "random"
-      ? [...teams].sort(() => Math.random() - 0.5)
-      : teams;
-  const step = (parsed.data.duration + parsed.data.gap) * 60_000;
-  const rows = ordered.map((team, index) => {
-    const position = Math.floor(index / rooms.length);
-    return {
-      event_id: event.id,
-      team_id: team.id,
-      room: rooms[index % rooms.length],
-      position,
-      starts_at: new Date(start.getTime() + position * step).toISOString(),
-      duration_minutes: parsed.data.duration,
-    };
-  });
-
-  const { error: deleteError } = await supabase.from("presentation_slots").delete().eq("event_id", event.id);
-  if (deleteError) return { ok: false, message: await adminMessage("agendaReplaceFailed") };
-  const { error } = await supabase.from("presentation_slots").insert(rows);
-  if (error) return { ok: false, message: await adminMessage("agendaSaveFailed") };
-
-  await logAudit(supabase, event.id, user.id, "generar_agenda", "presentation_slots", null, {
-    rooms,
-    slots: rows.length,
-  });
-  refreshAll();
-  return { ok: true, message: await adminMessage("agendaCreated", { slots: rows.length, rooms: rooms.length }) };
+  const result = await buildAgenda(session, { ...parsed.data, rooms: parsed.data.rooms.split(",") });
+  if (result.ok) refreshAll();
+  return result;
 }
 
 /** Mueve un turno una posición arriba o abajo dentro de su sala y recalcula horas. */

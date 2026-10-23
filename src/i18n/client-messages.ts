@@ -8,6 +8,7 @@ import type { AbstractIntlMessages } from "next-intl";
 export const CLIENT_NAMESPACES = [
   "agenda",
   "agendaAdmin",
+  "assistant",
   "aiEvidence",
   "auth",
   "challengesAdmin",
