@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
+import { ActionForm } from "@/components/app/action-form";
 import { deleteChallengeAction, saveChallengeAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
@@ -19,7 +20,7 @@ type Challenge = {
 function ChallengeForm({ challenge }: { challenge: Challenge | null }) {
   const t = useTranslations("challengesAdmin");
   return (
-    <form action={saveChallengeAction} className="grid gap-3 sm:grid-cols-[6rem_1fr_2fr_auto] sm:items-end">
+    <ActionForm action={saveChallengeAction} className="grid gap-3 sm:grid-cols-[6rem_1fr_2fr_auto] sm:items-end">
       <input name="id" type="hidden" value={challenge?.id ?? ""} />
       <label className="space-y-1 text-sm font-semibold">
         <span className="block">{t("order")}</span>
@@ -34,7 +35,7 @@ function ChallengeForm({ challenge }: { challenge: Challenge | null }) {
         <Input defaultValue={challenge?.description ?? ""} name="description" />
       </label>
       <Button type="submit">{challenge ? t("save") : t("create")}</Button>
-    </form>
+    </ActionForm>
   );
 }
 
@@ -61,12 +62,12 @@ export default async function AdminChallengesPage() {
             <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
               <span>{t("teams", { count })}</span>
               {count === 0 ? (
-                <form action={deleteChallengeAction}>
+                <ActionForm action={deleteChallengeAction}>
                   <input name="id" type="hidden" value={challenge.id} />
                   <ConfirmSubmit confirmLabel={t("delete")} title={t("deleteTitle", { name: challenge.name })}>
                     {t("delete")}
                   </ConfirmSubmit>
-                </form>
+                </ActionForm>
               ) : null}
             </div>
           </section>

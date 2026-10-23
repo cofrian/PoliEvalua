@@ -52,7 +52,37 @@
       "list": "Ver {units}",
       "edit": "Editar e importar",
       "form": "Formulario de evaluación",
-      "general": "General"
+      "general": "General",
+      "slots": "Turnos"
+    },
+    "challengesTab": "Retos o categorías",
+    "agendaAndRoom": "Agenda y sala",
+    "configure": "Configurar",
+    "hint": {
+      "home": "Qué falta y cómo va",
+      "participants": "{units}, personas y quién evalúa",
+      "evaluation": "Qué se puntúa y cuándo",
+      "assistant": "Te lo prepara la IA hablando",
+      "schedule": "Turnos y pantalla del día",
+      "live": "Grabar y voto del público",
+      "settings": "Nombre, logo, IA y permisos",
+      "list": "Así ven la lista de {units} el jurado y el alumnado.",
+      "edit": "Crea, edita o importa {units} y sus integrantes, y asígnales un reto.",
+      "people": "Invita a gente y decide qué puede hacer cada persona.",
+      "panels": "Decide qué jurado evalúa qué {units}. Si no lo tocas, todos evalúan a todos.",
+      "challenges": "Categorías para agrupar {units} y dar premios por separado.",
+      "rubric": "Los criterios que se puntúan, cuánto pesa cada uno y qué significa cada nivel.",
+      "form": "Abre o cierra la evaluación y elige qué ve quien evalúa.",
+      "peer": "Que el alumnado se evalúe entre sí.",
+      "results": "Notas finales, ranking y exportar.",
+      "agenda": "Genera los turnos de exposición y muévelos si hay cambios.",
+      "room": "La pantalla del día: turno actual, cronómetro, grabar y puntuar.",
+      "recordings": "Las exposiciones grabadas, sus transcripciones y resúmenes.",
+      "public": "Votación abierta al público con un código QR.",
+      "general": "Nombre, fechas, portada y lo que ve cada perfil.",
+      "academic": "Asignatura, competencias y resultados de aprendizaje.",
+      "sponsors": "Logos de patrocinadores en la portada.",
+      "audit": "Registro de todo lo que se ha cambiado y quién."
     }
   },
   "userMenu": {
@@ -296,7 +326,10 @@
   "evaluate": {
     "title": "Evaluar · {team}",
     "aiSupport": "Apoyo de la IA",
-    "notes": "Notas"
+    "notes": "Notas",
+    "record": "Grabar la exposición",
+    "recordHint": "el audio se transcribe y no se guarda",
+    "recordingsCount": "{count, plural, one {# grabación} other {# grabaciones}}"
   },
   "rubric": {
     "hiddenForStudents": "La rúbrica de este espacio todavía no está visible para el alumnado.",
@@ -369,12 +402,14 @@
     "question": "Pregunta:"
   },
   "room": {
-    "noAgenda": "No hay agenda",
+    "noAgenda": "Sin agenda",
     "createAgenda": "Crea la agenda en <link>Admin → Agenda</link>.",
     "notReady": "La gestión del espacio todavía no ha preparado la agenda.",
     "expectedAt": "previsto a las {time}",
     "next": "Siguiente: {name}",
-    "notes": "Notas"
+    "notes": "Notas",
+    "pickTitle": "¿A quién vas a evaluar?",
+    "pickText": "Elige el grupo que expone: en su pantalla puedes grabar la exposición, puntuar y tomar notas a la vez."
   },
   "slot": {
     "updateError": "No se ha podido actualizar el turno.",
@@ -1094,7 +1129,9 @@
     "add": "Añadir",
     "delete": "Borrar",
     "deleteText": "Solo se puede si nadie lo ha evaluado todavía. No se puede deshacer.",
-    "deleteTitle": "¿Borrar «{name}»?"
+    "deleteTitle": "¿Borrar «{name}»?",
+    "noChallenge": "Sin reto",
+    "noChallenges": "Aún no hay retos. <link>Créalos aquí</link> si quieres agrupar por categorías."
   },
   "importTeams": {
     "help": "Mismo formato que <code>equipos.txt</code>: Reto, Nº, Equipo, Miembro 1, Miembro 2… (separado por tabuladores o comas). Crea o actualiza por nombre y añade los integrantes que falten; no borra nada.",
@@ -1348,7 +1385,8 @@
     "assistantGroupsFailed": "No se han podido crear los grupos.",
     "publishNoCriteria": "Antes de publicar, añade los criterios de la rúbrica (Evaluación → Rúbrica).",
     "publishWeights": "Los pesos de la rúbrica suman {total} %; deben sumar 100 % para publicar.",
-    "brandingFailed": "No se ha podido guardar la imagen del espacio."
+    "brandingFailed": "No se ha podido guardar la imagen del espacio.",
+    "generic": "No se ha podido completar la acción. Inténtalo de nuevo."
   },
   "rubricEditor": {
     "levels": {

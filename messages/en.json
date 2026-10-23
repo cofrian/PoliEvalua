@@ -52,7 +52,37 @@
       "list": "View {units}",
       "edit": "Edit and import",
       "form": "Evaluation form",
-      "general": "General"
+      "general": "General",
+      "slots": "Slots"
+    },
+    "challengesTab": "Challenges or categories",
+    "agendaAndRoom": "Schedule and room",
+    "configure": "Configure",
+    "hint": {
+      "home": "What's left and progress",
+      "participants": "{units}, people and who evaluates",
+      "evaluation": "What's scored and when",
+      "assistant": "Let the AI set it up for you",
+      "schedule": "Slots and the live screen",
+      "live": "Recording and public vote",
+      "settings": "Name, logo, AI and permissions",
+      "list": "This is how the jury and students see the {units} list.",
+      "edit": "Create, edit or import {units} and their members, and assign a challenge.",
+      "people": "Invite people and decide what each one can do.",
+      "panels": "Decide which jury evaluates which {units}. If you leave it, everyone evaluates everyone.",
+      "challenges": "Categories to group {units} and give separate awards.",
+      "rubric": "The criteria, how much each weighs and what each level means.",
+      "form": "Open or close the evaluation and choose what evaluators see.",
+      "peer": "Let students evaluate each other.",
+      "results": "Final grades, ranking and export.",
+      "agenda": "Generate presentation slots and move them if things change.",
+      "room": "The live screen: current slot, timer, record and score.",
+      "recordings": "Recorded presentations, transcripts and summaries.",
+      "public": "Public voting with a QR code.",
+      "general": "Name, dates, cover and what each profile sees.",
+      "academic": "Course, competences and learning outcomes.",
+      "sponsors": "Sponsor logos on the cover.",
+      "audit": "Log of everything that changed and who did it."
     }
   },
   "userMenu": {
@@ -296,7 +326,10 @@
   "evaluate": {
     "title": "Evaluate · {team}",
     "aiSupport": "AI support",
-    "notes": "Notes"
+    "notes": "Notes",
+    "record": "Record the presentation",
+    "recordHint": "the audio is transcribed and not kept",
+    "recordingsCount": "{count, plural, one {# recording} other {# recordings}}"
   },
   "rubric": {
     "hiddenForStudents": "This space's rubric isn't visible to students yet.",
@@ -374,7 +407,9 @@
     "notReady": "The organizers haven't prepared the schedule yet.",
     "expectedAt": "expected at {time}",
     "next": "Next: {name}",
-    "notes": "Notes"
+    "notes": "Notes",
+    "pickTitle": "Who are you evaluating?",
+    "pickText": "Pick the group that's presenting: on its screen you can record, score and take notes at the same time."
   },
   "slot": {
     "updateError": "The slot couldn't be updated.",
@@ -1094,7 +1129,9 @@
     "add": "Add",
     "delete": "Delete",
     "deleteText": "Only possible if nobody has evaluated it yet. This can't be undone.",
-    "deleteTitle": "Delete “{name}”?"
+    "deleteTitle": "Delete “{name}”?",
+    "noChallenge": "No challenge",
+    "noChallenges": "No challenges yet. <link>Create them here</link> if you want to group by category."
   },
   "importTeams": {
     "help": "Same format as <code>equipos.txt</code>: Challenge, No., Team, Member 1, Member 2… (tab- or comma-separated). Creates or updates by name and adds missing members; deletes nothing.",
@@ -1348,7 +1385,8 @@
     "assistantGroupsFailed": "The groups couldn't be created.",
     "publishNoCriteria": "Before publishing, add the rubric criteria (Evaluation → Rubric).",
     "publishWeights": "The rubric weights add up to {total} %; they must add up to 100 % to publish.",
-    "brandingFailed": "The space's look couldn't be saved."
+    "brandingFailed": "The space's look couldn't be saved.",
+    "generic": "The action couldn't be completed. Try again."
   },
   "rubricEditor": {
     "levels": {

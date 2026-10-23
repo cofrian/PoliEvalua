@@ -1,5 +1,6 @@
 import { MonitorPlay } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { ActionForm } from "@/components/app/action-form";
 import { PageHeader } from "@/components/app/page-header";
 import Link from "next/link";
 
@@ -68,7 +69,7 @@ export default async function PublicAdminPage() {
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl">{t("count", { count: counts.total })}</h2>
           {counts.total ? (
-            <form action={resetPublicVotesAction}>
+            <ActionForm action={resetPublicVotesAction}>
               <ConfirmSubmit
                 confirmLabel={t("reset")}
                 description={t("resetText", { count: counts.total })}
@@ -76,7 +77,7 @@ export default async function PublicAdminPage() {
               >
                 {t("resetButton")}
               </ConfirmSubmit>
-            </form>
+            </ActionForm>
           ) : null}
         </div>
         <ol className="space-y-2">

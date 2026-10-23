@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { ActionForm } from "@/components/app/action-form";
 import { hideWelcomeAction } from "@/app/(app)/admin/actions";
 import { evaluationReadiness } from "@/lib/app/evaluation-readiness";
 import type { getSession } from "@/lib/app/session";
@@ -61,7 +62,7 @@ export async function WelcomeGuide({ session }: { session: Session }) {
 
   return (
     <section aria-labelledby="welcome-title" className="relative rounded-2xl border border-upv-yellow/70 bg-upv-yellow/10 p-5 sm:p-6">
-      <form action={hideWelcomeAction} className="absolute top-3 right-3">
+      <ActionForm action={hideWelcomeAction} className="absolute top-3 right-3">
         <button
           aria-label={t("hide")}
           className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -70,7 +71,7 @@ export async function WelcomeGuide({ session }: { session: Session }) {
         >
           <X aria-hidden="true" className="size-4" />
         </button>
-      </form>
+      </ActionForm>
       <h2 className="font-display text-xl" id="welcome-title">
         {t("title")}
       </h2>

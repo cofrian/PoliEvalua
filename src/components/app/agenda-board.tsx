@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Radio } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
+import { ActionForm } from "@/components/app/action-form";
 import { moveSlotAction } from "@/app/(app)/admin/actions";
 import {
   byRoom,
@@ -91,7 +92,7 @@ export function AgendaBoard({
                   ) : null}
                   {canReorder && slot.status === "pending" ? (
                     <span className="flex shrink-0 gap-1">
-                      <form action={moveSlotAction}>
+                      <ActionForm action={moveSlotAction}>
                         <input name="id" type="hidden" value={slot.id} />
                         <input name="direction" type="hidden" value="up" />
                         <button
@@ -102,8 +103,8 @@ export function AgendaBoard({
                         >
                           <ArrowUp className="size-4" />
                         </button>
-                      </form>
-                      <form action={moveSlotAction}>
+                      </ActionForm>
+                      <ActionForm action={moveSlotAction}>
                         <input name="id" type="hidden" value={slot.id} />
                         <input name="direction" type="hidden" value="down" />
                         <button
@@ -114,7 +115,7 @@ export function AgendaBoard({
                         >
                           <ArrowDown className="size-4" />
                         </button>
-                      </form>
+                      </ActionForm>
                     </span>
                   ) : null}
                 </li>

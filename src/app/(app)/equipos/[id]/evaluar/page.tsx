@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mic } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -7,6 +7,8 @@ import { AiEvidencePanel } from "@/components/app/ai-evidence-panel";
 import { EvaluationForm } from "@/components/app/evaluation-form";
 import { NotesDrawer } from "@/components/app/notes-drawer";
 import { NotesPanel } from "@/components/app/notes-panel";
+import { PresentationStudio } from "@/components/app/presentation-studio";
+import { loadPresentationData, recordingDisabledReason } from "@/lib/app/presentation-data";
 import { RubricLiveUpdates } from "@/components/app/rubric-live-updates";
 import { loadEvaluationContext } from "@/lib/app/evaluation-data";
 import { getSession } from "@/lib/app/session";
@@ -19,7 +21,7 @@ export default async function EvaluatePage({
   const { id } = await params;
   const session = await getSession();
   const t = await getTranslations("evaluate");
-  const { supabase, user, event } = session;
+  const { supabase, user, event, recording, role, isAdmin } = session;
 
   const { data: team } = await supabase
     .from("teams")
@@ -57,6 +59,9 @@ export default async function EvaluatePage({
     );
   }
 
+  // Grabar sin salir de la evaluación: el jurado no tiene que ir a otra pantalla.
+  const presentations = recording.enabled ? await loadPresentationData(supabase, event.id, team.id) : null;
+
   const aiPanel = (
     <AiEvidencePanel evidence={context.aiEvidence} processing={context.aiProcessing} teamId={team.id} />
   );
@@ -65,6 +70,28 @@ export default async function EvaluatePage({
     <div className="space-y-6">
       {back}
       <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title", { team: team.name })}</h1>
+
+      {presentations ? (
+        <details className="group rounded-xl border border-border bg-white p-4 dark:bg-card" open={presentations.records.length === 0}>
+          <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold [&::-webkit-details-marker]:hidden">
+            <Mic aria-hidden="true" className="size-4 text-upv-red" /> {t("record")}
+            <span className="font-normal text-muted-foreground">
+              · {presentations.records.length ? t("recordingsCount", { count: presentations.records.length }) : t("recordHint")}
+            </span>
+          </summary>
+          <div className="mt-4">
+            <PresentationStudio
+              canCreate={role !== "viewer"}
+              canManage={isAdmin}
+              initialRecords={presentations.records}
+              juryReports={presentations.juryReports}
+              recordingDisabledReason={await recordingDisabledReason(recording.enabled, isAdmin)}
+              teamId={team.id}
+              userId={user.id}
+            />
+          </div>
+        </details>
+      ) : null}
 
       <details className="rounded-xl border border-border bg-white p-4 lg:hidden dark:bg-card">
         <summary className="cursor-pointer font-semibold">{t("aiSupport")}</summary>

@@ -9,6 +9,7 @@ import {
   applyAssistantProposalAction,
   rejectAssistantProposalAction,
 } from "@/app/(app)/admin/evaluacion/actions";
+import { ActionForm } from "@/components/app/action-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { AssistantAction, EvaluationProposal } from "@/lib/ai/evaluation-proposal";
@@ -256,14 +257,14 @@ export function AssistantBuilder({
                 {turn.action ? <ActionPreview action={turn.action} /> : null}
                 {turn.action && turn.status === "pending" ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <form action={applyAssistantProposalAction}>
+                    <ActionForm action={applyAssistantProposalAction}>
                       <input name="proposalId" type="hidden" value={turn.id} />
                       <Button type="submit"><Check aria-hidden="true" className="size-4" /> {t("apply")}</Button>
-                    </form>
-                    <form action={rejectAssistantProposalAction}>
+                    </ActionForm>
+                    <ActionForm action={rejectAssistantProposalAction}>
                       <input name="proposalId" type="hidden" value={turn.id} />
                       <Button type="submit" variant="outline"><X aria-hidden="true" className="size-4" /> {t("discard")}</Button>
-                    </form>
+                    </ActionForm>
                   </div>
                 ) : turn.action ? (
                   <p className="mt-4 text-xs font-bold uppercase text-muted-foreground">
