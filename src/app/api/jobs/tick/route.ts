@@ -13,6 +13,6 @@ export async function POST(request: Request) {
   }
   const admin = createAdminClient();
   await sweepQueue(admin);
-  const processed = await runInternalJobs(admin, 4);
+  const processed = await runInternalJobs(admin, 8);
   return Response.json({ processed });
 }

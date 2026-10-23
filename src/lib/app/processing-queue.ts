@@ -25,8 +25,13 @@ const NVIDIA_PER_MINUTE = Number(process.env.NVIDIA_REQUESTS_PER_MINUTE) || 30;
 const GROQ_PER_MINUTE = Number(process.env.GROQ_REQUESTS_PER_MINUTE) || 18;
 /** Esperas más largas que esto (cupo por hora agotado) van al trabajador externo. */
 const GROQ_MAX_DEFER_SECONDS = 120;
-const MAX_INTERNAL_CONCURRENCY = Number(process.env.MAX_INTERNAL_CONCURRENCY) || 4;
+/** Trabajos internos a la vez en toda la plataforma; el cupo real lo marcan Groq y NVIDIA. */
+const MAX_INTERNAL_CONCURRENCY = Number(process.env.MAX_INTERNAL_CONCURRENCY) || 16;
 const INTERNAL_LEASE_SECONDS = 290;
+/** Tras este tiempo una invocación deja de reclamar trabajos (maxDuration es 300 s). */
+const LANE_DEADLINE_MS = 180_000;
+/** Intentos con Groq antes de pasar al respaldo; Kaggle ya se avisó en el primer fallo. */
+const GROQ_MAX_ATTEMPTS = 2;
 export const EXTERNAL_LEASE_SECONDS = Number(process.env.TRANSCRIPTION_LEASE_SECONDS) || 15 * 60;
 const SLOT_WAIT_MS = 25_000;
 /** Minutos que se espera a un trabajador externo antes de dar el trozo por fallido. */
@@ -245,7 +250,11 @@ export async function handleJobFailure(
 ) {
   const lastError = message.slice(0, 1000);
 
-  if (retryable && job.attempts < job.max_attempts) {
+  const maxAttempts =
+    job.kind === "transcribe_segment" && job.runner === "internal"
+      ? Math.min(job.max_attempts, GROQ_MAX_ATTEMPTS)
+      : job.max_attempts;
+  if (retryable && job.attempts < maxAttempts) {
     const delaySeconds = 15 * 2 ** Math.max(0, job.attempts - 1);
     await admin
       .from("processing_jobs")
@@ -418,6 +427,9 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
       language: (recording?.language || process.env.TRANSCRIPTION_LANGUAGE || "es").split("-")[0],
     });
   } catch (error) {
+    // Al primer fallo de Groq se arranca Kaggle en paralelo: si Groq sigue
+    // fallando, el respaldo ya estará listo cuando le llegue el audio.
+    await dispatchKaggleWorker(admin);
     // Cupo por minuto lleno: esperar sin gastar intento. Cupo por hora o día
     // agotado: no tiene sentido reintentar, pasa al respaldo.
     if (error instanceof TranscriptionError && error.retryAfterSeconds !== undefined) {
@@ -616,13 +628,23 @@ async function executeJob(admin: SupabaseClient, job: Job) {
 }
 
 /**
- * Ejecuta hasta `budget` trabajos internos respetando el límite global de
- * concurrencia. Se llama tras cada subida (con after()) y desde el pulso.
+ * Ejecuta trabajos internos en `lanes` carriles paralelos respetando el
+ * límite global de concurrencia. Cada carril sigue reclamando trabajos hasta
+ * vaciar la cola o agotar su tiempo. Se llama tras cada subida (con after())
+ * y desde el pulso.
  */
-export async function runInternalJobs(admin: SupabaseClient, budget = 2) {
+export async function runInternalJobs(admin: SupabaseClient, lanes = 2) {
+  const deadline = Date.now() + LANE_DEADLINE_MS;
+  const results = await Promise.all(
+    Array.from({ length: lanes }, () => runLane(admin, deadline)),
+  );
+  return results.reduce((sum, count) => sum + count, 0);
+}
+
+async function runLane(admin: SupabaseClient, deadline: number) {
   const workerId = `vercel-${crypto.randomUUID().slice(0, 8)}`;
   let processed = 0;
-  while (processed < budget) {
+  while (Date.now() < deadline) {
     const { data: running } = await admin.rpc("count_running_jobs", { p_runner: "internal" });
     if ((running ?? 0) >= MAX_INTERNAL_CONCURRENCY) break;
 
