@@ -1404,7 +1404,12 @@
       "notConfigured": "The assistant is ready, but NVIDIA_API_KEY isn't configured on the server.",
       "agendaNeedsGroups": "To build the schedule you need {units} first. Do you want me to create them?",
       "saveFailed": "The answer was generated but couldn't be saved.",
-      "invalid": "The AI couldn't prepare a valid answer. Try again with more detail."
+      "invalid": "The AI couldn't prepare a valid answer. Try again with more detail.",
+      "askRooms": "Which rooms will the presentations be in?",
+      "askStart": "On what day and at what time do they start?",
+      "askDuration": "How many minutes is each slot (and is there a break between them)?",
+      "askGroupsCount": "How many {units} do you want to create (or who goes in each one)?",
+      "askEvaluation": "What do you want to evaluate, with which criteria (or shall I suggest them) and on what scale?"
     },
     "preview": {
       "page": "Proposed page",

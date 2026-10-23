@@ -119,16 +119,67 @@ export const assistantActionSchema = z.discriminatedUnion("type", [
 ]);
 
 /**
- * Respuesta del asistente en una conversación. Si falta algo imprescindible
- * para la acción, `questions` lo pide y `action` es null: nunca se inventa.
+ * Borrador de agenda tal como lo devuelve el modelo: deja vacío lo que la
+ * persona no ha dicho. El servidor comprueba lo imprescindible y pregunta.
+ */
+export const agendaDraftSchema = z.object({
+  type: z.literal("agenda"),
+  rooms: z.array(z.string().trim().min(1).max(80)).max(20).nullish(),
+  start: z.string().nullish(),
+  durationMinutes: z.number().int().min(1).max(240).nullish(),
+  gapMinutes: z.number().int().min(0).max(120).nullish(),
+  order: z.enum(["number", "random"]).nullish(),
+});
+
+const chatActionSchema = z.discriminatedUnion("type", [
+  evaluationActionSchema,
+  groupsActionSchema,
+  agendaDraftSchema,
+]);
+
+/** Lo que se le enseña al modelo como formato (sin las tolerancias de abajo). */
+export const assistantChatPromptSchema = z.object({
+  scope: z.enum(["space", "out_of_scope"]),
+  /** Qué quiere hacer la persona, aunque todavía falten datos para la acción. */
+  intent: z.enum(["evaluation", "groups", "agenda", "other"]),
+  reply: z.string().trim().min(2).max(2000),
+  questions: z.array(z.string().trim().min(3).max(300)).max(5),
+  action: chatActionSchema.nullable(),
+});
+
+/**
+ * Respuesta del asistente en una conversación. Quien decide si falta algo
+ * imprescindible es el servidor (ver api/assistant), no el modelo.
  */
 export const assistantChatSchema = z.object({
   scope: z.enum(["space", "out_of_scope"]),
+  intent: z
+    .enum(["evaluation", "groups", "agenda", "other"])
+    .nullish()
+    .catch(null)
+    .transform((value) => value ?? "other"),
   reply: z.string().trim().min(2).max(2000),
-  questions: z.array(z.string().trim().min(3).max(300)).max(5),
-  action: assistantActionSchema.nullable(),
+  // Los modelos devuelven null en vez de [] cuando no preguntan nada.
+  questions: z
+    .array(z.string().trim().min(3).max(300))
+    .max(5)
+    .nullish()
+    .transform((value) => value ?? []),
+  // Una acción a medio rellenar o con otro tipo cuenta como «sin acción».
+  action: z.preprocess((raw) => {
+    if (!raw || typeof raw !== "object") return null;
+    const type = (raw as { type?: unknown }).type;
+    // Algunos modelos copian la forma de la evaluación y anidan los datos de la
+    // agenda o de los grupos en «proposal»: se suben al nivel de la acción.
+    const nested = (raw as { proposal?: unknown }).proposal;
+    const value =
+      type !== "evaluation" && nested && typeof nested === "object" ? { ...nested, type } : raw;
+    if (type === "evaluation") return value;
+    return chatActionSchema.safeParse(value).success ? value : null;
+  }, chatActionSchema.nullable()),
 });
 
+export type AgendaDraft = z.infer<typeof agendaDraftSchema>;
 export type EvaluationProposal = z.infer<typeof evaluationProposalSchema>;
 export type AssistantAction = z.infer<typeof assistantActionSchema>;
 export type AssistantChat = z.infer<typeof assistantChatSchema>;

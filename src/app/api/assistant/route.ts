@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import {
+  assistantChatPromptSchema,
   assistantChatSchema,
   normalizeEvaluationProposal,
   type AssistantAction,
@@ -32,6 +33,35 @@ const requestSchema = z.object({
   threadId: z.string().uuid().nullish(),
 });
 
+const NUMBER_WORDS =
+  /\b(\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|quatre|cinc|sis|set|vuit|nou|deu|onze|dotze|vint|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty)\b/i;
+
+/** ¿Ha dicho la persona alguna cantidad? (cifras o palabras en es, ca y en). */
+function mentionsNumber(text: string) {
+  return NUMBER_WORDS.test(text);
+}
+
+/** «2026-11-05 9:00», «2026-11-05T09:00:00»… → «2026-11-05T09:00»; null si no hay día y hora. */
+function normalizeStart(value: string | null | undefined) {
+  const match = value?.trim().match(/^(\d{4}-\d{2}-\d{2})[T ](\d{1,2}):(\d{2})/);
+  return match ? `${match[1]}T${match[2].padStart(2, "0")}:${match[3]}` : null;
+}
+
+const agendaExtractSchema = z.object({
+  rooms: z.array(z.string().trim().min(1).max(80)).max(20).nullish(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish().catch(null),
+  time: z.string().regex(/^\d{1,2}:\d{2}$/).nullish().catch(null),
+  durationMinutes: z.number().int().min(1).max(240).nullish().catch(null),
+  gapMinutes: z.number().int().min(0).max(120).nullish().catch(null),
+  order: z.enum(["number", "random"]).nullish().catch(null),
+});
+
+const groupsExtractSchema = z.object({
+  count: z.number().int().min(1).max(80).nullish().catch(null),
+  names: z.array(z.string().trim().min(1).max(120)).max(80).nullish(),
+  members: z.array(z.array(z.string().trim().max(120)).max(20)).max(80).nullish(),
+});
+
 /** Turnos anteriores que se le pasan al modelo (los más recientes). */
 const HISTORY_TURNS = 8;
 
@@ -44,9 +74,11 @@ Acciones que puedes proponer (una por respuesta, en "action"):
 - "groups": crear grupos o equipos nuevos con los nombres de sus integrantes.
 - "agenda": repartir los grupos que ya existen en salas y turnos.
 
+En "intent" indica siempre qué quiere hacer la persona (evaluation, groups, agenda u other), aunque todavía no puedas proponer la acción.
+
 Antes de proponer una acción comprueba que tienes lo imprescindible:
 - evaluation: qué se evalúa y los criterios (o permiso explícito para que los propongas tú) y la escala.
-- groups: cuántos grupos y cómo se llaman o quién va en cada uno (o permiso para numerarlos «Grupo 1», «Grupo 2»…).
+- groups: CUÁNTOS grupos (imprescindible: si la persona no da el número ni una lista de la que deducirlo, pregunta; nunca supongas una cantidad) y cómo se llaman o quién va en cada uno (si no lo dice, puedes numerarlos «Grupo 1», «Grupo 2»…).
 - agenda: salas, día y hora de inicio y minutos por turno. Debe haber grupos creados.
 Si falta algo imprescindible, NO lo inventes: deja "action" a null y pregunta en "questions" (máximo 5 preguntas cortas y concretas). Puedes usar lo que la persona ya dijo antes en la conversación.
 Si la petición es ambigua entre varias acciones, pregunta cuál quiere.
@@ -54,6 +86,8 @@ Si la petición es ambigua entre varias acciones, pregunta cuál quiere.
 Reglas obligatorias:
 - ${LOCALE_RULE[locale] ?? LOCALE_RULE.es} Que sea accesible.
 - "reply" explica en una o dos frases qué propones o qué te falta. No repitas en "reply" las preguntas de "questions".
+- Nunca digas que has creado o aplicado algo: solo lo propones («Te propongo…»); la persona lo aplica al confirmar.
+- Si haces preguntas, "action" tiene que ser null. Si ya tienes lo imprescindible, propón la acción y no preguntes nada más.
 - Los pesos de los criterios deben sumar exactamente 100 y cada criterio incluye niveles entre scaleMin y scaleMax.
 - No incluyas datos personales que la persona no te haya dado ni pidas información sensible.
 - No pongas notas ni decidas ganadores.
@@ -196,6 +230,7 @@ export async function POST(request: Request) {
           provider,
           modelId: id,
           schema: assistantChatSchema,
+          promptSchema: assistantChatPromptSchema,
           system: systemPrompt(event.locale),
           history,
           prompt: `Contexto actual del espacio (sin datos personales):\n${JSON.stringify(context)}\n\nMensaje de la persona:\n${parsed.data.message}`,
@@ -205,17 +240,102 @@ export async function POST(request: Request) {
       { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 60_000 },
     );
 
-    let action: AssistantAction | null = output.scope === "space" ? output.action : null;
-    if (action?.type === "evaluation") {
-      action = { ...action, proposal: normalizeEvaluationProposal(action.proposal) };
-    }
-    // Una agenda sin grupos no se puede aplicar: mejor preguntar.
-    const questions = [...output.questions];
-    if (action?.type === "agenda" && !context.groups.length) {
-      action = null;
-      questions.push(t("agendaNeedsGroups", { units: words.unitsLower }));
+    // El servidor decide si falta algo imprescindible: los modelos a veces se
+    // lo inventan y a veces preguntan sin motivo.
+    if (process.env.DEBUG_ASSISTANT) console.log("ASISTENTE", modelId, JSON.stringify(output));
+    const userMessages = [...[...(previous ?? [])].reverse().map((turn) => turn.prompt), parsed.data.message];
+    const userText = userMessages.join("\n");
+    const intent = output.action?.type ?? (output.scope === "space" ? output.intent : "other");
+    const missing: string[] = [];
+    let action: AssistantAction | null = null;
+
+    // Para grupos y agenda los datos se sacan de lo que ha escrito la persona con
+    // una llamada aparte y muy acotada; el servidor comprueba qué falta.
+    const extract = <T,>(schema: z.ZodType<T>, task: string) =>
+      withModelFallback(
+        "builder",
+        (id, abortSignal) =>
+          generateJson({
+            provider,
+            modelId: id,
+            schema,
+            system: `Extraes datos de los mensajes de una persona que prepara un espacio de evaluación. ${task}
+Usa solo lo que la persona haya dicho de forma explícita en sus mensajes; pon null en lo que no haya dicho. No inventes nada.`,
+            prompt: `Hoy es ${today} (hora de Valencia).\nMensajes de la persona, del más antiguo al más reciente:\n${userMessages.map((text, index) => `${index + 1}. ${text}`).join("\n")}`,
+            abortSignal,
+            maxOutputTokens: 1500,
+          }),
+        { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 30_000 },
+      ).then(({ result }) => result);
+
+    if (intent === "agenda") {
+      const complete = output.action?.type === "agenda" ? output.action : null;
+      const data = complete?.rooms?.length && normalizeStart(complete.start) && complete.durationMinutes
+        ? { rooms: complete.rooms, start: complete.start, durationMinutes: complete.durationMinutes, gapMinutes: complete.gapMinutes, order: complete.order }
+        : await extract(
+            agendaExtractSchema,
+            "Datos de la agenda de exposiciones: salas, fecha (AAAA-MM-DD), hora de inicio (HH:MM), minutos por turno, minutos de descanso entre turnos y orden (number o random).",
+          ).then((found) => ({
+            rooms: found.rooms,
+            start: found.date && found.time ? `${found.date}T${found.time}` : null,
+            durationMinutes: found.durationMinutes,
+            gapMinutes: found.gapMinutes,
+            order: found.order,
+          }));
+      const start = normalizeStart(data.start);
+      if (!context.groups.length) missing.push(t("agendaNeedsGroups", { units: words.unitsLower }));
+      if (!data.rooms?.length) missing.push(t("askRooms"));
+      if (!start) missing.push(t("askStart"));
+      if (!data.durationMinutes) missing.push(t("askDuration"));
+      if (!missing.length) {
+        action = {
+          type: "agenda",
+          rooms: data.rooms!,
+          start: start!,
+          durationMinutes: data.durationMinutes!,
+          gapMinutes: data.gapMinutes ?? 0,
+          order: data.order ?? "number",
+        };
+      }
+    } else if (intent === "groups") {
+      const found = await extract(
+        groupsExtractSchema,
+        "Grupos que quiere crear: cuántos (count), sus nombres si los da (names) y los integrantes de cada uno si los da (members, en el mismo orden que names).",
+      );
+      // Solo cuentan los nombres que aparecen de verdad en lo que ha escrito.
+      const lowered = userText.toLocaleLowerCase();
+      // («Grupo 1 a Grupo 6» no nombra los intermedios: entonces vale el número).
+      const listed = found.names ?? [];
+      const allNamed = listed.length > 0 && listed.every((name) => lowered.includes(name.toLocaleLowerCase()));
+      const names = allNamed
+        ? listed
+        : found.count && mentionsNumber(userText)
+          ? Array.from({ length: found.count }, (_, index) => `${words.unit} ${index + 1}`)
+          : [];
+      if (!names.length) {
+        missing.push(t("askGroupsCount", { units: words.unitsLower }));
+      } else {
+        action = {
+          type: "groups",
+          groups: names.slice(0, 80).map((name, index) => ({
+            name: name.slice(0, 120),
+            projectTitle: null,
+            members: (found.members?.[index] ?? []).filter((member) => member.trim().length >= 2).slice(0, 20),
+          })),
+        };
+      }
+    } else if (output.action?.type === "evaluation") {
+      action = { ...output.action, proposal: normalizeEvaluationProposal(output.action.proposal) };
     }
 
+    // Con huecos solo se pregunta; si está completo, se propone sin más preguntas.
+    const questions = missing.length
+      ? missing
+      : action
+        ? []
+        : output.questions.length || output.intent !== "evaluation"
+          ? output.questions
+          : [t("askEvaluation")];
     const { data: saved, error } = await supabase
       .from("assistant_proposals")
       .insert({

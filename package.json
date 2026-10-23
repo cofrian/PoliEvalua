@@ -21,6 +21,7 @@
     "test:security": "npm run test:rls && npm run test:tenants && npm run test:features && npm run test:students",
     "test:prompts": "node scripts/check-prompt-version.mjs",
     "test:messages": "node scripts/check-messages.mjs",
+    "smoke:assistant": "node scripts/smoke-assistant.mjs",
     "test:ci": "npm run test:prompts && npm run test:messages && npm run lint && npm run typecheck && npm run build",
     "test:models": "node scripts/check-nvidia-models.mjs",
     "smoke:audio": "node scripts/smoke-audio.mjs",

@@ -1404,7 +1404,12 @@
       "notConfigured": "El asistente está preparado, pero falta configurar NVIDIA_API_KEY en el servidor.",
       "agendaNeedsGroups": "Para montar la agenda primero hacen falta {units}. ¿Quieres que los cree?",
       "saveFailed": "La respuesta se generó, pero no se pudo guardar.",
-      "invalid": "La IA no ha podido preparar una respuesta válida. Inténtalo de nuevo con más detalle."
+      "invalid": "La IA no ha podido preparar una respuesta válida. Inténtalo de nuevo con más detalle.",
+      "askRooms": "¿En qué salas o aulas serán las exposiciones?",
+      "askStart": "¿Qué día y a qué hora empiezan?",
+      "askDuration": "¿Cuántos minutos dura cada turno (y si hay descanso entre ellos)?",
+      "askGroupsCount": "¿Cuántos {units} quieres crear (o quién va en cada uno)?",
+      "askEvaluation": "¿Qué quieres evaluar, con qué criterios (o te los propongo yo) y con qué escala?"
     },
     "preview": {
       "page": "Página propuesta",
