@@ -4,6 +4,7 @@ import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settin
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_RECORDING_NOTICE, NO_AUDIO_GUARANTEE } from "@/lib/app/recording-notice";
 import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
+import { selectClass } from "@/lib/app/ui";
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
   day: "2-digit",
@@ -49,6 +50,23 @@ export default async function RecordingSettingsPage() {
       >
         <SettingRow htmlFor="enabled" label="Grabar exposiciones en este espacio">
           <SettingSwitch defaultChecked={recording.enabled} id="enabled" name="enabled" />
+        </SettingRow>
+        <SettingRow
+          description="Con «Detectar automáticamente» cada exposición puede ser en castellano, valenciano o inglés. Fija un idioma solo si todas son en el mismo: la transcripción es algo más precisa."
+          htmlFor="spokenLanguage"
+          label="Idioma de las exposiciones"
+        >
+          <select
+            className={`${selectClass} w-full`}
+            defaultValue={recording.spokenLanguage}
+            id="spokenLanguage"
+            name="spokenLanguage"
+          >
+            <option value="auto">Detectar automáticamente</option>
+            <option value="es">Castellano</option>
+            <option value="ca">Valenciano</option>
+            <option value="en">Inglés</option>
+          </select>
         </SettingRow>
         <SettingRow
           description={`Déjalo vacío para usar el texto por defecto. Si lo personalizas, siempre se añadirá: «${NO_AUDIO_GUARANTEE}»`}

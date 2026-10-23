@@ -1,5 +1,6 @@
 import "server-only";
 
+import { whisperLanguage } from "@/lib/app/recording-notice";
 import { createHash, timingSafeEqual } from "node:crypto";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -448,7 +449,7 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
     text = await transcribeWithGroq({
       audio: new Blob([audio], { type: segment.mime_type }),
       fileName: segment.storage_path.split("/").at(-1) ?? `${segment.seq}.webm`,
-      language: (recording?.language || process.env.TRANSCRIPTION_LANGUAGE || "es").split("-")[0],
+      language: whisperLanguage(recording?.language),
       prompt: recording?.asr_prompt ?? null,
     });
   } catch (error) {

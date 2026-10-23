@@ -70,12 +70,13 @@ async function requestTranscription(
   audio: Blob,
   fileName: string,
   apiKey: string,
-  language: string,
+  language: string | null,
   prompt: string | null,
 ) {
   const form = new FormData();
   form.append("model", GROQ_ASR_MODEL);
-  form.append("language", language);
+  // Sin idioma, Whisper lo detecta.
+  if (language) form.append("language", language);
   form.append("response_format", "json");
   form.append("temperature", "0");
   // Pista de vocabulario (equipo, título, rúbrica): mejora nombres propios.
@@ -140,7 +141,7 @@ export async function transcribeWithGroq({
 }: {
   audio: Blob;
   fileName: string;
-  language: string;
+  language: string | null;
   prompt?: string | null;
 }) {
   const apiKey = process.env.GROQ_API_KEY;

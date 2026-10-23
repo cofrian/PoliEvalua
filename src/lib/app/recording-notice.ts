@@ -8,8 +8,23 @@ export const DEFAULT_RECORDING_NOTICE =
 export const NO_AUDIO_GUARANTEE =
   "El audio no se conserva: se borra en cuanto se transcribe.";
 
+/** Idioma hablado en las exposiciones. «auto»: Whisper lo detecta en cada fragmento. */
+export const SPOKEN_LANGUAGES = ["auto", "es", "ca", "en"] as const;
+export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];
+
+export function isSpokenLanguage(value: unknown): value is SpokenLanguage {
+  return typeof value === "string" && (SPOKEN_LANGUAGES as readonly string[]).includes(value);
+}
+
+/** Lo que se envía a Whisper: null deja que detecte el idioma. */
+export function whisperLanguage(value: string | null | undefined): string | null {
+  const base = (value ?? "auto").split("-")[0];
+  return base === "auto" ? null : base;
+}
+
 export type RecordingSettings = {
   enabled: boolean;
+  spokenLanguage: SpokenLanguage;
   noticeVersion: number;
   noticeText: string;
   customText: string | null;
@@ -26,6 +41,8 @@ export function recordingSettings(settings: unknown): RecordingSettings {
       : null;
   return {
     enabled: recording?.enabled === true,
+    // Por defecto se detecta: en un mismo espacio puede haber exposiciones en varios idiomas.
+    spokenLanguage: isSpokenLanguage(recording?.spoken_language) ? recording.spoken_language : "auto",
     noticeVersion: Number(recording?.notice_version) || 0,
     noticeText: customText ?? DEFAULT_RECORDING_NOTICE,
     customText,

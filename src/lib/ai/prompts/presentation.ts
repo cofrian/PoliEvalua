@@ -3,13 +3,14 @@
 // Si cambia cualquier texto de este archivo, sube PROMPT_VERSION y registra el
 // hash nuevo en PROMPT_HASHES (lo comprueba `npm run test:prompts`).
 
-export const PROMPT_VERSION = "2026.10.3";
+export const PROMPT_VERSION = "2026.10.4";
 
 /** Hash de los textos por versión; lo calcula scripts/check-prompt-version.mjs. */
 export const PROMPT_HASHES: Record<string, string> = {
   "2026.10.1": "54dff2db863f5145",
   "2026.10.2": "a2daf877e4ec40d4",
   "2026.10.3": "3eec9a604a05744b",
+  "2026.10.4": "59c91c882917b0d7",
 };
 
 export type SpaceKind = "hackathon" | "class" | "awards" | "project" | "custom";
@@ -140,13 +141,14 @@ export function buildAsrPrompt({
 
   const team = teamName?.trim();
   const title = projectTitle?.trim();
-  let head = team ? `Exposición del equipo ${team}` : "Exposición";
-  if (title) head += ` sobre «${title}»`;
   if (!team && !title && !terms.length) return null;
 
-  let text = `${head}.`;
+  // Solo nombres, sin frases: así la pista no empuja a Whisper hacia ningún
+  // idioma y sirve igual para exposiciones en castellano, valenciano o inglés.
+  let text = [team, title ? `«${title}»` : ""].filter(Boolean).join(" · ");
+  text = text ? `${text}.` : "";
   for (const [index, term] of terms.entries()) {
-    const next = `${text}${index === 0 ? " Términos: " : ", "}${term}`;
+    const next = `${text}${index === 0 ? (text ? " " : "") : ", "}${term}`;
     if (next.length + 1 > ASR_PROMPT_MAX) break;
     text = next;
   }

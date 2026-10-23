@@ -1,6 +1,7 @@
 "use server";
 
 import { isLocale } from "@/i18n/config";
+import { isSpokenLanguage } from "@/lib/app/recording-notice";
 import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
@@ -164,8 +165,10 @@ export async function updateRecordingSettingsAction(formData: FormData) {
   // Activar o cambiar el texto obliga a que todos vuelvan a confirmar el aviso.
   const mustReconfirm =
     enabled && (!recording.enabled || customText !== recording.customText);
+  const spokenLanguage = formData.get("spokenLanguage");
   const next = {
     enabled,
+    spoken_language: isSpokenLanguage(spokenLanguage) ? spokenLanguage : "auto",
     notice_version: mustReconfirm ? recording.noticeVersion + 1 : recording.noticeVersion,
     notice_text: customText,
   };
