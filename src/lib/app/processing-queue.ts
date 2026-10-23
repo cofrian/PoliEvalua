@@ -1,6 +1,6 @@
 import "server-only";
 
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -10,6 +10,13 @@ import {
   type Criterion,
 } from "@/lib/ai/agents/presentation-graph";
 import { AiConfigError, AllModelsFailedError, aiConfigured } from "@/lib/ai/models";
+import {
+  cleanAdminText,
+  dropPromptEcho,
+  INSTRUCTIONS_MAX,
+  PROMPT_VERSION,
+  type SpaceKind,
+} from "@/lib/ai/prompts/presentation";
 import { TranscriptionError, groqConfigured, transcribeWithGroq } from "@/lib/ai/transcription";
 import { mergeTranscripts } from "@/lib/app/merge-transcripts";
 
@@ -54,6 +61,13 @@ type TeamRelation =
   | { name: string; project_title: string | null; challenge_id: string | null }
   | { name: string; project_title: string | null; challenge_id: string | null }[]
   | null;
+
+type EventRow = { kind: SpaceKind; settings: { ai?: { instructions?: unknown } } | null };
+type EventRelation = EventRow | EventRow[] | null;
+
+function shortHash(text: string) {
+  return createHash("sha256").update(text).digest("hex").slice(0, 12);
+}
 
 /** El trabajo debe esperar sin gastar un intento (p. ej. cupo del proveedor lleno). */
 class DeferJob extends Error {
@@ -360,9 +374,15 @@ export async function completeSegment(
   transcript: string,
   provider: "groq" | "external",
 ) {
+  const { data: current } = await admin
+    .from("presentation_segments")
+    .select("recording:presentation_recordings(asr_prompt)")
+    .eq("id", segmentId)
+    .maybeSingle();
+  const recording = current?.recording as unknown as { asr_prompt: string | null } | null;
   const { data: segment } = await admin
     .from("presentation_segments")
-    .update({ status: "done", transcript, provider })
+    .update({ status: "done", transcript: dropPromptEcho(transcript, recording?.asr_prompt), provider })
     .eq("id", segmentId)
     .select("id, recording_id, event_id, storage_path")
     .maybeSingle();
@@ -400,7 +420,7 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
     .from("presentation_segments")
     .update({ status: "transcribing" })
     .eq("id", job.segment_id)
-    .select("id, seq, recording_id, storage_path, mime_type, recording:presentation_recordings(language)")
+    .select("id, seq, recording_id, storage_path, mime_type, recording:presentation_recordings(language, asr_prompt)")
     .maybeSingle();
   if (!segment) throw new TranscriptionError("El segmento ya no existe.", false);
   // Sin Groq no se gastan intentos: directamente al trabajador externo.
@@ -418,13 +438,17 @@ async function runTranscribeSegment(admin: SupabaseClient, job: Job) {
   if (error || !audio) throw new TranscriptionError("No se pudo leer el audio temporal.", true);
 
   await acquireSlot(admin, "groq");
-  const recording = segment.recording as unknown as { language: string | null } | null;
+  const recording = segment.recording as unknown as {
+    language: string | null;
+    asr_prompt: string | null;
+  } | null;
   let text: string;
   try {
     text = await transcribeWithGroq({
       audio: new Blob([audio], { type: segment.mime_type }),
       fileName: segment.storage_path.split("/").at(-1) ?? `${segment.seq}.webm`,
       language: (recording?.language || process.env.TRANSCRIPTION_LANGUAGE || "es").split("-")[0],
+      prompt: recording?.asr_prompt ?? null,
     });
   } catch (error) {
     // Al primer fallo de Groq se arranca Kaggle en paralelo: si Groq sigue
@@ -483,11 +507,14 @@ async function rubricCriteria(
   if (!rubric) return [];
   const { data: criteria } = await admin
     .from("rubric_criteria")
-    .select("title, description")
+    .select("title, description, weight, rubric_levels(score, label, descriptor)")
     .eq("rubric_id", rubric.id)
     .is("deleted_at", null)
     .order("order");
-  return criteria ?? [];
+  return (criteria ?? []).map(({ rubric_levels, ...criterion }) => ({
+    ...criterion,
+    levels: [...(rubric_levels ?? [])].sort((a, b) => a.score - b.score),
+  }));
 }
 
 async function runAnalyze(admin: SupabaseClient, job: Job) {
@@ -499,19 +526,30 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     .from("presentation_recordings")
     .update({ status: "analyzing", error_message: null })
     .eq("id", job.recording_id)
-    .select("id, event_id, team_id, transcript, analysis_state, team:teams(name, project_title, challenge_id)")
+    .select(
+      "id, event_id, team_id, transcript, analysis_state, team:teams(name, project_title, challenge_id), event:events(kind, settings)",
+    )
     .maybeSingle();
   if (!recording?.transcript) throw new TranscriptionError("No hay transcripción.", false);
 
   const teamValue = recording.team as unknown as TeamRelation;
   const team = Array.isArray(teamValue) ? teamValue[0] : teamValue;
-  const state: AnalysisState = { ...(recording.analysis_state as AnalysisState) };
+  const eventValue = recording.event as unknown as EventRelation;
+  const event = Array.isArray(eventValue) ? eventValue[0] : eventValue;
+  const kind: SpaceKind = event?.kind ?? "custom";
+  const instructions = cleanAdminText(event?.settings?.ai?.instructions, INSTRUCTIONS_MAX);
+  // Nodos guardados con otra versión de los prompts no se mezclan con los nuevos.
+  const saved = recording.analysis_state as AnalysisState;
+  const state: AnalysisState =
+    saved?.promptVersion === PROMPT_VERSION ? { ...saved } : { promptVersion: PROMPT_VERSION };
 
-  const { insights, jury } = await runPresentationGraph({
+  const { insights, jury, models } = await runPresentationGraph({
     transcript: recording.transcript,
     teamName: team?.name ?? "Proyecto",
     projectTitle: team?.project_title ?? null,
     criteria: await rubricCriteria(admin, recording.event_id),
+    kind,
+    instructions,
     previous: state,
     deps: {
       acquireSlot: () => acquireSlot(admin, "nvidia"),
@@ -533,6 +571,8 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     criteria_evidence: jury.criteria,
     questions: jury.questions,
     risks: jury.risks,
+    weaknesses: jury.weaknesses,
+    prompt_version: PROMPT_VERSION,
   });
   await admin
     .from("presentation_recordings")
@@ -543,6 +583,14 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
       outline: insights.outline,
       action_items: insights.actionItems,
       mind_map: insights.mindMap,
+      prompt_version: PROMPT_VERSION,
+      analysis_meta: {
+        promptVersion: PROMPT_VERSION,
+        kind,
+        instructionsHash: instructions ? shortHash(instructions) : null,
+        // Solo los modelos de esta pasada; los nodos reutilizados no llaman a ninguno.
+        models,
+      },
       processed_at: new Date().toISOString(),
       error_message: null,
     })

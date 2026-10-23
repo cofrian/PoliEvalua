@@ -6,6 +6,11 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 
+import {
+  cleanAdminText,
+  GLOSSARY_MAX,
+  INSTRUCTIONS_MAX,
+} from "@/lib/ai/prompts/presentation";
 import { logAudit } from "@/lib/app/audit";
 import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
 import { getSession } from "@/lib/app/session";
@@ -221,6 +226,34 @@ export async function updateMaterialsSettingsAction(formData: FormData) {
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
   if (error) throw new Error("No se ha podido guardar la configuración de entregas.");
   await logAudit(supabase, event.id, user.id, "configurar_entregas", "events", event.id, materials);
+  refreshAll();
+}
+
+// ========== INTELIGENCIA ARTIFICIAL ==========
+
+export async function updateAiSettingsAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const rawInstructions = text(formData, "aiInstructions");
+  const rawGlossary = text(formData, "aiGlossary");
+  if (rawInstructions.length > INSTRUCTIONS_MAX) {
+    throw new Error(`Las indicaciones no pueden pasar de ${INSTRUCTIONS_MAX} caracteres.`);
+  }
+  if (rawGlossary.length > GLOSSARY_MAX) {
+    throw new Error(`El glosario no puede pasar de ${GLOSSARY_MAX} caracteres.`);
+  }
+  const ai = {
+    instructions: cleanAdminText(rawInstructions, INSTRUCTIONS_MAX) || null,
+    glossary: cleanAdminText(rawGlossary, GLOSSARY_MAX) || null,
+  };
+  const { data: current } = await supabase
+    .from("events")
+    .select("settings")
+    .eq("id", event.id)
+    .single();
+  const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), ai };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error("No se han podido guardar los ajustes de IA.");
+  await logAudit(supabase, event.id, user.id, "configurar_ia", "events", event.id, ai);
   refreshAll();
 }
 

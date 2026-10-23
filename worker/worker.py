@@ -43,10 +43,12 @@ session.headers["Authorization"] = f"Bearer {WORKER_TOKEN}"
 wake_event = threading.Event()
 state = {"model_ready": False, "busy": False, "processed": 0, "last_error": None}
 
-def transcribe(model: WhisperModel, path: str, language: str | None) -> str:
+def transcribe(model: WhisperModel, path: str, language: str | None, prompt: str | None) -> str:
     segments, _info = model.transcribe(
         path,
         language=language or None,
+        # Pista de vocabulario (equipo, título, rúbrica) para los nombres propios.
+        initial_prompt=prompt or None,
         vad_filter=True,
         beam_size=5,
     )
@@ -84,7 +86,7 @@ def process_job(model: WhisperModel, job: dict) -> None:
             return
 
         started = time.monotonic()
-        text = transcribe(model, audio_path, job.get("language"))
+        text = transcribe(model, audio_path, job.get("language"), job.get("prompt"))
 
     # Un segmento sin voz (pausa larga) es válido: se envía vacío.
     response = session.post(

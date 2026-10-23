@@ -65,12 +65,20 @@ export async function convertToWav(audio: Blob): Promise<Blob> {
   return new Blob([new Uint8Array(output)], { type: "audio/wav" });
 }
 
-async function requestTranscription(audio: Blob, fileName: string, apiKey: string, language: string) {
+async function requestTranscription(
+  audio: Blob,
+  fileName: string,
+  apiKey: string,
+  language: string,
+  prompt: string | null,
+) {
   const form = new FormData();
   form.append("model", GROQ_ASR_MODEL);
   form.append("language", language);
   form.append("response_format", "json");
   form.append("temperature", "0");
+  // Pista de vocabulario (equipo, título, rúbrica): mejora nombres propios.
+  if (prompt) form.append("prompt", prompt);
   form.append("file", audio, fileName);
 
   let response: Response;
@@ -127,10 +135,12 @@ export async function transcribeWithGroq({
   audio,
   fileName,
   language,
+  prompt = null,
 }: {
   audio: Blob;
   fileName: string;
   language: string;
+  prompt?: string | null;
 }) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -139,10 +149,10 @@ export async function transcribeWithGroq({
 
   const alreadyWav = audio.type === "audio/wav" || fileName.endsWith(".wav");
   try {
-    return await requestTranscription(audio, fileName, apiKey, language);
+    return await requestTranscription(audio, fileName, apiKey, language, prompt);
   } catch (error) {
     if (error instanceof TranscriptionError && error.unsupportedFormat && !alreadyWav) {
-      return requestTranscription(await convertToWav(audio), `${fileName}.wav`, apiKey, language);
+      return requestTranscription(await convertToWav(audio), `${fileName}.wav`, apiKey, language, prompt);
     }
     throw error;
   }
