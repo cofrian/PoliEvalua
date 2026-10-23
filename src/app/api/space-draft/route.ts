@@ -1,4 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { getLocale } from "next-intl/server";
+import { LOCALE_RULE, type SpaceLocale } from "@/lib/ai/prompts/presentation";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -41,7 +43,7 @@ const spaceDraftSchema = z.object({
 
 export type SpaceDraft = z.infer<typeof spaceDraftSchema>;
 
-const SYSTEM_PROMPT = `Eres el asistente de creación de espacios de una plataforma de evaluación de la UPV.
+const systemPrompt = (locale: SpaceLocale) => `Eres el asistente de creación de espacios de una plataforma de evaluación de la UPV.
 A partir de la descripción del usuario configuras un espacio nuevo y, si hay información suficiente,
 una propuesta de evaluación (rúbrica, requisitos, preguntas, contexto académico y paneles de jurado).
 
@@ -52,7 +54,7 @@ Perfiles: judge, mentor, teacher, student, reviewer, viewer. joinRoles solo pued
 habilitados y nunca teacher.
 
 Reglas obligatorias:
-- Escribe todo en español claro y accesible.
+- ${LOCALE_RULE[locale] ?? LOCALE_RULE.es} Que sea accesible.
 - Los pesos de los criterios deben sumar exactamente 100 y cada criterio debe incluir niveles dentro de scaleMin y scaleMax.
 - Si es docencia, rellena academic con institución (por defecto Universitat Politècnica de València), asignatura y lo que indique el usuario.
 - Si la evaluación es solo de comentarios o no hay datos para una rúbrica, devuelve proposal null.
@@ -61,6 +63,7 @@ Reglas obligatorias:
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
+  const locale = (await getLocale()) as SpaceLocale;
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
@@ -109,7 +112,7 @@ export async function POST(request: Request) {
           provider,
           modelId: id,
           schema: spaceDraftSchema,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt(locale),
           prompt: `Descripción del espacio que quiere crear el usuario:\n${parsed.data.message}`,
           abortSignal,
         }),

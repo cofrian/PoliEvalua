@@ -1,4 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { LOCALE_RULE, type SpaceLocale } from "@/lib/ai/prompts/presentation";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -25,13 +26,13 @@ const requestSchema = z.object({
   message: z.string().trim().min(3).max(4000),
 });
 
-const SYSTEM_PROMPT = `Eres el asistente de configuración de una plataforma de evaluación de la UPV.
+const systemPrompt = (locale: SpaceLocale) => `Eres el asistente de configuración de una plataforma de evaluación de la UPV.
 Tu ámbito exclusivo es diseñar evaluaciones: páginas de evaluación, requisitos, preguntas, rúbricas,
 contexto académico y organización del jurado. Rechaza conversaciones ajenas a ese ámbito.
 
 Genera siempre una propuesta completa que una persona propietaria pueda revisar antes de aplicarla.
 Reglas obligatorias:
-- Escribe todo en español claro y accesible.
+- ${LOCALE_RULE[locale] ?? LOCALE_RULE.es} Que sea accesible.
 - Los pesos de los criterios deben sumar exactamente 100.
 - Cada criterio debe incluir niveles dentro de scaleMin y scaleMax.
 - No incluyas datos personales ni solicites información sensible.
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
       .maybeSingle(),
     supabase
       .from("events")
-      .select("id, name, kind, description, settings")
+      .select("id, name, kind, description, settings, locale")
       .eq("id", eventId)
       .maybeSingle(),
   ]);
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
           provider,
           modelId: id,
           schema: assistantResponseSchema,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt(event.locale),
           prompt: `Contexto actual del espacio (sin datos personales):\n${JSON.stringify({
             event,
             academic,
