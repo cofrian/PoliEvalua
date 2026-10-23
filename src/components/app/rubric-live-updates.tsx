@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ export function RubricLiveUpdates({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const t = useTranslations("common");
 
   useEffect(() => {
     const channel = supabase
@@ -36,7 +38,7 @@ export function RubricLiveUpdates({
             .select("full_name")
             .eq("id", change.user_id)
             .maybeSingle();
-          toast.info(`${author?.full_name ?? "Alguien"} ${change.summary}`);
+          toast.info(`${author?.full_name ?? t("someone")} ${change.summary}`);
           router.refresh();
         },
       )

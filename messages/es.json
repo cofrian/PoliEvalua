@@ -587,5 +587,245 @@
     "criteria": "Criterios con mucho desacuerdo (diferencia ≥ {points} puntos)",
     "spread": "{team} · {criterion}: {points} puntos entre la nota más alta y la más baja",
     "more": "… y {count} más"
+  },
+  "home": {
+    "modes": {
+      "hackathon": {
+        "title": "Hackathones y eventos",
+        "description": "Jurado, mentores, equipos, notas compartidas y evaluación en directo."
+      },
+      "class": {
+        "title": "Asignaturas",
+        "description": "Evaluación docente y entre iguales con grupos, entregas y anonimato configurable."
+      },
+      "awards": {
+        "title": "Premios y convocatorias",
+        "description": "Candidaturas, comités, criterios ponderados y resultados auditables."
+      },
+      "project": {
+        "title": "Proyectos",
+        "description": "Formularios a medida, revisiones por fases y seguimiento de evidencias."
+      }
+    },
+    "login": "Entrar",
+    "kicker": "Evaluación abierta y reutilizable",
+    "title": "Crea el proceso de evaluación que necesita tu actividad",
+    "lead": "Gestiona espacios, formularios, rúbricas, participantes e invitaciones para proyectos, asignaturas, premios y hackathones.",
+    "access": "Acceder a la plataforma",
+    "createSpace": "Crear un espacio",
+    "aside": "Una base común. Cada espacio conserva su identidad, reglas y personas.",
+    "kicker2": "Un sistema, distintos contextos",
+    "title2": "Todo se configura desde el propio espacio",
+    "lead2": "El gestor decide quién participa, qué se pregunta, cómo se calcula el resultado y qué información puede ver cada rol.",
+    "footer": "Evalúa · Universitat Politècnica de València",
+    "footerTags": "Accesible · Responsive · Datos protegidos por RLS"
+  },
+  "platform": {
+    "account": "Tu cuenta",
+    "yourSpaces": "Tus espacios"
+  },
+  "spaceKinds": {
+    "hackathon": "Hackathon",
+    "class": "Asignatura",
+    "awards": "Premios",
+    "project": "Proyectos",
+    "custom": "Personalizado"
+  },
+  "participantModes": {
+    "teams": "Equipos",
+    "groups": "Grupos",
+    "individuals": "Proyectos individuales",
+    "candidates": "Candidaturas"
+  },
+  "evaluationModes": {
+    "rubric": "Rúbrica",
+    "feedback": "Preguntas y comentarios",
+    "mixed": "Puntuación y comentarios"
+  },
+  "spaces": {
+    "kicker": "Tus espacios",
+    "title": "Elige dónde quieres trabajar",
+    "lead": "Tu cuenta es común, pero los miembros, permisos, notas y resultados están separados en cada espacio.",
+    "new": "Nuevo espacio",
+    "last": "Último espacio",
+    "enter": "Entrar al espacio",
+    "readyTitle": "Tu cuenta ya está lista",
+    "readyText": "Crea tu primer espacio o introduce el código que te haya facilitado una organización.",
+    "createFirst": "Crear mi primer espacio",
+    "codeTitle": "Entrar con un código de espacio",
+    "codeText": "Este código solo sirve para añadir un espacio a tu cuenta; nunca se pide para entrar en la plataforma."
+  },
+  "join": {
+    "code": "Código del espacio",
+    "codePlaceholder": "Código de la organización",
+    "as": "Participaré como",
+    "entering": "Entrando…",
+    "enter": "Entrar al espacio"
+  },
+  "duplicate": {
+    "summary": "Duplicar para otro curso",
+    "copySuffix": "{name} (copia)",
+    "name": "Nombre del espacio nuevo",
+    "slug": "Identificador web",
+    "code": "Código de acceso",
+    "codePlaceholder": "Código de acceso nuevo",
+    "note": "Copia la rúbrica, la página de evaluación, los datos académicos, los paneles y los ajustes. No copia personas, grupos, notas, evaluaciones ni grabaciones.",
+    "submit": "Duplicar",
+    "pending": "Duplicando…"
+  },
+  "spaceErrors": {
+    "noAccess": "No tienes acceso activo a este espacio.",
+    "checkCode": "Revisa el código y el rol.",
+    "tooMany": "Demasiados intentos. Espera unos minutos.",
+    "badCode": "El código no es válido o el acceso está cerrado.",
+    "roleNotAllowed": "Ese perfil no está habilitado para entrar con código en este espacio.",
+    "inactive": "Tu acceso a este espacio está desactivado. Contacta con su gestor.",
+    "addFailed": "No se ha podido añadir el espacio a tu cuenta.",
+    "checkCreate": "Revisa la identidad, los perfiles, las funciones seleccionadas y el código (mínimo 6 caracteres).",
+    "inUse": "Ese identificador o código de acceso ya está en uso.",
+    "createFailed": "No se ha podido crear el espacio. Inténtalo de nuevo.",
+    "checkDuplicate": "Revisa el nombre, el identificador (minúsculas y guiones) y el código (mínimo 6).",
+    "duplicateFailed": "No se ha podido duplicar el espacio.",
+    "joinRolesEnabled": "Los perfiles con código deben estar habilitados.",
+    "subjectRequired": "Indica la asignatura del espacio académico."
+  },
+  "newSpace": {
+    "kicker": "Creación guiada",
+    "title": "Nuevo espacio",
+    "lead": "Elige la plantilla, quién participa, cómo se evaluará y qué funciones necesitas. Podrás cambiarlo después."
+  },
+  "createSpace": {
+    "roles": {
+      "judge": {
+        "label": "Jurado",
+        "description": "Puntúa mediante la rúbrica."
+      },
+      "mentor": {
+        "label": "Mentoría",
+        "description": "Comenta y toma notas sin votar."
+      },
+      "teacher": {
+        "label": "Profesorado",
+        "description": "Configura y evalúa actividades docentes."
+      },
+      "student": {
+        "label": "Alumnado",
+        "description": "Participa sin permisos de gestión ni voto docente."
+      },
+      "reviewer": {
+        "label": "Evaluadores",
+        "description": "Revisa candidaturas o proyectos."
+      },
+      "viewer": {
+        "label": "Consulta",
+        "description": "Acceso de solo lectura."
+      }
+    },
+    "modules": {
+      "participants": {
+        "label": "Participantes",
+        "description": "Equipos, grupos, personas o candidaturas."
+      },
+      "rubric": {
+        "label": "Rúbrica",
+        "description": "Criterios, niveles, pesos y puntuaciones."
+      },
+      "notes": {
+        "label": "Notas",
+        "description": "Comentarios privados y compartidos."
+      },
+      "results": {
+        "label": "Resultados",
+        "description": "Ranking, informes y exportación."
+      },
+      "sponsors": {
+        "label": "Patrocinadores",
+        "description": "Logotipos y entidades colaboradoras."
+      }
+    },
+    "draftError": "No se ha podido preparar el espacio.",
+    "connectError": "No se ha podido conectar con el asistente.",
+    "aiTitle": "Descríbelo y lo preparo",
+    "aiText": "Cuenta qué quieres evaluar, quién participa y cómo será la rúbrica. Rellenaré el formulario y dejaré la evaluación como borrador para que la revises. Si me falta algo importante, te lo preguntaré.",
+    "aiLabel": "Descripción del espacio para el asistente",
+    "aiPlaceholder": "Asignatura de Ingeniería del Software, 3.º de GII en la ETSINF, curso 2026–2027. Grupos de 4 estudiantes presentan su proyecto y el profesorado puntúa de 0 a 10: análisis 30 %, diseño 30 %, presentación 20 %, trabajo en equipo 20 %.",
+    "preparing": "Preparando…",
+    "prepare": "Preparar con IA",
+    "slow": "Puede tardar hasta un minuto.",
+    "rubricReady": "Rúbrica «{name}» con {count, plural, one {# criterio} other {# criterios}} lista como borrador.",
+    "reviewAndCreate": "{reply} Revisa los campos y pulsa «Crear espacio».",
+    "kind": "1. Tipo de espacio",
+    "kindHint": "La plantilla marca un punto de partida que puedes personalizar.",
+    "identity": "2. Identidad",
+    "name": "Nombre del espacio",
+    "namePlaceholder": "Premios de innovación 2027",
+    "slug": "Identificador web",
+    "slugPlaceholder": "premios-innovacion-2027",
+    "slugHint": "Solo letras minúsculas, números y guiones.",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Qué se va a evaluar y quién participa.",
+    "manage": "3. Qué quieres gestionar",
+    "participantMode": "Unidad participante",
+    "participantModes": {
+      "teams": "Equipos",
+      "groups": "Grupos de clase",
+      "individuals": "Personas o proyectos individuales",
+      "candidates": "Candidaturas"
+    },
+    "evaluationMode": "Forma de evaluación",
+    "evaluationModes": {
+      "rubric": "Rúbrica con puntuación",
+      "feedback": "Solo preguntas y comentarios",
+      "mixed": "Puntuación y comentarios"
+    },
+    "academic": "4. Contexto académico",
+    "academicToggle": "Vincular este espacio a una asignatura y una titulación",
+    "institution": "Universidad o institución",
+    "school": "Centro o escuela",
+    "degree": "Titulación",
+    "degreePlaceholder": "Grado en Ingeniería Informática",
+    "subject": "Asignatura",
+    "subjectCode": "Código de asignatura",
+    "year": "Curso académico",
+    "term": "Semestre",
+    "termPlaceholder": "Primer semestre",
+    "who": "5. Quién participa",
+    "whoHint": "Tú serás la persona propietaria. Activa los demás perfiles que utilizará este espacio.",
+    "access": "6. Acceso mediante código",
+    "code": "Código inicial",
+    "codeHint": "Elige qué perfiles pueden darse de alta con el código. Los demás necesitarán una invitación personal.",
+    "creating": "Creando espacio…",
+    "create": "Crear espacio"
+  },
+  "recordingNotice": {
+    "default": "Las exposiciones de este espacio se grabarán para transcribirlas automáticamente y preparar un resumen y materiales de apoyo para la evaluación. El audio no se guarda: se borra en cuanto se convierte en texto. Se conservan solo la transcripción y los materiales generados, que ven únicamente las personas autorizadas del espacio.",
+    "guarantee": "El audio no se conserva: se borra en cuanto se transcribe.",
+    "title": "Las exposiciones se grabarán",
+    "saving": "Guardando…",
+    "ok": "Entendido",
+    "saveError": "No se ha podido guardar.",
+    "ackError": "No se ha podido guardar la confirmación. Inténtalo de nuevo."
+  },
+  "common": {
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copyError": "No se ha podido copiar; selecciónalo y cópialo a mano.",
+    "confirm": "Sí, continuar",
+    "cancel": "Cancelar",
+    "saved": "Cambios guardados",
+    "saveError": "No se pudo guardar",
+    "unsaved": "Tienes cambios sin guardar",
+    "saving": "Guardando…",
+    "save": "Guardar cambios",
+    "someone": "Alguien",
+    "alsoHere": "{name} también está aquí",
+    "othersHere": "{count} personas más aquí",
+    "themeToggle": "Cambiar tema de color",
+    "lightMode": "Activar modo claro",
+    "darkMode": "Activar modo oscuro",
+    "currentSpace": "Espacio actual: {name}. Cambiar de espacio",
+    "yourSpaces": "Tus espacios",
+    "allSpaces": "Ver todos los espacios",
+    "newSpace": "Nuevo espacio"
   }
 }

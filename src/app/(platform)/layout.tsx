@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { UserMenu } from "@/components/app/app-shell";
 import { UpvBrand } from "@/components/brand/upv-brand";
@@ -7,6 +8,7 @@ import { getAccount } from "@/lib/app/session";
 export default async function PlatformLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const { supabase, profile } = await getAccount();
   await supabase.rpc("touch_last_seen");
+  const t = await getTranslations("platform");
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -14,7 +16,7 @@ export default async function PlatformLayout({ children }: Readonly<{ children: 
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <UpvBrand compact href="/espacios" />
           <UserMenu
-            profile={{ name: profile.full_name || "Tu cuenta", avatarUrl: profile.avatar_url ?? null, roleLabel: "Tus espacios" }}
+            profile={{ name: profile.full_name || t("account"), avatarUrl: profile.avatar_url ?? null, roleLabel: t("yourSpaces") }}
           />
         </div>
       </header>

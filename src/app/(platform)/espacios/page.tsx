@@ -1,26 +1,19 @@
 import { Plus } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { selectSpaceAction } from "@/app/(app)/espacios/actions";
 import { DuplicateSpaceForm } from "@/components/app/duplicate-space-form";
 import { JoinSpaceForm } from "@/components/app/join-space-form";
 import { Button } from "@/components/ui/button";
-import { getAccount, roleLabels, type SpaceRole } from "@/lib/app/session";
-
-const kindLabels = {
-  hackathon: "Hackathon",
-  class: "Asignatura",
-  awards: "Premios",
-  project: "Proyectos",
-  custom: "Personalizado",
-} as const;
+import { getAccount, type SpaceRole } from "@/lib/app/session";
 
 type SpaceRelation = {
   id: string;
   name: string;
   slug: string;
-  kind: keyof typeof kindLabels;
+  kind: "hackathon" | "class" | "awards" | "project" | "custom";
   status: string;
   settings: {
     participant_mode?: "teams" | "groups" | "individuals" | "candidates";
@@ -28,21 +21,15 @@ type SpaceRelation = {
   } | null;
 };
 
-const participantLabels = {
-  teams: "Equipos",
-  groups: "Grupos",
-  individuals: "Proyectos individuales",
-  candidates: "Candidaturas",
-} as const;
-
-const evaluationLabels = {
-  rubric: "Rúbrica",
-  feedback: "Preguntas y comentarios",
-  mixed: "Puntuación y comentarios",
-} as const;
-
 export default async function SpacesPage() {
   const { supabase, user } = await getAccount();
+  const [t, tKinds, tModes, tEval, tRoles] = await Promise.all([
+    getTranslations("spaces"),
+    getTranslations("spaceKinds"),
+    getTranslations("participantModes"),
+    getTranslations("evaluationModes"),
+    getTranslations("roles"),
+  ]);
   const activeEventId = (await cookies()).get("active_event_id")?.value;
   const { data } = await supabase
     .from("event_members")
@@ -56,14 +43,14 @@ export default async function SpacesPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-upv-500 dark:text-upv-300">Tus espacios</p>
-          <h1 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">Elige dónde quieres trabajar</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-upv-500 dark:text-upv-300">{t("kicker")}</p>
+          <h1 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">{t("title")}</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Tu cuenta es común, pero los miembros, permisos, notas y resultados están separados en cada espacio.
+            {t("lead")}
           </p>
         </div>
         <Button asChild>
-          <Link href="/espacios/nuevo"><Plus aria-hidden="true" />Nuevo espacio</Link>
+          <Link href="/espacios/nuevo"><Plus aria-hidden="true" />{t("new")}</Link>
         </Button>
       </div>
 
@@ -78,21 +65,21 @@ export default async function SpacesPage() {
               <article className="rounded-xl border border-border bg-white p-5 dark:bg-card" key={space.id}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-upv-500 dark:text-upv-300">{kindLabels[space.kind]}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-upv-500 dark:text-upv-300">{tKinds(space.kind)}</p>
                     <h2 className="mt-2 font-heading text-xl font-semibold">{space.name}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">{roleLabels[membership.role as SpaceRole]}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{tRoles(membership.role as SpaceRole)}</p>
                     {space.settings?.participant_mode && space.settings?.evaluation_mode ? (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        {participantLabels[space.settings.participant_mode]} · {evaluationLabels[space.settings.evaluation_mode]}
+                        {tModes(space.settings.participant_mode)} · {tEval(space.settings.evaluation_mode)}
                       </p>
                     ) : null}
                   </div>
-                  {active ? <span className="rounded-full bg-upv-blue/20 px-2.5 py-1 text-xs font-semibold">Último espacio</span> : null}
+                  {active ? <span className="rounded-full bg-upv-blue/20 px-2.5 py-1 text-xs font-semibold">{t("last")}</span> : null}
                 </div>
                 <form action={selectSpaceAction} className="mt-5">
                   <input name="eventId" type="hidden" value={space.id} />
                   <Button className="w-full" type="submit" variant={active ? "outline" : "default"}>
-                    Entrar al espacio
+                    {t("enter")}
                   </Button>
                 </form>
                 {membership.role === "owner" || membership.role === "manager" ? (
@@ -104,20 +91,20 @@ export default async function SpacesPage() {
         </div>
       ) : (
         <section className="rounded-xl border border-dashed border-border bg-white p-8 text-center dark:bg-card">
-          <h2 className="font-heading text-2xl font-semibold">Tu cuenta ya está lista</h2>
+          <h2 className="font-heading text-2xl font-semibold">{t("readyTitle")}</h2>
           <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
-            Crea tu primer espacio o introduce el código que te haya facilitado una organización.
+            {t("readyText")}
           </p>
           <Button asChild className="mt-5">
-            <Link href="/espacios/nuevo"><Plus aria-hidden="true" />Crear mi primer espacio</Link>
+            <Link href="/espacios/nuevo"><Plus aria-hidden="true" />{t("createFirst")}</Link>
           </Button>
         </section>
       )}
 
       <section className="rounded-xl border border-border bg-white p-5 sm:p-6 dark:bg-card">
-        <h2 className="font-heading text-xl font-semibold">Entrar con un código de espacio</h2>
+        <h2 className="font-heading text-xl font-semibold">{t("codeTitle")}</h2>
         <p className="mb-5 mt-1 text-sm text-muted-foreground">
-          Este código solo sirve para añadir un espacio a tu cuenta; nunca se pide para entrar en la plataforma.
+          {t("codeText")}
         </p>
         <JoinSpaceForm />
       </section>

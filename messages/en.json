@@ -587,5 +587,245 @@
     "criteria": "Criteria with strong disagreement (difference ≥ {points} points)",
     "spread": "{team} · {criterion}: {points} points between the highest and lowest score",
     "more": "… and {count} more"
+  },
+  "home": {
+    "modes": {
+      "hackathon": {
+        "title": "Hackathons and events",
+        "description": "Jury, mentors, teams, shared notes and live evaluation."
+      },
+      "class": {
+        "title": "Courses",
+        "description": "Teacher and peer assessment with groups, submissions and configurable anonymity."
+      },
+      "awards": {
+        "title": "Awards and calls",
+        "description": "Entries, committees, weighted criteria and auditable results."
+      },
+      "project": {
+        "title": "Projects",
+        "description": "Custom forms, staged reviews and evidence tracking."
+      }
+    },
+    "login": "Sign in",
+    "kicker": "Open, reusable evaluation",
+    "title": "Build the evaluation process your activity needs",
+    "lead": "Manage spaces, forms, rubrics, participants and invitations for projects, courses, awards and hackathons.",
+    "access": "Go to the platform",
+    "createSpace": "Create a space",
+    "aside": "One shared base. Each space keeps its own identity, rules and people.",
+    "kicker2": "One system, different contexts",
+    "title2": "Everything is set up from the space itself",
+    "lead2": "The manager decides who takes part, what is asked, how the result is calculated and what each role can see.",
+    "footer": "Evalúa · Universitat Politècnica de València",
+    "footerTags": "Accessible · Responsive · Data protected by RLS"
+  },
+  "platform": {
+    "account": "Your account",
+    "yourSpaces": "Your spaces"
+  },
+  "spaceKinds": {
+    "hackathon": "Hackathon",
+    "class": "Course",
+    "awards": "Awards",
+    "project": "Projects",
+    "custom": "Custom"
+  },
+  "participantModes": {
+    "teams": "Teams",
+    "groups": "Groups",
+    "individuals": "Individual projects",
+    "candidates": "Entries"
+  },
+  "evaluationModes": {
+    "rubric": "Rubric",
+    "feedback": "Questions and comments",
+    "mixed": "Scores and comments"
+  },
+  "spaces": {
+    "kicker": "Your spaces",
+    "title": "Choose where you want to work",
+    "lead": "Your account is shared, but members, permissions, notes and results are kept separate in each space.",
+    "new": "New space",
+    "last": "Last space",
+    "enter": "Enter space",
+    "readyTitle": "Your account is ready",
+    "readyText": "Create your first space or enter the code an organization gave you.",
+    "createFirst": "Create my first space",
+    "codeTitle": "Join with a space code",
+    "codeText": "This code only adds a space to your account; it's never needed to sign in."
+  },
+  "join": {
+    "code": "Space code",
+    "codePlaceholder": "Organization's code",
+    "as": "I'll take part as",
+    "entering": "Joining…",
+    "enter": "Enter space"
+  },
+  "duplicate": {
+    "summary": "Duplicate for another term",
+    "copySuffix": "{name} (copy)",
+    "name": "New space name",
+    "slug": "Web identifier",
+    "code": "Access code",
+    "codePlaceholder": "New access code",
+    "note": "Copies the rubric, evaluation page, academic data, panels and settings. It doesn't copy people, groups, notes, evaluations or recordings.",
+    "submit": "Duplicate",
+    "pending": "Duplicating…"
+  },
+  "spaceErrors": {
+    "noAccess": "You don't have active access to this space.",
+    "checkCode": "Check the code and the role.",
+    "tooMany": "Too many attempts. Wait a few minutes.",
+    "badCode": "The code is invalid or access is closed.",
+    "roleNotAllowed": "That role can't join this space with a code.",
+    "inactive": "Your access to this space is disabled. Contact its manager.",
+    "addFailed": "The space couldn't be added to your account.",
+    "checkCreate": "Check the identity, roles, selected features and the code (at least 6 characters).",
+    "inUse": "That identifier or access code is already in use.",
+    "createFailed": "The space couldn't be created. Try again.",
+    "checkDuplicate": "Check the name, the identifier (lowercase and hyphens) and the code (at least 6).",
+    "duplicateFailed": "The space couldn't be duplicated.",
+    "joinRolesEnabled": "Roles that join with a code must be enabled.",
+    "subjectRequired": "Enter the course for the academic space."
+  },
+  "newSpace": {
+    "kicker": "Guided setup",
+    "title": "New space",
+    "lead": "Choose the template, who takes part, how it will be evaluated and which features you need. You can change it later."
+  },
+  "createSpace": {
+    "roles": {
+      "judge": {
+        "label": "Jury",
+        "description": "Scores with the rubric."
+      },
+      "mentor": {
+        "label": "Mentors",
+        "description": "Comments and takes notes without voting."
+      },
+      "teacher": {
+        "label": "Teaching staff",
+        "description": "Sets up and evaluates course activities."
+      },
+      "student": {
+        "label": "Students",
+        "description": "Take part without management rights or a teacher vote."
+      },
+      "reviewer": {
+        "label": "Reviewers",
+        "description": "Review entries or projects."
+      },
+      "viewer": {
+        "label": "Viewers",
+        "description": "Read-only access."
+      }
+    },
+    "modules": {
+      "participants": {
+        "label": "Participants",
+        "description": "Teams, groups, people or entries."
+      },
+      "rubric": {
+        "label": "Rubric",
+        "description": "Criteria, levels, weights and scores."
+      },
+      "notes": {
+        "label": "Notes",
+        "description": "Private and shared comments."
+      },
+      "results": {
+        "label": "Results",
+        "description": "Ranking, reports and export."
+      },
+      "sponsors": {
+        "label": "Sponsors",
+        "description": "Logos and partner organizations."
+      }
+    },
+    "draftError": "The space couldn't be prepared.",
+    "connectError": "Couldn't reach the assistant.",
+    "aiTitle": "Describe it and I'll set it up",
+    "aiText": "Tell me what you want to evaluate, who takes part and what the rubric looks like. I'll fill in the form and leave the evaluation as a draft for you to review. If something important is missing, I'll ask you.",
+    "aiLabel": "Space description for the assistant",
+    "aiPlaceholder": "Software Engineering course, 3rd year of Computer Engineering at ETSINF, 2026–2027. Groups of 4 students present their project and teachers score from 0 to 10: analysis 30 %, design 30 %, presentation 20 %, teamwork 20 %.",
+    "preparing": "Preparing…",
+    "prepare": "Prepare with AI",
+    "slow": "It can take up to a minute.",
+    "rubricReady": "Rubric “{name}” with {count, plural, one {# criterion} other {# criteria}} ready as a draft.",
+    "reviewAndCreate": "{reply} Review the fields and press “Create space”.",
+    "kind": "1. Space type",
+    "kindHint": "The template is a starting point you can customize.",
+    "identity": "2. Identity",
+    "name": "Space name",
+    "namePlaceholder": "Innovation awards 2027",
+    "slug": "Web identifier",
+    "slugPlaceholder": "innovation-awards-2027",
+    "slugHint": "Lowercase letters, numbers and hyphens only.",
+    "description": "Description",
+    "descriptionPlaceholder": "What will be evaluated and who takes part.",
+    "manage": "3. What you want to manage",
+    "participantMode": "Participant unit",
+    "participantModes": {
+      "teams": "Teams",
+      "groups": "Class groups",
+      "individuals": "Individuals or individual projects",
+      "candidates": "Entries"
+    },
+    "evaluationMode": "Evaluation method",
+    "evaluationModes": {
+      "rubric": "Scored rubric",
+      "feedback": "Questions and comments only",
+      "mixed": "Scores and comments"
+    },
+    "academic": "4. Academic context",
+    "academicToggle": "Link this space to a course and a degree",
+    "institution": "University or institution",
+    "school": "School or faculty",
+    "degree": "Degree",
+    "degreePlaceholder": "Bachelor's in Computer Engineering",
+    "subject": "Course",
+    "subjectCode": "Course code",
+    "year": "Academic year",
+    "term": "Term",
+    "termPlaceholder": "First semester",
+    "who": "5. Who takes part",
+    "whoHint": "You'll be the owner. Enable the other roles this space will use.",
+    "access": "6. Access with a code",
+    "code": "Initial code",
+    "codeHint": "Choose which roles can sign up with the code. The rest will need a personal invitation.",
+    "creating": "Creating space…",
+    "create": "Create space"
+  },
+  "recordingNotice": {
+    "default": "Presentations in this space will be recorded to transcribe them automatically and prepare a summary and support materials for the evaluation. The audio isn't kept: it's deleted as soon as it becomes text. Only the transcript and the generated materials are kept, and only authorized people in the space can see them.",
+    "guarantee": "The audio isn't kept: it's deleted as soon as it's transcribed.",
+    "title": "Presentations will be recorded",
+    "saving": "Saving…",
+    "ok": "Got it",
+    "saveError": "It couldn't be saved.",
+    "ackError": "Your confirmation couldn't be saved. Try again."
+  },
+  "common": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyError": "Couldn't copy; select it and copy it by hand.",
+    "confirm": "Yes, continue",
+    "cancel": "Cancel",
+    "saved": "Changes saved",
+    "saveError": "Couldn't save",
+    "unsaved": "You have unsaved changes",
+    "saving": "Saving…",
+    "save": "Save changes",
+    "someone": "Someone",
+    "alsoHere": "{name} is also here",
+    "othersHere": "{count} more people here",
+    "themeToggle": "Change colour theme",
+    "lightMode": "Switch to light mode",
+    "darkMode": "Switch to dark mode",
+    "currentSpace": "Current space: {name}. Switch space",
+    "yourSpaces": "Your spaces",
+    "allSpaces": "See all spaces",
+    "newSpace": "New space"
   }
 }

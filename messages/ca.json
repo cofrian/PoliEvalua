@@ -587,5 +587,245 @@
     "criteria": "Criteris amb molt de desacord (diferència ≥ {points} punts)",
     "spread": "{team} · {criterion}: {points} punts entre la nota més alta i la més baixa",
     "more": "… i {count} més"
+  },
+  "home": {
+    "modes": {
+      "hackathon": {
+        "title": "Hackatons i esdeveniments",
+        "description": "Jurat, mentors, equips, notes compartides i avaluació en directe."
+      },
+      "class": {
+        "title": "Assignatures",
+        "description": "Avaluació docent i entre iguals amb grups, lliuraments i anonimat configurable."
+      },
+      "awards": {
+        "title": "Premis i convocatòries",
+        "description": "Candidatures, comités, criteris ponderats i resultats auditables."
+      },
+      "project": {
+        "title": "Projectes",
+        "description": "Formularis a mida, revisions per fases i seguiment d'evidències."
+      }
+    },
+    "login": "Entrar",
+    "kicker": "Avaluació oberta i reutilitzable",
+    "title": "Crea el procés d'avaluació que necessita la teua activitat",
+    "lead": "Gestiona espais, formularis, rúbriques, participants i invitacions per a projectes, assignatures, premis i hackatons.",
+    "access": "Accedir a la plataforma",
+    "createSpace": "Crear un espai",
+    "aside": "Una base comuna. Cada espai conserva la seua identitat, regles i persones.",
+    "kicker2": "Un sistema, contextos diferents",
+    "title2": "Tot es configura des del mateix espai",
+    "lead2": "El gestor decidix qui participa, què es pregunta, com es calcula el resultat i quina informació pot veure cada rol.",
+    "footer": "Evalúa · Universitat Politècnica de València",
+    "footerTags": "Accessible · Adaptable · Dades protegides per RLS"
+  },
+  "platform": {
+    "account": "El teu compte",
+    "yourSpaces": "Els teus espais"
+  },
+  "spaceKinds": {
+    "hackathon": "Hackató",
+    "class": "Assignatura",
+    "awards": "Premis",
+    "project": "Projectes",
+    "custom": "Personalitzat"
+  },
+  "participantModes": {
+    "teams": "Equips",
+    "groups": "Grups",
+    "individuals": "Projectes individuals",
+    "candidates": "Candidatures"
+  },
+  "evaluationModes": {
+    "rubric": "Rúbrica",
+    "feedback": "Preguntes i comentaris",
+    "mixed": "Puntuació i comentaris"
+  },
+  "spaces": {
+    "kicker": "Els teus espais",
+    "title": "Tria on vols treballar",
+    "lead": "El teu compte és comú, però els membres, permisos, notes i resultats estan separats en cada espai.",
+    "new": "Espai nou",
+    "last": "Últim espai",
+    "enter": "Entrar a l'espai",
+    "readyTitle": "El teu compte ja està llest",
+    "readyText": "Crea el teu primer espai o introduïx el codi que t'haja facilitat una organització.",
+    "createFirst": "Crear el meu primer espai",
+    "codeTitle": "Entrar amb un codi d'espai",
+    "codeText": "Este codi només servix per a afegir un espai al teu compte; mai no es demana per a entrar en la plataforma."
+  },
+  "join": {
+    "code": "Codi de l'espai",
+    "codePlaceholder": "Codi de l'organització",
+    "as": "Hi participaré com a",
+    "entering": "Entrant…",
+    "enter": "Entrar a l'espai"
+  },
+  "duplicate": {
+    "summary": "Duplicar per a un altre curs",
+    "copySuffix": "{name} (còpia)",
+    "name": "Nom de l'espai nou",
+    "slug": "Identificador web",
+    "code": "Codi d'accés",
+    "codePlaceholder": "Codi d'accés nou",
+    "note": "Copia la rúbrica, la pàgina d'avaluació, les dades acadèmiques, els panells i la configuració. No copia persones, grups, notes, avaluacions ni gravacions.",
+    "submit": "Duplicar",
+    "pending": "Duplicant…"
+  },
+  "spaceErrors": {
+    "noAccess": "No tens accés actiu a este espai.",
+    "checkCode": "Revisa el codi i el rol.",
+    "tooMany": "Massa intents. Espera uns minuts.",
+    "badCode": "El codi no és vàlid o l'accés està tancat.",
+    "roleNotAllowed": "Eixe perfil no està habilitat per a entrar amb codi en este espai.",
+    "inactive": "El teu accés a este espai està desactivat. Contacta amb el gestor.",
+    "addFailed": "No s'ha pogut afegir l'espai al teu compte.",
+    "checkCreate": "Revisa la identitat, els perfils, les funcions seleccionades i el codi (mínim 6 caràcters).",
+    "inUse": "Eixe identificador o codi d'accés ja està en ús.",
+    "createFailed": "No s'ha pogut crear l'espai. Torna-ho a provar.",
+    "checkDuplicate": "Revisa el nom, l'identificador (minúscules i guions) i el codi (mínim 6).",
+    "duplicateFailed": "No s'ha pogut duplicar l'espai.",
+    "joinRolesEnabled": "Els perfils amb codi han d'estar habilitats.",
+    "subjectRequired": "Indica l'assignatura de l'espai acadèmic."
+  },
+  "newSpace": {
+    "kicker": "Creació guiada",
+    "title": "Espai nou",
+    "lead": "Tria la plantilla, qui participa, com s'avaluarà i quines funcions necessites. Podràs canviar-ho després."
+  },
+  "createSpace": {
+    "roles": {
+      "judge": {
+        "label": "Jurat",
+        "description": "Puntua amb la rúbrica."
+      },
+      "mentor": {
+        "label": "Mentoria",
+        "description": "Comenta i pren notes sense votar."
+      },
+      "teacher": {
+        "label": "Professorat",
+        "description": "Configura i avalua activitats docents."
+      },
+      "student": {
+        "label": "Alumnat",
+        "description": "Participa sense permisos de gestió ni vot docent."
+      },
+      "reviewer": {
+        "label": "Avaluadors",
+        "description": "Revisa candidatures o projectes."
+      },
+      "viewer": {
+        "label": "Consulta",
+        "description": "Accés de només lectura."
+      }
+    },
+    "modules": {
+      "participants": {
+        "label": "Participants",
+        "description": "Equips, grups, persones o candidatures."
+      },
+      "rubric": {
+        "label": "Rúbrica",
+        "description": "Criteris, nivells, pesos i puntuacions."
+      },
+      "notes": {
+        "label": "Notes",
+        "description": "Comentaris privats i compartits."
+      },
+      "results": {
+        "label": "Resultats",
+        "description": "Classificació, informes i exportació."
+      },
+      "sponsors": {
+        "label": "Patrocinadors",
+        "description": "Logotips i entitats col·laboradores."
+      }
+    },
+    "draftError": "No s'ha pogut preparar l'espai.",
+    "connectError": "No s'ha pogut connectar amb l'assistent.",
+    "aiTitle": "Descriu-lo i el prepare",
+    "aiText": "Explica què vols avaluar, qui participa i com serà la rúbrica. Ompliré el formulari i deixaré l'avaluació com a esborrany perquè la revises. Si em falta alguna cosa important, t'ho preguntaré.",
+    "aiLabel": "Descripció de l'espai per a l'assistent",
+    "aiPlaceholder": "Assignatura d'Enginyeria del Programari, 3r de GII a l'ETSINF, curs 2026–2027. Grups de 4 estudiants presenten el seu projecte i el professorat puntua de 0 a 10: anàlisi 30 %, disseny 30 %, presentació 20 %, treball en equip 20 %.",
+    "preparing": "Preparant…",
+    "prepare": "Preparar amb IA",
+    "slow": "Pot tardar fins a un minut.",
+    "rubricReady": "Rúbrica «{name}» amb {count, plural, one {# criteri} other {# criteris}} llesta com a esborrany.",
+    "reviewAndCreate": "{reply} Revisa els camps i prem «Crear l'espai».",
+    "kind": "1. Tipus d'espai",
+    "kindHint": "La plantilla marca un punt de partida que pots personalitzar.",
+    "identity": "2. Identitat",
+    "name": "Nom de l'espai",
+    "namePlaceholder": "Premis d'innovació 2027",
+    "slug": "Identificador web",
+    "slugPlaceholder": "premis-innovacio-2027",
+    "slugHint": "Només lletres minúscules, números i guions.",
+    "description": "Descripció",
+    "descriptionPlaceholder": "Què s'avaluarà i qui participa.",
+    "manage": "3. Què vols gestionar",
+    "participantMode": "Unitat participant",
+    "participantModes": {
+      "teams": "Equips",
+      "groups": "Grups de classe",
+      "individuals": "Persones o projectes individuals",
+      "candidates": "Candidatures"
+    },
+    "evaluationMode": "Forma d'avaluació",
+    "evaluationModes": {
+      "rubric": "Rúbrica amb puntuació",
+      "feedback": "Només preguntes i comentaris",
+      "mixed": "Puntuació i comentaris"
+    },
+    "academic": "4. Context acadèmic",
+    "academicToggle": "Vincular este espai a una assignatura i una titulació",
+    "institution": "Universitat o institució",
+    "school": "Centre o escola",
+    "degree": "Titulació",
+    "degreePlaceholder": "Grau en Enginyeria Informàtica",
+    "subject": "Assignatura",
+    "subjectCode": "Codi d'assignatura",
+    "year": "Curs acadèmic",
+    "term": "Semestre",
+    "termPlaceholder": "Primer semestre",
+    "who": "5. Qui participa",
+    "whoHint": "Tu seràs la persona propietària. Activa els altres perfils que usarà este espai.",
+    "access": "6. Accés amb codi",
+    "code": "Codi inicial",
+    "codeHint": "Tria quins perfils poden donar-se d'alta amb el codi. La resta necessitarà una invitació personal.",
+    "creating": "Creant l'espai…",
+    "create": "Crear l'espai"
+  },
+  "recordingNotice": {
+    "default": "Les exposicions d'este espai es gravaran per a transcriure-les automàticament i preparar un resum i materials de suport per a l'avaluació. L'àudio no es guarda: s'esborra tan prompte com es convertix en text. Només es conserven la transcripció i els materials generats, que veuen únicament les persones autoritzades de l'espai.",
+    "guarantee": "L'àudio no es conserva: s'esborra tan prompte com es transcriu.",
+    "title": "Les exposicions es gravaran",
+    "saving": "Guardant…",
+    "ok": "Entesos",
+    "saveError": "No s'ha pogut guardar.",
+    "ackError": "No s'ha pogut guardar la confirmació. Torna-ho a provar."
+  },
+  "common": {
+    "copy": "Copiar",
+    "copied": "Copiat",
+    "copyError": "No s'ha pogut copiar; selecciona-ho i copia-ho a mà.",
+    "confirm": "Sí, continuar",
+    "cancel": "Cancel·lar",
+    "saved": "Canvis guardats",
+    "saveError": "No s'ha pogut guardar",
+    "unsaved": "Tens canvis sense guardar",
+    "saving": "Guardant…",
+    "save": "Guardar els canvis",
+    "someone": "Algú",
+    "alsoHere": "{name} també està ací",
+    "othersHere": "{count} persones més ací",
+    "themeToggle": "Canviar el tema de color",
+    "lightMode": "Activar el mode clar",
+    "darkMode": "Activar el mode fosc",
+    "currentSpace": "Espai actual: {name}. Canviar d'espai",
+    "yourSpaces": "Els teus espais",
+    "allSpaces": "Veure tots els espais",
+    "newSpace": "Espai nou"
   }
 }

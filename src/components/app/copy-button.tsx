@@ -1,13 +1,15 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
 /** Copia un texto al portapapeles y lo confirma en el propio botón. */
-export function CopyButton({ value, label = "Copiar" }: { value: string; label?: string }) {
+export function CopyButton({ value, label }: { value: string; label?: string }) {
+  const t = useTranslations("common");
   const [copied, setCopied] = useState(false);
   return (
     <Button
@@ -17,7 +19,7 @@ export function CopyButton({ value, label = "Copiar" }: { value: string; label?:
           setCopied(true);
           setTimeout(() => setCopied(false), 1800);
         } catch {
-          toast.error("No se ha podido copiar; selecciónalo y cópialo a mano.");
+          toast.error(t("copyError"));
         }
       }}
       size="sm"
@@ -25,7 +27,7 @@ export function CopyButton({ value, label = "Copiar" }: { value: string; label?:
       variant="outline"
     >
       {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-      {copied ? "Copiado" : label}
+      {copied ? t("copied") : (label ?? t("copy"))}
     </Button>
   );
 }
