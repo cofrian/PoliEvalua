@@ -52,9 +52,38 @@
       "list": "Veure {units}",
       "edit": "Editar i importar",
       "form": "Formulari d'avaluació",
-      "general": "General"
+      "general": "General",
+      "slots": "Torns"
     },
-    "challengesTab": "Reptes o categories"
+    "challengesTab": "Reptes o categories",
+    "agendaAndRoom": "Agenda i sala",
+    "configure": "Configurar",
+    "hint": {
+      "home": "Què falta i com va",
+      "participants": "{units}, persones i qui avalua",
+      "evaluation": "Què es puntua i quan",
+      "assistant": "T'ho prepara la IA parlant",
+      "schedule": "Torns i pantalla del dia",
+      "live": "Gravar i vot del públic",
+      "settings": "Nom, logo, IA i permisos",
+      "list": "Així veuen la llista de {units} el jurat i l'alumnat.",
+      "edit": "Crea, edita o importa {units} i els seus integrants, i assigna'ls un repte.",
+      "people": "Convida gent i decidix què pot fer cada persona.",
+      "panels": "Decidix quin jurat avalua quins {units}. Si no ho toques, tots avaluen a tots.",
+      "challenges": "Categories per a agrupar {units} i donar premis per separat.",
+      "rubric": "Els criteris que es puntuen, quant pesa cadascun i què significa cada nivell.",
+      "form": "Obri o tanca l'avaluació i tria què veu qui avalua.",
+      "peer": "Que l'alumnat s'avalue entre si.",
+      "results": "Notes finals, rànquing i exportar.",
+      "agenda": "Genera els torns d'exposició i mou-los si hi ha canvis.",
+      "room": "La pantalla del dia: torn actual, cronòmetre, gravar i puntuar.",
+      "recordings": "Les exposicions gravades, les transcripcions i els resums.",
+      "public": "Votació oberta al públic amb un codi QR.",
+      "general": "Nom, dates, portada i el que veu cada perfil.",
+      "academic": "Assignatura, competències i resultats d'aprenentatge.",
+      "sponsors": "Logos de patrocinadors en la portada.",
+      "audit": "Registre de tot el que s'ha canviat i qui."
+    }
   },
   "userMenu": {
     "open": "Menú d'usuari",

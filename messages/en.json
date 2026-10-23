@@ -52,9 +52,38 @@
       "list": "View {units}",
       "edit": "Edit and import",
       "form": "Evaluation form",
-      "general": "General"
+      "general": "General",
+      "slots": "Slots"
     },
-    "challengesTab": "Challenges or categories"
+    "challengesTab": "Challenges or categories",
+    "agendaAndRoom": "Schedule and room",
+    "configure": "Configure",
+    "hint": {
+      "home": "What's left and progress",
+      "participants": "{units}, people and who evaluates",
+      "evaluation": "What's scored and when",
+      "assistant": "Let the AI set it up for you",
+      "schedule": "Slots and the live screen",
+      "live": "Recording and public vote",
+      "settings": "Name, logo, AI and permissions",
+      "list": "This is how the jury and students see the {units} list.",
+      "edit": "Create, edit or import {units} and their members, and assign a challenge.",
+      "people": "Invite people and decide what each one can do.",
+      "panels": "Decide which jury evaluates which {units}. If you leave it, everyone evaluates everyone.",
+      "challenges": "Categories to group {units} and give separate awards.",
+      "rubric": "The criteria, how much each weighs and what each level means.",
+      "form": "Open or close the evaluation and choose what evaluators see.",
+      "peer": "Let students evaluate each other.",
+      "results": "Final grades, ranking and export.",
+      "agenda": "Generate presentation slots and move them if things change.",
+      "room": "The live screen: current slot, timer, record and score.",
+      "recordings": "Recorded presentations, transcripts and summaries.",
+      "public": "Public voting with a QR code.",
+      "general": "Name, dates, cover and what each profile sees.",
+      "academic": "Course, competences and learning outcomes.",
+      "sponsors": "Sponsor logos on the cover.",
+      "audit": "Log of everything that changed and who did it."
+    }
   },
   "userMenu": {
     "open": "User menu",

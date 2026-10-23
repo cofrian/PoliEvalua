@@ -52,9 +52,38 @@
       "list": "Ver {units}",
       "edit": "Editar e importar",
       "form": "Formulario de evaluación",
-      "general": "General"
+      "general": "General",
+      "slots": "Turnos"
     },
-    "challengesTab": "Retos o categorías"
+    "challengesTab": "Retos o categorías",
+    "agendaAndRoom": "Agenda y sala",
+    "configure": "Configurar",
+    "hint": {
+      "home": "Qué falta y cómo va",
+      "participants": "{units}, personas y quién evalúa",
+      "evaluation": "Qué se puntúa y cuándo",
+      "assistant": "Te lo prepara la IA hablando",
+      "schedule": "Turnos y pantalla del día",
+      "live": "Grabar y voto del público",
+      "settings": "Nombre, logo, IA y permisos",
+      "list": "Así ven la lista de {units} el jurado y el alumnado.",
+      "edit": "Crea, edita o importa {units} y sus integrantes, y asígnales un reto.",
+      "people": "Invita a gente y decide qué puede hacer cada persona.",
+      "panels": "Decide qué jurado evalúa qué {units}. Si no lo tocas, todos evalúan a todos.",
+      "challenges": "Categorías para agrupar {units} y dar premios por separado.",
+      "rubric": "Los criterios que se puntúan, cuánto pesa cada uno y qué significa cada nivel.",
+      "form": "Abre o cierra la evaluación y elige qué ve quien evalúa.",
+      "peer": "Que el alumnado se evalúe entre sí.",
+      "results": "Notas finales, ranking y exportar.",
+      "agenda": "Genera los turnos de exposición y muévelos si hay cambios.",
+      "room": "La pantalla del día: turno actual, cronómetro, grabar y puntuar.",
+      "recordings": "Las exposiciones grabadas, sus transcripciones y resúmenes.",
+      "public": "Votación abierta al público con un código QR.",
+      "general": "Nombre, fechas, portada y lo que ve cada perfil.",
+      "academic": "Asignatura, competencias y resultados de aprendizaje.",
+      "sponsors": "Logos de patrocinadores en la portada.",
+      "audit": "Registro de todo lo que se ha cambiado y quién."
+    }
   },
   "userMenu": {
     "open": "Menú de usuario",

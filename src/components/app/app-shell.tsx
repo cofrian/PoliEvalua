@@ -110,6 +110,7 @@ function SectionTabs({ groups }: { groups: NavGroup[] }) {
                     : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
                 )}
                 href={tab.href}
+                title={tab.hint}
               >
                 {tab.label}
               </Link>
@@ -139,7 +140,15 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
         aria-hidden="true"
         className={cn("size-4 shrink-0", active ? "text-foreground" : "opacity-70 group-hover:opacity-100")}
       />
-      <span className="truncate">{item.label}</span>
+      <span className="min-w-0">
+        <span className="block truncate">{item.label}</span>
+        {item.hint ? (
+          // Solo visual: el nombre del enlace sigue siendo el de la sección.
+          <span aria-hidden="true" className="block text-xs leading-snug font-normal text-muted-foreground first-letter:uppercase">
+            {item.hint}
+          </span>
+        ) : null}
+      </span>
     </Link>
   );
 }

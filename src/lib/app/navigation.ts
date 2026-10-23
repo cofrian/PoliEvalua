@@ -28,9 +28,10 @@ export type NavIcon =
   | "shield"
   | "group";
 
-export type NavTab = { href: string; label: string };
+/** `hint`: una frase que explica qué se hace ahí. */
+export type NavTab = { href: string; label: string; hint?: string };
 /** Con `tabs`, la sección agrupa varias páginas y se muestran como pestañas arriba. */
-export type NavItem = { href: string; label: string; icon: NavIcon; primary?: boolean; tabs?: NavTab[] };
+export type NavItem = { href: string; label: string; icon: NavIcon; primary?: boolean; tabs?: NavTab[]; hint?: string };
 export type NavGroup = { label?: string; items: NavItem[] };
 
 /**
@@ -64,44 +65,56 @@ export function buildNavigation(session: Session, t: NavT): NavGroup[] {
 
   // Quien gestiona ve seis secciones; cada una agrupa sus páginas en pestañas.
   const participants: NavTab[] = [
-    { href: "/equipos", label: t("tabs.list", { units: words.unitsLower }) },
-    ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: t("tabs.edit") }] : []),
-    { href: "/admin/personas", label: t("people") },
-    { href: "/admin/paneles", label: t("panels", { evaluator: words.evaluator }) },
-    { href: "/admin/retos", label: t("challengesTab") },
+    { href: "/equipos", label: t("tabs.list", { units: words.unitsLower }), hint: t("hint.list", { units: words.unitsLower }) },
+    ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: t("tabs.edit"), hint: t("hint.edit", { units: words.unitsLower }) }] : []),
+    { href: "/admin/personas", label: t("people"), hint: t("hint.people") },
+    { href: "/admin/paneles", label: t("panels", { evaluator: words.evaluator }), hint: t("hint.panels", { units: words.unitsLower }) },
+    { href: "/admin/retos", label: t("challengesTab"), hint: t("hint.challenges", { units: words.unitsLower }) },
   ];
   const evaluation: NavTab[] = [
-    ...(words.hasModule("rubric") ? [{ href: "/rubrica", label: t("rubric") }] : []),
-    { href: "/admin/evaluacion", label: t("tabs.form") },
-    ...(hasStudents ? [{ href: "/admin/coevaluacion", label: t("peerReview") }] : []),
-    ...(showResults ? [{ href: "/resultados", label: t("results") }] : []),
+    ...(words.hasModule("rubric") ? [{ href: "/rubrica", label: t("rubric"), hint: t("hint.rubric") }] : []),
+    { href: "/admin/evaluacion", label: t("tabs.form"), hint: t("hint.form") },
+    ...(hasStudents ? [{ href: "/admin/coevaluacion", label: t("peerReview"), hint: t("hint.peer") }] : []),
+    ...(showResults ? [{ href: "/resultados", label: t("results"), hint: t("hint.results") }] : []),
   ];
   const schedule: NavTab[] = [
-    { href: "/admin/agenda", label: t("agenda") },
-    { href: "/sala", label: t("room") },
+    { href: "/admin/agenda", label: t("tabs.slots"), hint: t("hint.agenda") },
+    { href: "/sala", label: t("room"), hint: t("hint.room") },
   ];
   const live: NavTab[] = [
-    { href: "/admin/grabaciones", label: t("recordings") },
-    { href: "/admin/publico", label: t("publicVote") },
+    { href: "/admin/grabaciones", label: t("recordings"), hint: t("hint.recordings") },
+    { href: "/admin/publico", label: t("publicVote"), hint: t("hint.public") },
   ];
   const settingsTabs: NavTab[] = [
-    { href: "/admin/ajustes", label: t("tabs.general") },
-    ...(academic ? [{ href: "/admin/academico", label: t("academic") }] : []),
-    ...(words.hasModule("sponsors") ? [{ href: "/admin/patrocinadores", label: t("sponsors") }] : []),
-    { href: "/admin/auditoria", label: t("audit") },
+    { href: "/admin/ajustes", label: t("tabs.general"), hint: t("hint.general") },
+    ...(academic ? [{ href: "/admin/academico", label: t("academic"), hint: t("hint.academic") }] : []),
+    ...(words.hasModule("sponsors") ? [{ href: "/admin/patrocinadores", label: t("sponsors"), hint: t("hint.sponsors") }] : []),
+    { href: "/admin/auditoria", label: t("audit"), hint: t("hint.audit") },
   ];
 
+  // Agrupado por momentos: primero se prepara, luego se vive el día, y aparte la configuración.
   return [
     {
+      items: [{ href: "/admin", label: t("home"), icon: "home", primary: true, hint: t("hint.home") }],
+    },
+    {
+      label: t("prepare"),
       items: [
-        { href: "/admin", label: t("home"), icon: "home", primary: true },
-        { href: participants[0].href, label: t("participants"), icon: "users", primary: true, tabs: participants },
-        { href: evaluation[0]?.href ?? "/admin/evaluacion", label: t("evaluation"), icon: "clipboard", primary: true, tabs: evaluation },
-        { href: "/admin/agenda", label: t("agenda"), icon: "calendar", primary: true, tabs: schedule },
-        { href: "/admin/grabaciones", label: t("recordingsAndPublic"), icon: "video", tabs: live },
-        { href: "/admin/asistente", label: t("assistant"), icon: "sparkles" },
-        { href: "/admin/ajustes", label: t("settings"), icon: "settings", tabs: settingsTabs },
+        { href: participants[0].href, label: t("participants"), icon: "users", primary: true, tabs: participants, hint: t("hint.participants", { units: words.unitsLower }) },
+        { href: evaluation[0]?.href ?? "/admin/evaluacion", label: t("evaluation"), icon: "clipboard", primary: true, tabs: evaluation, hint: t("hint.evaluation") },
+        { href: "/admin/asistente", label: t("assistant"), icon: "sparkles", hint: t("hint.assistant") },
       ],
+    },
+    {
+      label: t("during"),
+      items: [
+        { href: "/admin/agenda", label: t("agendaAndRoom"), icon: "calendar", primary: true, tabs: schedule, hint: t("hint.schedule") },
+        { href: "/admin/grabaciones", label: t("recordingsAndPublic"), icon: "video", tabs: live, hint: t("hint.live") },
+      ],
+    },
+    {
+      label: t("configure"),
+      items: [{ href: "/admin/ajustes", label: t("settings"), icon: "settings", tabs: settingsTabs, hint: t("hint.settings") }],
     },
   ];
 }
