@@ -1,6 +1,8 @@
+import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app/app-shell";
+import { ProductTour, type TourKind } from "@/components/app/product-tour";
 import { RecordingNoticeDialog } from "@/components/app/recording-notice-dialog";
 import { buildNavigation } from "@/lib/app/navigation";
 import { needsRecordingNotice } from "@/lib/app/recording-notice";
@@ -15,7 +17,17 @@ export default async function AppLayout({
     getTranslations("roles"),
     getTranslations("recordingNotice"),
   ]);
-  const { supabase, profile, event, memberships, membership, recording } = session;
+  const { supabase, user, profile, event, memberships, membership, recording, words } = session;
+  const tourKind: TourKind = session.isAdmin
+    ? "admin"
+    : profile.role === "student"
+      ? "student"
+      : session.canVote
+        ? "judge"
+        : "viewer";
+  const tourSeen =
+    Boolean((user.user_metadata?.tour_seen as Record<string, boolean> | undefined)?.[tourKind]) ||
+    (await cookies()).has(`tour_seen_${tourKind}`);
   const showRecordingNotice = needsRecordingNotice(
     recording,
     membership.recording_notice_version,
@@ -47,6 +59,13 @@ export default async function AppLayout({
       >
         {children}
       </AppShell>
+      <ProductTour
+        autoOpen={!tourSeen && !showRecordingNotice}
+        evaluator={words.evaluator}
+        kind={tourKind}
+        spaceName={event.name}
+        units={words.unitsLower}
+      />
       {showRecordingNotice ? (
         <RecordingNoticeDialog
           guarantee={recording.customText ? tNotice("guarantee") : null}

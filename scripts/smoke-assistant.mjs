@@ -28,7 +28,7 @@ try {
     await db.from("auth_attempts").delete().eq("kind", "assistant").like("key", "assistant:ip:%127.0.0.1%");
     await db.from("auth_attempts").delete().eq("kind", "assistant").like("key", "assistant:ip:::1%");
   }
-  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: "Prueba Asistente" } });
+  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: "Prueba Asistente", tour_seen: { admin: true, judge: true, student: true, viewer: true } } });
   if (error) throw error;
   userId = data.user.id;
   await db.from("profiles").update({ disabled: false, full_name: "Prueba Asistente", locale: "es" }).eq("id", userId);

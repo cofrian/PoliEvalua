@@ -83,7 +83,11 @@ async function register(
   await page.getByLabel("Contraseña").fill(testPassword);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
   await page.waitForURL("**/espacios");
-  await rememberUser(who.email);
+  const user = await rememberUser(who.email);
+  // El tutorial de bienvenida se prueba aparte; aquí taparía la pantalla.
+  await db.auth.admin.updateUserById(user.id, {
+    user_metadata: { full_name: who.name, tour_seen: { admin: true, judge: true, student: true, viewer: true } },
+  });
   return page;
 }
 
@@ -134,6 +138,7 @@ test.beforeAll(async () => {
     "closed",
   );
 
+  // Solo los equipos de este espacio (antes cogía los de cualquiera).
   const { data: teams } = await db
     .from("teams")
     .select("id, name")

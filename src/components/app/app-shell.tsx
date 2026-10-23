@@ -35,6 +35,7 @@ import { useTheme } from "next-themes";
 import { useState, type ReactNode } from "react";
 
 import { logoutAction } from "@/app/(auth)/actions";
+import { OPEN_TOUR_EVENT } from "@/components/app/product-tour";
 import { SpaceSwitcher, type SpaceOption } from "@/components/app/space-switcher";
 import { UpvBrand } from "@/components/brand/upv-brand";
 import {
@@ -192,6 +193,7 @@ function Avatar({ profile, className }: { profile: Profile; className?: string }
 export function UserMenu({ profile }: { profile: Profile }) {
   const { setTheme, theme } = useTheme();
   const t = useTranslations("userMenu");
+  const tTour = useTranslations("tour");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -214,6 +216,9 @@ export function UserMenu({ profile }: { profile: Profile }) {
           <Link href="/perfil">
             <UserRound aria-hidden="true" className="size-4" /> {t("profile")}
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => window.dispatchEvent(new Event(OPEN_TOUR_EVENT))}>
+          <GraduationCap aria-hidden="true" className="size-4" /> {tTour("replay")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs text-muted-foreground">{t("theme")}</DropdownMenuLabel>

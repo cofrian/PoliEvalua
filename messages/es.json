@@ -1538,5 +1538,114 @@
     "done": "Hecho",
     "hide": "Ocultar la bienvenida",
     "assistantHint": "¿Prefieres que te lo prepare la IA? Cuéntaselo al <link>asistente</link>."
+  },
+  "tour": {
+    "skip": "Saltar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "start": "¡Empezar!",
+    "step": "Paso {current} de {total}",
+    "replay": "Ver el tutorial",
+    "scene": {
+      "rubric": "Rúbrica",
+      "group": "Grupo {n}",
+      "criterion1": "Análisis del problema",
+      "criterion2": "Solución y prototipo",
+      "criterion3": "Presentación",
+      "send": "Enviar",
+      "summary": "Resumen",
+      "question": "¿Cuánto cuesta el kit?",
+      "repo": "Repositorio",
+      "web": "Web o demo",
+      "deliverables": "Entregas"
+    },
+    "admin": {
+      "welcome": {
+        "title": "Te damos la bienvenida a {space}",
+        "text": "En un par de minutos te enseñamos cómo preparar una evaluación de principio a fin. Puedes saltarlo y volver a verlo cuando quieras desde tu menú."
+      },
+      "rubric": {
+        "title": "Primero, la rúbrica",
+        "text": "Define qué se evalúa, cuánto pesa cada criterio y qué significa cada nivel. ¿Prisa? El asistente IA te propone una completa."
+      },
+      "people": {
+        "title": "Añade {units} e invita",
+        "text": "Importa la lista de PoliformaT o créalos a mano, y comparte el código para que el {evaluator} y el alumnado entren solos."
+      },
+      "live": {
+        "title": "La evaluación, en directo",
+        "text": "Cada persona puntúa desde el móvil o el portátil y tú ves el progreso al momento: quién falta, quién no ha empezado y dónde hay desacuerdo."
+      },
+      "ai": {
+        "title": "La IA escucha por ti",
+        "text": "Graba las exposiciones: se transcriben, se resumen y el {evaluator} recibe preguntas y puntos débiles. El audio nunca se guarda."
+      },
+      "done": {
+        "title": "¡Todo listo!",
+        "text": "Empieza por la guía de tres pasos del Inicio. Si te pierdes, el menú de la izquierda lo agrupa todo por secciones."
+      }
+    },
+    "judge": {
+      "welcome": {
+        "title": "Te damos la bienvenida a {space}",
+        "text": "Vas a evaluar {units}. Te enseñamos en medio minuto cómo hacerlo."
+      },
+      "groups": {
+        "title": "Tus {units}",
+        "text": "En «{units}» tienes todos los que te tocan, con sus integrantes, entregas y tus notas privadas o compartidas."
+      },
+      "score": {
+        "title": "Puntuar es tocar un número",
+        "text": "Elige un nivel en cada criterio, añade un comentario si quieres y envía. Se guarda solo mientras escribes, incluso sin conexión."
+      },
+      "ai": {
+        "title": "Apoyo de la IA",
+        "text": "Si la exposición se graba, verás citas por criterio, puntos débiles y preguntas sugeridas. Nunca te dice qué nota poner."
+      },
+      "done": {
+        "title": "¡A evaluar!",
+        "text": "Durante las exposiciones, «Sala» te lo pone todo en una pantalla: el turno, el cronómetro, la rúbrica y tus notas."
+      }
+    },
+    "student": {
+      "welcome": {
+        "title": "Te damos la bienvenida a {space}",
+        "text": "Aquí tienes todo lo de tu grupo en un sitio. Te lo enseñamos en un momento."
+      },
+      "deliverables": {
+        "title": "Tus entregas, con un enlace",
+        "text": "Añade el repositorio, la web, el vídeo o las diapositivas desde «Mi grupo». No hay que subir archivos."
+      },
+      "rubric": {
+        "title": "Sabes cómo te evalúan",
+        "text": "Consulta la rúbrica: los criterios, cuánto pesa cada uno y qué se espera en cada nivel."
+      },
+      "agenda": {
+        "title": "Tu turno, al minuto",
+        "text": "La agenda te dice cuándo expones y avisa si hay retraso, en directo."
+      },
+      "done": {
+        "title": "¡Mucha suerte!",
+        "text": "Cuando se publiquen los resultados, verás tu nota y los comentarios en «Mi grupo»."
+      }
+    },
+    "viewer": {
+      "welcome": {
+        "title": "Te damos la bienvenida a {space}",
+        "text": "Tienes acceso de consulta. Te enseñamos dónde está cada cosa."
+      },
+      "groups": {
+        "title": "Todos los {units}",
+        "text": "Consulta cada uno con sus integrantes y entregas."
+      },
+      "agenda": {
+        "title": "La agenda en directo",
+        "text": "Mira quién expone ahora y quién va después."
+      },
+      "done": {
+        "title": "¡Listo!",
+        "text": "Puedes volver a ver este tutorial cuando quieras desde tu menú."
+      }
+    }
   }
 }

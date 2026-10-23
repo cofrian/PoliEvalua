@@ -1538,5 +1538,114 @@
     "done": "Done",
     "hide": "Hide the welcome",
     "assistantHint": "Would you rather the AI set it up? Tell the <link>assistant</link>."
+  },
+  "tour": {
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "start": "Let's go!",
+    "step": "Step {current} of {total}",
+    "replay": "Watch the tutorial",
+    "scene": {
+      "rubric": "Rubric",
+      "group": "Group {n}",
+      "criterion1": "Problem analysis",
+      "criterion2": "Solution and prototype",
+      "criterion3": "Presentation",
+      "send": "Send",
+      "summary": "Summary",
+      "question": "How much does the kit cost?",
+      "repo": "Repository",
+      "web": "Website or demo",
+      "deliverables": "Deliverables"
+    },
+    "admin": {
+      "welcome": {
+        "title": "Welcome to {space}",
+        "text": "In a couple of minutes we'll show you how to run an evaluation from start to finish. You can skip it and watch it again anytime from your menu."
+      },
+      "rubric": {
+        "title": "First, the rubric",
+        "text": "Set what's evaluated, how much each criterion weighs and what each level means. In a hurry? The AI assistant suggests a complete one."
+      },
+      "people": {
+        "title": "Add {units} and invite",
+        "text": "Import the PoliformaT list or create them by hand, and share the code so the {evaluator} and students can join on their own."
+      },
+      "live": {
+        "title": "Live evaluation",
+        "text": "Everyone scores from their phone or laptop and you see progress instantly: who's missing, who hasn't started and where there's disagreement."
+      },
+      "ai": {
+        "title": "The AI listens for you",
+        "text": "Record the presentations: they're transcribed and summarised, and the {evaluator} gets questions and weak points. Audio is never kept."
+      },
+      "done": {
+        "title": "All set!",
+        "text": "Start with the three-step guide on Home. If you get lost, the menu on the left groups everything by section."
+      }
+    },
+    "judge": {
+      "welcome": {
+        "title": "Welcome to {space}",
+        "text": "You'll be evaluating {units}. Here's how in half a minute."
+      },
+      "groups": {
+        "title": "Your {units}",
+        "text": "Under “{units}” you'll find everyone assigned to you, with their members, deliverables and your private or shared notes."
+      },
+      "score": {
+        "title": "Scoring is one tap",
+        "text": "Pick a level for each criterion, add a comment if you like and send. It saves as you go, even offline."
+      },
+      "ai": {
+        "title": "AI support",
+        "text": "If the presentation is recorded, you'll see quotes per criterion, weak points and suggested questions. It never tells you what grade to give."
+      },
+      "done": {
+        "title": "Time to evaluate!",
+        "text": "During the presentations, “Room” puts it all on one screen: the slot, the timer, the rubric and your notes."
+      }
+    },
+    "student": {
+      "welcome": {
+        "title": "Welcome to {space}",
+        "text": "Everything about your group is in one place. Here's a quick tour."
+      },
+      "deliverables": {
+        "title": "Your deliverables, as links",
+        "text": "Add the repository, website, video or slides from “My group”. No file uploads needed."
+      },
+      "rubric": {
+        "title": "Know how you're evaluated",
+        "text": "Check the rubric: the criteria, how much each one weighs and what's expected at each level."
+      },
+      "agenda": {
+        "title": "Your slot, to the minute",
+        "text": "The schedule tells you when you present and warns you of delays, live."
+      },
+      "done": {
+        "title": "Good luck!",
+        "text": "When results are published, you'll see your grade and comments in “My group”."
+      }
+    },
+    "viewer": {
+      "welcome": {
+        "title": "Welcome to {space}",
+        "text": "You have view access. Here's where everything is."
+      },
+      "groups": {
+        "title": "All the {units}",
+        "text": "Browse each one with its members and deliverables."
+      },
+      "agenda": {
+        "title": "Live schedule",
+        "text": "See who's presenting now and who's next."
+      },
+      "done": {
+        "title": "Done!",
+        "text": "You can watch this tutorial again anytime from your menu."
+      }
+    }
   }
 }
