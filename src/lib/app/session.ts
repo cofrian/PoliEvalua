@@ -85,6 +85,11 @@ export const getSession = cache(async () => {
   if (!membership || !event) redirect("/login?reason=no-space");
 
   const role = membership.role;
+  const { data: branding } = await supabase
+    .from("event_branding")
+    .select("logo_light_url, accent_color")
+    .eq("event_id", event.id)
+    .maybeSingle();
   const locale = (await getLocale()) as Locale;
   const isAdmin = role === "owner" || role === "manager";
   const canVote = ["owner", "manager", "judge", "reviewer", "teacher"].includes(
@@ -105,5 +110,10 @@ export const getSession = cache(async () => {
     recording: recordingSettings(event.settings),
     locale,
     words: vocabulary(event, locale),
+    /** Logo y color del espacio (Ajustes → Imagen del espacio). */
+    branding: {
+      logoUrl: branding?.logo_light_url ?? null,
+      color: branding?.accent_color && branding.accent_color !== "#59CBE8" ? branding.accent_color : null,
+    },
   };
 });

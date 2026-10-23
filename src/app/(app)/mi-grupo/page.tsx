@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { AgendaLiveRefresh } from "@/components/app/agenda-live-refresh";
+import { SpaceCover } from "@/components/app/space-cover";
 import {
   PeerSummaryView,
   TeamFeedbackView,
@@ -18,7 +19,7 @@ import { cardClass } from "@/lib/app/ui";
 
 /** Punto de partida del alumnado: su grupo, sus entregas y lo que necesita saber. */
 export default async function MyGroupPage() {
-  const { supabase, user, event, words, recording, eventClosed } = await getSession();
+  const { supabase, user, event, words, recording, eventClosed, branding } = await getSession();
   const [t, tNav, tAgenda] = await Promise.all([
     getTranslations("myGroup"),
     getTranslations("nav"),
@@ -87,13 +88,13 @@ export default async function MyGroupPage() {
   return (
     <div className="space-y-6">
       {mySlot ? <AgendaLiveRefresh eventId={event.id} /> : null}
-      <header>
-        <p className="text-sm font-bold text-muted-foreground">
-          {tNav("myUnit", { mode: words.mode })} · #{team.number}
-        </p>
-        <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{team.name}</h1>
-        {team.project_title ? <p className="mt-1 text-lg">{team.project_title}</p> : null}
-      </header>
+      <SpaceCover
+        color={branding.color}
+        eyebrow={`${tNav("myUnit", { mode: words.mode })} · #${team.number ?? "–"}`}
+        logoUrl={branding.logoUrl}
+        name={team.name}
+        subtitle={team.project_title}
+      />
 
       {myScheduled ? (
         <Link

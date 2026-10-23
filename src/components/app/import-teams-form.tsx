@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
+import { FileField } from "@/components/app/file-field";
 import { importTeamsAction, type ImportState } from "@/app/(app)/admin/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +20,7 @@ export function ImportTeamsForm() {
       <p className="text-sm text-muted-foreground">
         {t.rich("help", { code: (chunks) => <code>{chunks}</code> })}
       </p>
-      <input
-        accept=".txt,.csv,.tsv,text/plain,text/csv"
-        className="block text-sm"
-        name="file"
-        type="file"
-      />
+      <FileField accept=".txt,.csv,.tsv,text/plain,text/csv" name="file" />
       <Textarea
         className="min-h-24 font-mono text-xs"
         name="content"

@@ -138,17 +138,32 @@ test("1. La profesora ve el panel de inicio adaptado a una asignatura", async ({
   const page = await enter(browser, "teacher");
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Preparación" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Grupos", exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Participantes", exact: true }).first()).toBeVisible();
   // En una asignatura no hay retos ni patrocinadores.
   await expect(page.getByRole("link", { name: "Retos" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Patrocinadores" })).toHaveCount(0);
+});
+
+test("1b. Cambia el logo y el color del espacio y salen en la portada", async () => {
+  const page = pages.teacher!;
+  await page.goto("/admin/ajustes");
+  const form = page.locator("form", { has: page.getByLabel("Color") });
+  await form.getByLabel("Logo").setInputFiles("public/icons/icon-192.png");
+  await form.getByLabel("Color").fill("#0f6e8c");
+  await form.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page.getByText("Cambios guardados")).toBeVisible();
+  await page.goto("/admin");
+  const cover = page.locator("section", { has: page.getByRole("heading", { level: 1 }) }).first();
+  await expect(cover.locator("img")).toBeVisible();
+  await expect(cover).toHaveCSS("background-color", "rgb(15, 110, 140)");
 });
 
 test("2. Activa la grabación y el aviso aparece al entrar", async () => {
   const page = pages.teacher!;
   await page.goto("/admin/grabaciones");
   await page.getByRole("switch", { name: "Grabar exposiciones en este espacio" }).click();
-  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  // La página tiene dos bloques (grabación e IA): se guarda el primero.
+  await page.getByRole("button", { name: "Guardar cambios" }).first().click();
   await acknowledgeNotice(page);
   await expect(page.getByRole("heading", { name: /Confirmaciones/ })).toBeVisible();
 });
@@ -156,6 +171,7 @@ test("2. Activa la grabación y el aviso aparece al entrar", async () => {
 test("3. Importa el alumnado con su grupo y la entrega común", async () => {
   const page = pages.teacher!;
   await page.goto("/admin/equipos");
+  await page.getByRole("button", { name: "Importar lista" }).first().click();
   await page.getByLabel("Lista de alumnado", { exact: true }).fill(
     `Nombre;Correo;Grupo\nAna;${people.ana.email};Grupo A\nLuis;${people.luis.email};Grupo B`,
   );
@@ -180,7 +196,7 @@ test("4. Genera la agenda", async () => {
   await page.goto("/admin/agenda");
   await page.getByLabel("Salas (separadas por comas)").fill("Aula 1");
   await page.getByRole("button", { name: "Generar agenda" }).click();
-  await expect(page.getByText("Agenda creada: 2 turnos en 1 sala(s).")).toBeVisible();
+  await expect(page.getByText(/Agenda creada: 2 turnos en 1 sala/)).toBeVisible();
 });
 
 test("5. La estudiante confirma el aviso y ve su grupo, turno y rúbrica", async ({ browser }) => {

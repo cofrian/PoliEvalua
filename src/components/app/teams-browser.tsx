@@ -37,6 +37,7 @@ export function TeamsBrowser({
   canVote,
   title,
   isAdmin = false,
+  mode = "teams",
 }: {
   challenges: { id: string; name: string }[];
   teams: TeamSummary[];
@@ -45,6 +46,8 @@ export function TeamsBrowser({
   title: string;
   /** Quien gestiona ve cómo crear la lista cuando aún está vacía. */
   isAdmin?: boolean;
+  /** Tipo de unidad, para nombrarla bien en singular. */
+  mode?: string;
 }) {
   const t = useTranslations("teams");
   const [challenge, setChallenge] = useState<string>("all");
@@ -82,7 +85,7 @@ export function TeamsBrowser({
             className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
           <Input
-            aria-label={t("searchLabel")}
+            aria-label={t("searchLabel", { mode })}
             className="h-10 pl-9"
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("searchPlaceholder")}

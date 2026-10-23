@@ -120,7 +120,7 @@ export default async function AdminPeoplePage({
               : t("membersFiltered", { count: members.length, total: memberships?.length ?? 0 })}
           </h2>
           <form className="flex flex-wrap gap-2" role="search">
-            <Input aria-label={t("search")} className="h-9 w-full sm:w-56" defaultValue={q} name="q" placeholder={t("searchPlaceholder")} />
+            <Input aria-label={t("search")} className="h-9 w-full sm:w-72" defaultValue={q} name="q" placeholder={t("searchPlaceholder")} />
             <select aria-label={t("filterRole")} className={selectClass} defaultValue={rol} name="rol">
               <option value="">{t("allRoles")}</option>
               {presentRoles.map((role) => (

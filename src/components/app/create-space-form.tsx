@@ -119,7 +119,11 @@ export function CreateSpaceForm() {
   const [draftModel, setDraftModel] = useState<string | null>(null);
 
   async function generateDraft() {
-    if (prompt.trim().length < 3 || drafting) return;
+    if (drafting) return;
+    if (prompt.trim().length < 3) {
+      setDraftError(t("describeFirst"));
+      return;
+    }
     setDrafting(true);
     setDraftError(null);
     try {
@@ -199,7 +203,7 @@ export function CreateSpaceForm() {
           rows={4}
         />
         <div className="flex flex-wrap items-center gap-3">
-          <Button disabled={drafting || prompt.trim().length < 3} onClick={() => void generateDraft()} type="button" variant="secondary">
+          <Button disabled={drafting} onClick={() => void generateDraft()} type="button" variant="secondary">
             {drafting ? t("preparing") : t("prepare")}
           </Button>
           {drafting ? (

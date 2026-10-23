@@ -1,5 +1,5 @@
 import {
-  updateAiSettingsAction,
+  updateBrandingAction,
   updateEventAction,
   updateMaterialsSettingsAction,
   updateStudentVisibilityAction,
@@ -7,16 +7,16 @@ import {
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/app/page-header";
-import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
+import { AdvancedSettings, SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
+import { FileField } from "@/components/app/file-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
 import { LOCALES, localeNames } from "@/i18n/config";
 import { getSession } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
 export default async function AdminSettingsPage() {
-  const { supabase, event, words } = await getSession();
+  const { supabase, event, words, branding } = await getSession();
   const statusLabels = words.stageLabels;
   const [tLocale, t, tNav] = await Promise.all([
     getTranslations("locale"),
@@ -24,7 +24,6 @@ export default async function AdminSettingsPage() {
     getTranslations("nav"),
   ]);
   const enabledRoles = ((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? [];
-  const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null } }).ai;
 
   const { data: eventSettings } = await supabase
     .from("events")
@@ -70,27 +69,55 @@ export default async function AdminSettingsPage() {
               ))}
             </select>
           </SettingRow>
-          <SettingRow
-            description={t("codeHint")}
-            htmlFor="signupCode"
-            label={t("code")}
-          >
-            <Input
-              className="font-mono uppercase"
-              defaultValue={eventSettings.signup_code}
-              id="signupCode"
-              name="signupCode"
-            />
-          </SettingRow>
-          <SettingRow
-            description={t("codeOpenHint")}
-            htmlFor="signupOpen"
-            label={t("codeOpen")}
-          >
-            <SettingSwitch defaultChecked={eventSettings.signup_open} id="signupOpen" name="signupOpen" />
-          </SettingRow>
+          <AdvancedSettings hint={t("advancedHint")}>
+            <SettingRow
+              description={t("codeHint")}
+              htmlFor="signupCode"
+              label={t("code")}
+            >
+              <Input
+                className="font-mono uppercase"
+                defaultValue={eventSettings.signup_code}
+                id="signupCode"
+                name="signupCode"
+              />
+            </SettingRow>
+            <SettingRow
+              description={t("codeOpenHint")}
+              htmlFor="signupOpen"
+              label={t("codeOpen")}
+            >
+              <SettingSwitch defaultChecked={eventSettings.signup_open} id="signupOpen" name="signupOpen" />
+            </SettingRow>
+          </AdvancedSettings>
         </SettingsForm>
       ) : null}
+
+      <SettingsForm action={updateBrandingAction} description={t("brandingDescription")} title={t("branding")}>
+        <SettingRow description={t("logoHint")} label={t("logo")}>
+          <div className="flex items-center gap-3 sm:justify-end">
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="" className="size-10 rounded-lg border border-border bg-white object-contain p-1" src={branding.logoUrl} />
+            ) : null}
+            <FileField accept="image/*" label={t("logo")} name="logo" />
+          </div>
+          {branding.logoUrl ? (
+            <label className="mt-2 flex items-center gap-2 text-sm sm:justify-end">
+              <input name="removeLogo" type="checkbox" /> {t("removeLogo")}
+            </label>
+          ) : null}
+        </SettingRow>
+        <SettingRow description={t("colorHint")} htmlFor="accentColor" label={t("color")}>
+          <input
+            className="h-10 w-20 cursor-pointer rounded-md border border-input bg-transparent p-1 sm:ml-auto sm:block"
+            defaultValue={branding.color ?? "#3f4444"}
+            id="accentColor"
+            name="accentColor"
+            type="color"
+          />
+        </SettingRow>
+      </SettingsForm>
 
       {enabledRoles.includes("student") ? (
         <SettingsForm
@@ -146,27 +173,6 @@ export default async function AdminSettingsPage() {
             maxLength={2000}
             name="instructions"
             placeholder={t("instructionsPlaceholder")}
-            rows={3}
-          />
-        </SettingRow>
-      </SettingsForm>
-      <SettingsForm
-        action={updateAiSettingsAction}
-        description={t("aiDescription")}
-        title={t("ai")}
-      >
-        <SettingRow
-          description={t("aiHint")}
-          htmlFor="aiInstructions"
-          label={t("aiLabel", { max: INSTRUCTIONS_MAX })}
-          stacked
-        >
-          <Textarea
-            defaultValue={ai?.instructions ?? ""}
-            id="aiInstructions"
-            maxLength={INSTRUCTIONS_MAX}
-            name="aiInstructions"
-            placeholder={t("aiPlaceholder")}
             rows={3}
           />
         </SettingRow>

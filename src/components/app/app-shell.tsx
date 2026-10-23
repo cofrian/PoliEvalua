@@ -73,15 +73,58 @@ const icons: Record<NavIcon, LucideIcon> = {
 
 export type Profile = { name: string; avatarUrl: string | null; roleLabel: string };
 
-function isActive(pathname: string, href: string) {
+function matches(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Una sección está activa si lo está su página o cualquiera de sus pestañas. */
+function isActive(pathname: string, item: NavItem | string) {
+  if (typeof item === "string") return matches(pathname, item);
+  return matches(pathname, item.href) || (item.tabs ?? []).some((tab) => matches(pathname, tab.href));
+}
+
+/** Pestañas de la sección actual, encima del contenido. */
+function SectionTabs({ groups }: { groups: NavGroup[] }) {
+  const pathname = usePathname();
+  const t = useTranslations("nav");
+  const section = groups.flatMap((group) => group.items).find((item) => item.tabs?.length && isActive(pathname, item));
+  if (!section?.tabs || section.tabs.length < 2) return null;
+  // La pestaña más concreta que coincide (p. ej. /equipos/123 → «Ver grupos»).
+  const current = [...section.tabs]
+    .filter((tab) => matches(pathname, tab.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return (
+    <nav aria-label={t("sections")} className="-mx-4 mb-6 overflow-x-auto px-4 print:hidden sm:mx-0 sm:px-0">
+      <ul className="flex min-w-max gap-1 border-b border-border">
+        {section.tabs.map((tab) => {
+          const active = tab.href === current?.href;
+          return (
+            <li key={tab.href}>
+              <Link
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "-mb-px block border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                )}
+                href={tab.href}
+              >
+                {tab.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
 }
 
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
   const Icon = icons[item.icon];
-  const active = isActive(pathname, item.href);
+  const active = isActive(pathname, item);
   return (
     <Link
       aria-current={active ? "page" : undefined}
@@ -211,11 +254,12 @@ export function AppShell({
   const [open, setOpen] = useState(false);
   const t = useTranslations("nav");
   const primary = groups.flatMap((group) => group.items).filter((item) => item.primary).slice(0, 4);
-  const moreActive = !primary.some((item) => isActive(pathname, item.href));
+  const moreActive = !primary.some((item) => isActive(pathname, item));
 
   return (
     <div className="min-h-svh bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
-      <aside className="sticky top-0 hidden h-svh flex-col border-r border-border/70 bg-card/60 print:hidden lg:flex">
+      <div className="hidden border-r border-border/70 bg-card/60 print:hidden lg:block">
+      <aside className="sticky top-0 flex h-svh flex-col">
         <div className="flex h-16 items-center px-4">
           <UpvBrand compact href="/equipos" />
         </div>
@@ -226,6 +270,7 @@ export function AppShell({
           <NavGroups groups={groups} />
         </div>
       </aside>
+      </div>
 
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur print:hidden">
@@ -242,6 +287,7 @@ export function AppShell({
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pb-12">
+          <SectionTabs groups={groups} />
           {children}
         </main>
       </div>
@@ -256,7 +302,7 @@ export function AppShell({
         >
           {primary.map((item) => {
             const Icon = icons[item.icon];
-            const active = isActive(pathname, item.href);
+            const active = isActive(pathname, item);
             return (
               <li key={item.href}>
                 <Link

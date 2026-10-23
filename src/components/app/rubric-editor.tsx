@@ -188,7 +188,7 @@ export function RubricEditor({
 
   return (
     <div className="space-y-5">
-      <WeightBar total={total} />
+      {criteria.length ? <WeightBar total={total} /> : null}
 
       {canEdit ? (
         <div className="flex flex-wrap gap-2">

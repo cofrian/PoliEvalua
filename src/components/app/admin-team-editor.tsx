@@ -43,10 +43,11 @@ export function AdminTeamEditor({
           <span className="block">{t("number")}</span>
           <Input defaultValue={team?.number ?? ""} inputMode="numeric" name="number" />
         </label>
-        <label className="space-y-1 text-sm font-semibold sm:col-span-3">
+        <label className={`space-y-1 text-sm font-semibold ${challenges.length ? "sm:col-span-3" : "sm:col-span-5"}`}>
           <span className="block">{t("name")}</span>
           <Input defaultValue={team?.name ?? ""} name="name" required />
         </label>
+{challenges.length ? (
         <label className="space-y-1 text-sm font-semibold sm:col-span-2">
           <span className="block">{t("challenge")}</span>
           <select
@@ -61,6 +62,7 @@ export function AdminTeamEditor({
             ))}
           </select>
         </label>
+        ) : null}
         <label className="space-y-1 text-sm font-semibold sm:col-span-4">
           <span className="block">{t("project")}</span>
           <Input defaultValue={team?.project_title ?? ""} name="projectTitle" />

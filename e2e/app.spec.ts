@@ -358,7 +358,7 @@ test("10. El propietario entra con su cuenta y ve lo privado", async ({
   await adminPage.goto(`/equipos/${team.id}`);
   await expect(adminPage.getByText(privateText)).toBeVisible();
   await expect(adminPage.getByText(sharedText)).toBeVisible();
-  await expect(adminPage.getByText("Editar equipo (admin)")).toBeVisible();
+  await expect(adminPage.getByText("Editar equipo")).toBeVisible();
 });
 
 test("11. El admin ve las votaciones en directo", async () => {
@@ -434,9 +434,10 @@ test("13. El admin puede editar la rúbrica y gestionar todo", async () => {
   await expect(adminPage.getByText(people.mentor.name)).toBeVisible();
 
   await adminPage.goto("/admin/equipos");
-  await expect(
-    adminPage.getByText(/Importar equipos/),
-  ).toBeVisible();
+  // La importación vive en una ventana que se abre desde la lista.
+  await adminPage.getByRole("button", { name: "Importar lista" }).first().click();
+  await expect(adminPage.getByText(/Importar equipos/)).toBeVisible();
+  await adminPage.keyboard.press("Escape");
   await expect(adminPage.getByText(team.name).first()).toBeVisible();
 
   await adminPage.goto("/admin/retos");

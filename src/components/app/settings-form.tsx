@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -66,7 +66,7 @@ export function SettingsForm({
         <span aria-live="polite" className="mr-auto text-xs text-muted-foreground">
           {dirty ? t("unsaved") : ""}
         </span>
-        <Button disabled={!dirty || pending} type="submit">
+        <Button disabled={pending} type="submit" variant={dirty ? "default" : "outline"}>
           {pending ? <Loader2 aria-hidden="true" className="animate-spin" /> : null}
           {pending ? t("saving") : t("save")}
         </Button>
@@ -105,6 +105,26 @@ export function SettingRow({
       </div>
       <div className={stacked ? "" : "shrink-0 sm:w-72 sm:text-right"}>{children}</div>
     </div>
+  );
+}
+
+/**
+ * Ajustes que casi nadie necesita, plegados para que el bloque se lea de un
+ * vistazo. Siguen dentro del mismo formulario y se guardan con él.
+ */
+export function AdvancedSettings({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
+  const t = useTranslations("common");
+  return (
+    <details className="group">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground sm:px-6 [&::-webkit-details-marker]:hidden">
+        <span>
+          {t("advanced")}
+          {hint ? <span className="block text-xs font-normal">{hint}</span> : null}
+        </span>
+        <ChevronDown aria-hidden="true" className="size-4 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="divide-y divide-border/70 border-t border-border/70">{children}</div>
+    </details>
   );
 }
 

@@ -43,7 +43,17 @@
     "organizeAgenda": "Organitzar l'agenda",
     "recordings": "Gravacions",
     "publicVote": "Vot del públic",
-    "audit": "Auditoria"
+    "audit": "Auditoria",
+    "home": "Inici",
+    "participants": "Participants",
+    "recordingsAndPublic": "Gravacions i públic",
+    "sections": "Seccions d'esta part",
+    "tabs": {
+      "list": "Veure {units}",
+      "edit": "Editar i importar",
+      "form": "Formulari d'avaluació",
+      "general": "General"
+    }
   },
   "userMenu": {
     "open": "Menú d'usuari",
@@ -151,7 +161,7 @@
     "count": "{count} {units}",
     "evaluatedByYou": "{count} avaluats per tu",
     "mentorHint": "com a mentor pots prendre notes, no votar",
-    "searchLabel": "Buscar",
+    "searchLabel": "Buscar {mode, select, teams {equip} groups {grup} candidates {candidatura} other {projecte}}",
     "searchPlaceholder": "Busca per nom o número",
     "createOrImport": "Crear o importar {units}",
     "emptyAdmin": "Crea la llista a mà o importa-la des d'un full de càlcul. Apareixeran ací per a avaluar-los.",
@@ -172,10 +182,14 @@
     "evaluate": "Avaluar",
     "members": "Integrants",
     "noMembers": "Sense integrants.",
-    "edit": "Editar (gestió)",
+    "edit": "Editar {mode, select, teams {l'equip} groups {el grup} candidates {la candidatura} other {el projecte}}",
     "deliverables": "Lliuraments",
     "project": "Projecte",
-    "notes": "Notes"
+    "notes": "Notes",
+    "notReadyRubric": "Encara no es pot avaluar: falta preparar la rúbrica.",
+    "notReadyRubricAdmin": "Encara no es pot avaluar: <link>prepara la rúbrica</link>.",
+    "notReadyPage": "L'avaluació encara no està oberta.",
+    "notReadyPageAdmin": "L'avaluació està en esborrany: <link>publica-la</link> perquè el jurat puga puntuar."
   },
   "notes": {
     "synced": "Notes pendents sincronitzades.",
@@ -204,7 +218,8 @@
     "share": "Compartir",
     "delete": "Esborrar la nota",
     "button": "Notes ({count})",
-    "drawerTitle": "Notes"
+    "drawerTitle": "Notes",
+    "emptyNote": "Escriu la nota abans d'afegir-la."
   },
   "links": {
     "kind": {
@@ -273,7 +288,10 @@
     "plannedBefore": "previst abans a les {time}",
     "live": "En directe",
     "moveUp": "Avançar {name}",
-    "moveDown": "Endarrerir {name}"
+    "moveDown": "Endarrerir {name}",
+    "emptyAction": "Preparar l'agenda",
+    "emptyAdmin": "Repartix els torns d'exposició entre les sales en un minut; el jurat i l'alumnat els veuran ací al moment.",
+    "emptyOther": "L'organització encara no l'ha preparada. Ací veuràs l'hora de cada torn, amb els retards al dia."
   },
   "evaluate": {
     "title": "Avaluar · {team}",
@@ -284,13 +302,18 @@
     "hiddenForStudents": "La rúbrica d'este espai encara no és visible per a l'alumnat.",
     "none": "No hi ha cap rúbrica activa.",
     "title": "Rúbrica",
-    "meta": "{name} · versió {version} · escala {min}–{max}",
+    "meta": "{name} · puntuació de {min} a {max}",
     "locked": " · 🔒 Bloquejada",
     "studentHint": "Així t'avaluarà el {evaluator}: revisa cada criteri i el que s'espera en cada nivell abans de la teua {presentation}.",
     "readOnlyHint": "Només les persones propietàries i gestores poden canviar l'estructura de la rúbrica.",
     "history": "Historial de canvis",
     "someone": "Algú",
-    "noChanges": "Encara no s'ha canviat res."
+    "noChanges": "Encara no s'ha canviat res.",
+    "scale": "Puntuació de {min} a {max}",
+    "emptyTitle": "La rúbrica encara no té criteris",
+    "emptyAdmin": "Afig els criteris amb «Afegir un criteri» o demana a l'assistent que et propose una rúbrica completa.",
+    "emptyOther": "L'organització encara no l'ha preparada. Ací veuràs cada criteri i el que s'espera en cada nivell.",
+    "emptyAssistant": "Demanar-la a l'assistent"
   },
   "myGroup": {
     "noneTitle": "{mode, select, teams {Encara no tens equip} groups {Encara no tens grup} candidates {Encara no tens candidatura} other {Encara no tens projecte}}",
@@ -397,7 +420,8 @@
       },
       "of": "Aportació de {name}",
       "legend": "1 = quasi res · 3 = el que s'esperava · 5 = moltíssim. Ningú del grup veurà la teua valoració.",
-      "save": "Guardar la valoració"
+      "save": "Guardar la valoració",
+      "pickOne": "Valora almenys un company abans de guardar."
     }
   },
   "studio": {
@@ -569,12 +593,12 @@
     "selfTitle": "Autoavaluació sobre 100",
     "final": "Final",
     "finalTitle": "Ponderada: {evaluator} {teacher} %, companys {peer} %, auto {self} %",
-    "dispersion": "Dispersió",
+    "dispersion": "Desacord",
     "minMax": "Mín–Màx",
     "judges": "Jutges",
     "feedback": "Retroalimentació",
     "reviews": "{count} rev.",
-    "legend": "Columnes de criteri: mitjana sobre {scale}. Dispersió: desviació típica del total entre jutges (com més alta, més desacord).",
+    "legend": "Columnes de criteri: mitjana sobre {scale}. «Desacord» indica quant difereixen les notes dels jutges: com més alt, menys d'acord estan.",
     "byJudge": "Avaluacions per jutge",
     "teamAverage": "{name} · mitjana {average}",
     "chartLabel": "Mitjana per projecte",
@@ -813,7 +837,8 @@
     "creating": "Creant l'espai…",
     "create": "Crear l'espai",
     "questionsTitle": "Per a preparar-ho millor necessite saber:",
-    "questionsHint": "Afig les respostes a la descripció de dalt i torna a prémer «Preparar amb IA»."
+    "questionsHint": "Afig les respostes a la descripció de dalt i torna a prémer «Preparar amb IA».",
+    "describeFirst": "Descriu primer l'espai: què s'avalua i qui participa."
   },
   "recordingNotice": {
     "default": "Les exposicions d'este espai es gravaran per a transcriure-les automàticament i preparar un resum i materials de suport per a l'avaluació. L'àudio no es guarda: s'esborra tan prompte com es convertix en text. Només es conserven la transcripció i els materials generats, que veuen únicament les persones autoritzades de l'espai.",
@@ -844,7 +869,10 @@
     "currentSpace": "Espai actual: {name}. Canviar d'espai",
     "yourSpaces": "Els teus espais",
     "allSpaces": "Veure tots els espais",
-    "newSpace": "Espai nou"
+    "newSpace": "Espai nou",
+    "advanced": "Opcions avançades",
+    "chooseFile": "Triar un arxiu",
+    "noFile": "Cap arxiu triat"
   },
   "adminHome": {
     "title": "Resum",
@@ -853,11 +881,11 @@
   "overview": {
     "rubric": "Rúbrica",
     "rubricDetail": "{count, plural, one {# criteri} other {# criteris}} · pesos {weight} %",
-    "noCriteria": "Sense criteris",
+    "noCriteria": "Sense criteris: afig-los per a poder avaluar",
     "page": "Pàgina d'avaluació",
     "published": "Publicada",
     "closed": "Tancada",
-    "draft": "En preparació",
+    "draft": "En esborrany: encara no pot avaluar ningú",
     "unitsDetail": "{count} · {empty} sense integrants",
     "noneYet": "Cap encara",
     "students": "Alumnat amb compte",
@@ -866,13 +894,13 @@
     "evaluatorsDetail": "{people, plural, one {# persona} other {# persones}} · {panels, plural, one {# panell} other {# panells}}",
     "agenda": "Agenda",
     "slots": "{count} torns",
-    "noAgenda": "Sense agenda",
+    "noAgenda": "Sense agenda (pots avaluar sense ella)",
     "notice": "Avís de gravació",
     "noticePending": "{count, plural, one {# persona encara no l'ha confirmat} other {# persones encara no l'han confirmat}}",
     "noticeDone": "Tothom l'ha confirmat",
-    "recordingOff": "Gravació desactivada",
+    "recordingOff": "Desactivada (activa-la si aneu a gravar)",
     "prep": "Preparació",
-    "stepsDone": "{done} de {total} passos",
+    "stepsDone": "{done} de {total} passos imprescindibles",
     "progress": "Progrés de la preparació",
     "next": "Pas següent",
     "allReady": "{academic, select, true {Tot llest. Quan comencen les exposicions, segueix el progrés ací.} other {Tot llest. Quan comencen les defenses, segueix el progrés ací.}}",
@@ -880,20 +908,21 @@
     "pending": "Pendent",
     "optional": " · opcional",
     "evaluation": "Avaluació",
-    "sent": "enviades",
-    "withMin": "{units} amb ≥ {min}",
+    "sent": "avaluacions enviades",
+    "withMin": "{units} amb prou avaluacions",
     "notStarted": "avaluadors sense començar",
     "missing": "Els falten avaluacions",
     "drafts": " (+{count} esborrany)",
     "more": "… i {count} més",
     "recordings": "Gravacions: {ready} llestes · {processing} en procés",
     "failed": "{count} requerixen atenció",
-    "results": "Veure els resultats"
+    "results": "Veure els resultats",
+    "publishedNoRubric": "Publicada, però falta completar la rúbrica"
   },
   "settings": {
     "pageDescription": "Tot el que definix com funciona l'espai. Cada bloc es guarda per separat.",
     "pageTitle": "Configuració de l'espai",
-    "generalDescription": "Nom, fase en què esteu i com entra la gent.",
+    "generalDescription": "Nom, idioma i fase de l'espai.",
     "general": "General",
     "name": "Nom de l'espai",
     "phaseHint": "En tancar, ningú pot modificar avaluacions i tot el professorat i el jurat veuen els resultats.",
@@ -919,7 +948,15 @@
     "ai": "Intel·ligència artificial",
     "aiHint": "S'afigen després de les regles comunes, que sempre manen: la IA mai posarà notes ni inventarà contingut.",
     "aiLabel": "Indicacions per a la IA (opcional, màx. {max})",
-    "aiPlaceholder": "Centra't en la metodologia i en si les conclusions es basen en dades."
+    "aiPlaceholder": "Centra't en la metodologia i en si les conclusions es basen en dades.",
+    "advancedHint": "Codi per a unir-se a l'espai i si es pot usar",
+    "branding": "Imatge de l'espai",
+    "brandingDescription": "El logotip i el color ixen en la portada de l'espai, que veuen totes les persones.",
+    "logo": "Logotip",
+    "logoHint": "PNG o SVG amb fons transparent, millor quadrat.",
+    "removeLogo": "Llevar el logotip",
+    "color": "Color",
+    "colorHint": "Per a la portada. Si és clar, el text es posa fosc sol."
   },
   "recordingsAdmin": {
     "noName": "(sense nom)",
@@ -1026,7 +1063,12 @@
     "importStudents": "Importar l'alumnat",
     "importUnits": "Importar {units} (format equipos.txt)",
     "newUnit": "{mode, select, teams {Equip nou} groups {Grup nou} candidates {Candidatura nova} other {Projecte nou}}",
-    "membersCount": "{count, plural, one {# integrant} other {# integrants}}"
+    "membersCount": "{count, plural, one {# integrant} other {# integrants}}",
+    "import": "Importar una llista",
+    "importHint": "Apega o puja una llista. Primer veuràs una previsualització; no es guarda res fins que confirmes.",
+    "emptyTitle": "Encara no hi ha {units}",
+    "emptyText": "Importa'ls des d'una llista (per exemple, el CSV de PoliformaT) o crea'ls d'un en un amb el botó de dalt.",
+    "edit": "Editar"
   },
   "teamEditor": {
     "number": "Núm.",
@@ -1083,7 +1125,7 @@
     "description": "Quan s'obri l'avaluació, quantes opinions calen i com es calcula la nota.",
     "title": "Avaluació",
     "applied": "La proposta s'ha aplicat com a esborrany. Revisa-la i publica-la quan estiga llesta.",
-    "formDescription": "Versió {version}. Mentre estiga en esborrany, ningú no pot avaluar.",
+    "formDescription": "Mentre estiga en esborrany, ningú no pot avaluar.",
     "formTitle": "Pàgina d'avaluació",
     "statusHint": "Publica-la perquè el jurat puga puntuar. En tancar-la, ningú no pot modificar avaluacions.",
     "status": "Estat",
@@ -1115,7 +1157,10 @@
     "requirementsHint": "Un per línia. El jurat ha de marcar-los abans d'enviar.",
     "requirements": "Requisits obligatoris",
     "questionsHint": "Una per línia. Es responen amb text lliure.",
-    "questions": "Preguntes addicionals"
+    "questions": "Preguntes addicionals",
+    "advancedHint": "Dates, nota mínima, càlcul, rondes, requisits i preguntes extra",
+    "rubricMissing": "Per a poder publicar, primer <link>afig els criteris de la rúbrica</link>.",
+    "rubricWeights": "Els pesos de la rúbrica sumen {total} %: <link>ajusta'ls a 100 %</link> per a poder publicar."
   },
   "challengesAdmin": {
     "order": "Ordre",
@@ -1300,7 +1345,10 @@
     "panelTeamsFailed": "No s'han pogut assignar els projectes.",
     "panelNone": "Crea almenys un panell actiu.",
     "panelAutoFailed": "No s'ha pogut completar el repartiment automàtic.",
-    "assistantGroupsFailed": "No s'han pogut crear els grups."
+    "assistantGroupsFailed": "No s'han pogut crear els grups.",
+    "publishNoCriteria": "Abans de publicar, afig els criteris de la rúbrica (Avaluació → Rúbrica).",
+    "publishWeights": "Els pesos de la rúbrica sumen {total} %; han de sumar 100 % per a publicar.",
+    "brandingFailed": "No s'ha pogut guardar la imatge de l'espai."
   },
   "rubricEditor": {
     "levels": {
@@ -1409,7 +1457,8 @@
       "askStart": "Quin dia i a quina hora comencen?",
       "askDuration": "Quants minuts dura cada torn (i si hi ha descans entre ells)?",
       "askGroupsCount": "Quants {units} vols crear (o qui va en cadascun)?",
-      "askEvaluation": "Què vols avaluar, amb quins criteris (o te'ls propose jo) i amb quina escala?"
+      "askEvaluation": "Què vols avaluar, amb quins criteris (o te'ls propose jo) i amb quina escala?",
+      "tooShort": "Escriu què vols preparar (almenys unes paraules)."
     },
     "preview": {
       "page": "Pàgina proposada",
@@ -1435,5 +1484,21 @@
       "byNumber": "per número",
       "agendaNote": "Substituïx l'agenda actual si ja n'hi ha una. Després pots reordenar els torns en Organitzar l'agenda."
     }
+  },
+  "welcome": {
+    "title": "Et donem la benvinguda al teu espai",
+    "intro": "Amb estos tres passos ja es pot avaluar. La resta (agenda, gravacions, vot del públic) és opcional.",
+    "rubric": "Prepara la rúbrica",
+    "rubricText": "Els criteris, el seu pes i què significa cada nivell.",
+    "rubricAction": "Crear la rúbrica",
+    "units": "Afig els {units}",
+    "unitsText": "Importa'ls des d'una llista o crea'ls d'un en un.",
+    "unitsAction": "Afegir",
+    "people": "Convida el {evaluator}",
+    "peopleText": "Comparteix l'enllaç i el codi, o crea invitacions personals.",
+    "peopleAction": "Convidar",
+    "done": "Fet",
+    "hide": "Amagar la benvinguda",
+    "assistantHint": "Prefereixes que t'ho prepare la IA? Explica-li-ho a l'<link>assistent</link>."
   }
 }

@@ -124,7 +124,7 @@ export function PeerReviewForm({
       </div>
       {!locked ? (
         <div className="flex flex-wrap gap-2">
-          <Button disabled={busy || !complete} onClick={() => void save("submitted")} type="button">
+          <Button disabled={busy} onClick={() => void save("submitted")} type="button">
             {status === "submitted" ? t("update") : t("send")}
           </Button>
           {status !== "submitted" ? (
@@ -157,6 +157,10 @@ export function ContributionForm({
   const [busy, setBusy] = useState(false);
 
   async function save() {
+    if (!Object.keys(scores).length) {
+      toast.info(t("pickOne"));
+      return;
+    }
     setBusy(true);
     const { data: auth } = await supabase.auth.getUser();
     const rows = Object.entries(scores).map(([memberId, score]) => ({
@@ -204,7 +208,7 @@ export function ContributionForm({
       </ul>
       <p className="text-xs text-muted-foreground">{t("legend")}</p>
       {!locked ? (
-        <Button disabled={busy || !Object.keys(scores).length} onClick={() => void save()} type="button">
+        <Button disabled={busy} onClick={() => void save()} type="button">
           {t("save")}
         </Button>
       ) : null}

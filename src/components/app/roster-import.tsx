@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useActionState, useMemo, useState } from "react";
 
+import { FileField } from "@/components/app/file-field";
 import { importRosterAction, type RosterImportState } from "@/app/(app)/admin/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
@@ -52,12 +53,10 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
       <p className="text-sm text-muted-foreground">
         {t("help", { unit: unit.toLowerCase() })}
       </p>
-      <input
+      <FileField
         accept=".csv,.tsv,.txt,text/csv,text/plain"
-        aria-label={t("file")}
-        className="block text-sm"
+        label={t("file")}
         onChange={(event) => void loadFile(event.target.files?.[0])}
-        type="file"
       />
       <Textarea
         aria-label={t("list")}

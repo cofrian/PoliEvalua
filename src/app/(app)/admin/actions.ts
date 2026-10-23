@@ -7,7 +7,7 @@ import { isSpokenLanguage } from "@/lib/app/recording-notice";
 import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 
 import {
@@ -474,12 +474,13 @@ export async function saveTeamAction(formData: FormData) {
   const values = {
     name: text(formData, "name"),
     number: Number(text(formData, "number")) || null,
-    challenge_id: text(formData, "challengeId"),
+    // En asignaturas no hay retos: el grupo va sin reto.
+    challenge_id: text(formData, "challengeId") || null,
     project_title: optional(formData, "projectTitle"),
     description: optional(formData, "description"),
     table_location: optional(formData, "tableLocation"),
   };
-  if (!values.name || !values.challenge_id) return;
+  if (!values.name) return;
 
   if (id) {
     await supabase.from("teams").update(values).eq("id", id).eq("event_id", event.id);
@@ -747,6 +748,37 @@ async function uploadLogo(file: FormDataEntryValue | null, name: string) {
     .upload(path, file, { contentType: file.type, upsert: true });
   if (error) throw new Error(await adminMessage("logoFailed"));
   return supabase.storage.from("public-assets").getPublicUrl(path).data.publicUrl;
+}
+
+// ========== BIENVENIDA ==========
+
+/** Oculta la guía de bienvenida del Inicio para esta persona y este espacio. */
+export async function hideWelcomeAction() {
+  const { event } = await requireAdmin();
+  (await cookies()).set(`welcome_hidden_${event.id.slice(0, 8)}`, "1", { maxAge: 60 * 60 * 24 * 365, path: "/" });
+  refreshAll();
+}
+
+// ========== IMAGEN DEL ESPACIO ==========
+
+/** Logo y color propios del espacio: salen en su portada y en el menú. */
+export async function updateBrandingAction(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const color = text(formData, "accentColor");
+  const logo = await uploadLogo(formData.get("logo"), "logo-espacio");
+  const values = {
+    event_id: event.id,
+    ...(/^#[0-9a-f]{6}$/i.test(color) ? { accent_color: color } : {}),
+    ...(logo ? { logo_light_url: logo, logo_dark_url: logo } : {}),
+    ...(formData.get("removeLogo") === "on" && !logo ? { logo_light_url: null, logo_dark_url: null } : {}),
+  };
+  const { error } = await supabase.from("event_branding").upsert(values, { onConflict: "event_id" });
+  if (error) throw new Error(await adminMessage("brandingFailed"));
+  await logAudit(supabase, event.id, user.id, "imagen_espacio", "event_branding", event.id, {
+    color: values.accent_color ?? null,
+    logo: Boolean(logo),
+  });
+  refreshAll();
 }
 
 export async function saveSponsorAction(formData: FormData) {

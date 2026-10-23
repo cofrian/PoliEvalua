@@ -52,47 +52,48 @@ const roles: Record<Locale, { evaluator: Record<"academic" | "awards" | "event",
   },
 };
 
+/** Fases del espacio, dichas por lo que se puede hacer en cada una. */
 const stages: Record<Locale, Record<"event" | "class", Record<EventStatus, string>>> = {
   es: {
     event: {
-      setup: "Preparación",
-      building: "Desarrollo (notas)",
-      judging: "Defensas (evaluación)",
-      closed: "Cerrado",
+      setup: "Preparando el espacio",
+      building: "Desarrollo · solo notas",
+      judging: "Defensas · se puntúa",
+      closed: "Cerrado · resultados visibles",
     },
     class: {
-      setup: "Preparación",
-      building: "Trabajo en grupos (notas)",
-      judging: "Exposiciones (evaluación)",
-      closed: "Cerrado",
+      setup: "Preparando el espacio",
+      building: "Trabajo en grupos · solo notas",
+      judging: "Exposiciones · se puntúa",
+      closed: "Cerrado · resultados visibles",
     },
   },
   ca: {
     event: {
-      setup: "Preparació",
-      building: "Desenvolupament (notes)",
-      judging: "Defenses (avaluació)",
-      closed: "Tancat",
+      setup: "Preparant l'espai",
+      building: "Desenvolupament · només notes",
+      judging: "Defenses · es puntua",
+      closed: "Tancat · resultats visibles",
     },
     class: {
-      setup: "Preparació",
-      building: "Treball en grups (notes)",
-      judging: "Exposicions (avaluació)",
-      closed: "Tancat",
+      setup: "Preparant l'espai",
+      building: "Treball en grups · només notes",
+      judging: "Exposicions · es puntua",
+      closed: "Tancat · resultats visibles",
     },
   },
   en: {
     event: {
-      setup: "Setup",
-      building: "Building (notes)",
-      judging: "Pitches (evaluation)",
-      closed: "Closed",
+      setup: "Setting up the space",
+      building: "Building · notes only",
+      judging: "Pitches · scoring open",
+      closed: "Closed · results visible",
     },
     class: {
-      setup: "Setup",
-      building: "Group work (notes)",
-      judging: "Presentations (evaluation)",
-      closed: "Closed",
+      setup: "Setting up the space",
+      building: "Group work · notes only",
+      judging: "Presentations · scoring open",
+      closed: "Closed · results visible",
     },
   },
 };

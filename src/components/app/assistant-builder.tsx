@@ -163,7 +163,11 @@ export function AssistantBuilder({
 
   async function send() {
     const prompt = message.trim();
-    if (prompt.length < 3 || pending) return;
+    if (pending) return;
+    if (prompt.length < 3) {
+      setError(t("errors.tooShort"));
+      return;
+    }
     setPending(true);
     setError(null);
     try {
@@ -300,7 +304,7 @@ export function AssistantBuilder({
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">{t("safety")}</p>
-            <Button disabled={pending || message.trim().length < 3 || !configured} type="submit">
+            <Button disabled={pending || !configured} type="submit">
               <Send aria-hidden="true" className="size-4" /> {pending ? t("sending") : t("send")}
             </Button>
           </div>

@@ -78,8 +78,15 @@ export async function AdminOverview({ session }: { session: Session }) {
     },
     {
       label: t("page"),
-      done: page?.status === "published",
-      detail: page?.status === "published" ? t("published") : page?.status === "closed" ? t("closed") : t("draft"),
+      done: page?.status === "published" && criteria.length > 0 && Math.round(weightTotal) === 100,
+      detail:
+        page?.status === "published"
+          ? criteria.length && Math.round(weightTotal) === 100
+            ? t("published")
+            : t("publishedNoRubric")
+          : page?.status === "closed"
+            ? t("closed")
+            : t("draft"),
       href: "/admin/evaluacion",
     },
     {

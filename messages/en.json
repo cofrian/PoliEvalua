@@ -43,7 +43,17 @@
     "organizeAgenda": "Organize schedule",
     "recordings": "Recordings",
     "publicVote": "Public vote",
-    "audit": "Audit"
+    "audit": "Audit",
+    "home": "Home",
+    "participants": "Participants",
+    "recordingsAndPublic": "Recordings and audience",
+    "sections": "Sections in this area",
+    "tabs": {
+      "list": "View {units}",
+      "edit": "Edit and import",
+      "form": "Evaluation form",
+      "general": "General"
+    }
   },
   "userMenu": {
     "open": "User menu",
@@ -151,7 +161,7 @@
     "count": "{count} {units}",
     "evaluatedByYou": "{count} evaluated by you",
     "mentorHint": "as a mentor you can take notes, not vote",
-    "searchLabel": "Search",
+    "searchLabel": "Search {mode, select, teams {team} groups {group} candidates {entry} other {project}}",
     "searchPlaceholder": "Search by name or number",
     "createOrImport": "Create or import {units}",
     "emptyAdmin": "Create the list by hand or import it from a spreadsheet. They'll show up here to be evaluated.",
@@ -172,10 +182,14 @@
     "evaluate": "Evaluate",
     "members": "Members",
     "noMembers": "No members.",
-    "edit": "Edit (organizers)",
+    "edit": "Edit {mode, select, teams {team} groups {group} candidates {entry} other {project}}",
     "deliverables": "Deliverables",
     "project": "Project",
-    "notes": "Notes"
+    "notes": "Notes",
+    "notReadyRubric": "You can't evaluate yet: the rubric isn't ready.",
+    "notReadyRubricAdmin": "You can't evaluate yet: <link>set up the rubric</link>.",
+    "notReadyPage": "The evaluation isn't open yet.",
+    "notReadyPageAdmin": "The evaluation is a draft: <link>publish it</link> so the jury can score."
   },
   "notes": {
     "synced": "Pending notes synced.",
@@ -204,7 +218,8 @@
     "share": "Share",
     "delete": "Delete note",
     "button": "Notes ({count})",
-    "drawerTitle": "Notes"
+    "drawerTitle": "Notes",
+    "emptyNote": "Write the note before adding it."
   },
   "links": {
     "kind": {
@@ -273,7 +288,10 @@
     "plannedBefore": "originally planned at {time}",
     "live": "Live",
     "moveUp": "Move {name} earlier",
-    "moveDown": "Move {name} later"
+    "moveDown": "Move {name} later",
+    "emptyAction": "Set up the schedule",
+    "emptyAdmin": "Spread the presentation slots across rooms in a minute; the jury and students will see them here instantly.",
+    "emptyOther": "The organizers haven't prepared it yet. You'll see each slot's time here, kept up to date with delays."
   },
   "evaluate": {
     "title": "Evaluate · {team}",
@@ -284,13 +302,18 @@
     "hiddenForStudents": "This space's rubric isn't visible to students yet.",
     "none": "There is no active rubric.",
     "title": "Rubric",
-    "meta": "{name} · version {version} · scale {min}–{max}",
+    "meta": "{name} · scored from {min} to {max}",
     "locked": " · 🔒 Locked",
     "studentHint": "This is how the {evaluator} will evaluate you: review each criterion and what's expected at each level before your {presentation}.",
     "readOnlyHint": "Only owners and managers can change the rubric's structure.",
     "history": "Change history",
     "someone": "Someone",
-    "noChanges": "Nothing has changed yet."
+    "noChanges": "Nothing has changed yet.",
+    "scale": "Scored from {min} to {max}",
+    "emptyTitle": "The rubric has no criteria yet",
+    "emptyAdmin": "Add criteria with “Add criterion” or ask the assistant to suggest a complete rubric.",
+    "emptyOther": "The organizers haven't prepared it yet. You'll see each criterion and what's expected at each level here.",
+    "emptyAssistant": "Ask the assistant"
   },
   "myGroup": {
     "noneTitle": "{mode, select, teams {You don't have a team yet} groups {You don't have a group yet} candidates {You don't have an entry yet} other {You don't have a project yet}}",
@@ -397,7 +420,8 @@
       },
       "of": "Contribution of {name}",
       "legend": "1 = almost nothing · 3 = as expected · 5 = a great deal. No one in the group will see your rating.",
-      "save": "Save rating"
+      "save": "Save rating",
+      "pickOne": "Rate at least one teammate before saving."
     }
   },
   "studio": {
@@ -569,12 +593,12 @@
     "selfTitle": "Self-assessment out of 100",
     "final": "Final",
     "finalTitle": "Weighted: {evaluator} {teacher} %, peers {peer} %, self {self} %",
-    "dispersion": "Spread",
+    "dispersion": "Disagreement",
     "minMax": "Min–Max",
     "judges": "Judges",
     "feedback": "Feedback",
     "reviews": "{count} rev.",
-    "legend": "Criterion columns: average out of {scale}. Spread: standard deviation of the total across judges (higher means more disagreement).",
+    "legend": "Criterion columns: average out of {scale}. “Disagreement” shows how much the judges' scores differ: the higher, the less they agree.",
     "byJudge": "Evaluations by judge",
     "teamAverage": "{name} · average {average}",
     "chartLabel": "Average per project",
@@ -813,7 +837,8 @@
     "creating": "Creating space…",
     "create": "Create space",
     "questionsTitle": "To prepare it better I need to know:",
-    "questionsHint": "Add your answers to the description above and press “Prepare with AI” again."
+    "questionsHint": "Add your answers to the description above and press “Prepare with AI” again.",
+    "describeFirst": "Describe the space first: what is evaluated and who takes part."
   },
   "recordingNotice": {
     "default": "Presentations in this space will be recorded to transcribe them automatically and prepare a summary and support materials for the evaluation. The audio isn't kept: it's deleted as soon as it becomes text. Only the transcript and the generated materials are kept, and only authorized people in the space can see them.",
@@ -844,7 +869,10 @@
     "currentSpace": "Current space: {name}. Switch space",
     "yourSpaces": "Your spaces",
     "allSpaces": "See all spaces",
-    "newSpace": "New space"
+    "newSpace": "New space",
+    "advanced": "Advanced options",
+    "chooseFile": "Choose file",
+    "noFile": "No file chosen"
   },
   "adminHome": {
     "title": "Overview",
@@ -853,11 +881,11 @@
   "overview": {
     "rubric": "Rubric",
     "rubricDetail": "{count, plural, one {# criterion} other {# criteria}} · weights {weight} %",
-    "noCriteria": "No criteria",
+    "noCriteria": "No criteria: add them to start evaluating",
     "page": "Evaluation page",
     "published": "Published",
     "closed": "Closed",
-    "draft": "In preparation",
+    "draft": "Draft: nobody can evaluate yet",
     "unitsDetail": "{count} · {empty} without members",
     "noneYet": "None yet",
     "students": "Students with an account",
@@ -866,13 +894,13 @@
     "evaluatorsDetail": "{people, plural, one {# person} other {# people}} · {panels, plural, one {# panel} other {# panels}}",
     "agenda": "Schedule",
     "slots": "{count} slots",
-    "noAgenda": "No schedule",
+    "noAgenda": "No schedule (you can evaluate without one)",
     "notice": "Recording notice",
     "noticePending": "{count, plural, one {# person hasn't confirmed it yet} other {# people haven't confirmed it yet}}",
     "noticeDone": "Everyone has confirmed it",
-    "recordingOff": "Recording disabled",
+    "recordingOff": "Off (turn it on if you'll record)",
     "prep": "Setup",
-    "stepsDone": "{done} of {total} steps",
+    "stepsDone": "{done} of {total} essential steps",
     "progress": "Setup progress",
     "next": "Next step",
     "allReady": "{academic, select, true {All set. When the presentations start, follow the progress here.} other {All set. When the pitches start, follow the progress here.}}",
@@ -880,20 +908,21 @@
     "pending": "Pending",
     "optional": " · optional",
     "evaluation": "Evaluation",
-    "sent": "sent",
-    "withMin": "{units} with ≥ {min}",
+    "sent": "evaluations sent",
+    "withMin": "{units} with enough evaluations",
     "notStarted": "evaluators not started",
     "missing": "Missing evaluations",
     "drafts": " (+{count} draft)",
     "more": "… and {count} more",
     "recordings": "Recordings: {ready} ready · {processing} in progress",
     "failed": "{count} need attention",
-    "results": "View results"
+    "results": "View results",
+    "publishedNoRubric": "Published, but the rubric isn't complete"
   },
   "settings": {
     "pageDescription": "Everything that defines how the space works. Each block is saved separately.",
     "pageTitle": "Space settings",
-    "generalDescription": "Name, current phase and how people join.",
+    "generalDescription": "Name, language and phase of the space.",
     "general": "General",
     "name": "Space name",
     "phaseHint": "Once closed, nobody can change evaluations and all teachers and jury members see the results.",
@@ -919,7 +948,15 @@
     "ai": "Artificial intelligence",
     "aiHint": "They're added after the common rules, which always win: the AI will never grade or make up content.",
     "aiLabel": "Instructions for the AI (optional, max. {max})",
-    "aiPlaceholder": "Focus on the methodology and on whether the conclusions are backed by data."
+    "aiPlaceholder": "Focus on the methodology and on whether the conclusions are backed by data.",
+    "advancedHint": "Code to join the space and whether it can be used",
+    "branding": "Space look",
+    "brandingDescription": "The logo and color appear on the space's cover, which everyone sees.",
+    "logo": "Logo",
+    "logoHint": "PNG or SVG with a transparent background, ideally square.",
+    "removeLogo": "Remove logo",
+    "color": "Color",
+    "colorHint": "For the cover. If it's light, the text turns dark automatically."
   },
   "recordingsAdmin": {
     "noName": "(no name)",
@@ -1026,7 +1063,12 @@
     "importStudents": "Import students",
     "importUnits": "Import {units} (equipos.txt format)",
     "newUnit": "{mode, select, teams {New team} groups {New group} candidates {New entry} other {New project}}",
-    "membersCount": "{count, plural, one {# member} other {# members}}"
+    "membersCount": "{count, plural, one {# member} other {# members}}",
+    "import": "Import a list",
+    "importHint": "Paste or upload a list. You'll see a preview first; nothing is saved until you confirm.",
+    "emptyTitle": "No {units} yet",
+    "emptyText": "Import them from a list (for example, the PoliformaT CSV) or create them one by one with the button above.",
+    "edit": "Edit"
   },
   "teamEditor": {
     "number": "No.",
@@ -1083,7 +1125,7 @@
     "description": "When the evaluation opens, how many opinions are needed and how the grade is calculated.",
     "title": "Evaluation",
     "applied": "The proposal was applied as a draft. Review it and publish it when it's ready.",
-    "formDescription": "Version {version}. While it's a draft, nobody can evaluate.",
+    "formDescription": "While it's a draft, nobody can evaluate.",
     "formTitle": "Evaluation page",
     "statusHint": "Publish it so the jury can score. Once closed, nobody can change evaluations.",
     "status": "Status",
@@ -1115,7 +1157,10 @@
     "requirementsHint": "One per line. The jury must tick them before sending.",
     "requirements": "Required checks",
     "questionsHint": "One per line. Answered with free text.",
-    "questions": "Additional questions"
+    "questions": "Additional questions",
+    "advancedHint": "Dates, minimum evaluations, calculation, rounds, requirements and extra questions",
+    "rubricMissing": "To publish, first <link>add the rubric criteria</link>.",
+    "rubricWeights": "The rubric weights add up to {total} %: <link>adjust them to 100 %</link> to publish."
   },
   "challengesAdmin": {
     "order": "Order",
@@ -1300,7 +1345,10 @@
     "panelTeamsFailed": "The projects couldn't be assigned.",
     "panelNone": "Create at least one active panel.",
     "panelAutoFailed": "The automatic assignment couldn't be completed.",
-    "assistantGroupsFailed": "The groups couldn't be created."
+    "assistantGroupsFailed": "The groups couldn't be created.",
+    "publishNoCriteria": "Before publishing, add the rubric criteria (Evaluation → Rubric).",
+    "publishWeights": "The rubric weights add up to {total} %; they must add up to 100 % to publish.",
+    "brandingFailed": "The space's look couldn't be saved."
   },
   "rubricEditor": {
     "levels": {
@@ -1409,7 +1457,8 @@
       "askStart": "On what day and at what time do they start?",
       "askDuration": "How many minutes is each slot (and is there a break between them)?",
       "askGroupsCount": "How many {units} do you want to create (or who goes in each one)?",
-      "askEvaluation": "What do you want to evaluate, with which criteria (or shall I suggest them) and on what scale?"
+      "askEvaluation": "What do you want to evaluate, with which criteria (or shall I suggest them) and on what scale?",
+      "tooShort": "Write what you want to set up (at least a few words)."
     },
     "preview": {
       "page": "Proposed page",
@@ -1435,5 +1484,21 @@
       "byNumber": "by number",
       "agendaNote": "Replaces the current schedule if there is one. You can reorder slots afterwards in Organize schedule."
     }
+  },
+  "welcome": {
+    "title": "Welcome to your space",
+    "intro": "With these three steps you can start evaluating. The rest (schedule, recordings, audience vote) is optional.",
+    "rubric": "Set up the rubric",
+    "rubricText": "The criteria, their weight and what each level means.",
+    "rubricAction": "Create the rubric",
+    "units": "Add the {units}",
+    "unitsText": "Import them from a list or create them one by one.",
+    "unitsAction": "Add",
+    "people": "Invite the {evaluator}",
+    "peopleText": "Share the link and code, or create personal invitations.",
+    "peopleAction": "Invite",
+    "done": "Done",
+    "hide": "Hide the welcome",
+    "assistantHint": "Would you rather the AI set it up? Tell the <link>assistant</link>."
   }
 }

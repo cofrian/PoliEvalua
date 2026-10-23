@@ -13,6 +13,7 @@ import {
   type AssistantAction,
 } from "@/lib/ai/evaluation-proposal";
 import { buildAgenda } from "@/lib/app/agenda-builder";
+import { evaluationReadiness } from "@/lib/app/evaluation-readiness";
 
 async function requireManager() {
   const session = await getSession();
@@ -65,6 +66,16 @@ export async function saveEvaluationSettingsAction(formData: FormData) {
     requirements: list(value(formData, "requirements")),
     questions: list(value(formData, "questions")),
   });
+
+  // Publicar sin una rúbrica válida dejaría al jurado ante una pantalla vacía.
+  if (parsed.status === "published") {
+    const readiness = await evaluationReadiness(supabase, event.id);
+    if (!readiness.rubricReady) {
+      throw new Error(
+        await adminMessage(readiness.criteria ? "publishWeights" : "publishNoCriteria", { total: readiness.weightTotal }),
+      );
+    }
+  }
 
   const requirements = parsed.requirements.map((label, index) => ({
     key: `requisito-${index + 1}`,

@@ -11,6 +11,7 @@ import { NotesPanel, type Note } from "@/components/app/notes-panel";
 import { Presence } from "@/components/app/presence";
 import { TeamLinks, type TeamLink } from "@/components/app/team-links";
 import { Button } from "@/components/ui/button";
+import { evaluationReadiness } from "@/lib/app/evaluation-readiness";
 import { getSession } from "@/lib/app/session";
 
 export default async function TeamPage({
@@ -56,6 +57,7 @@ export default async function TeamPage({
     ]);
 
   if (!team) notFound();
+  const readiness = canVote ? await evaluationReadiness(supabase, event.id) : null;
 
   // Grabación en curso: aún subiendo trozos y sin cerrar (las abandonadas se limpian a las 3 h).
   const { count: liveRecordings } = recording.enabled
@@ -118,7 +120,22 @@ export default async function TeamPage({
               <Mic2 className="size-4" /> {t("presentations")}
             </Link>
           </Button>
-          {canVote && canVoteThisTeam ? (
+          {canVote && canVoteThisTeam && readiness && !readiness.open && !evaluation ? (
+            <div className="max-w-xs text-right">
+              <Button className="h-11 px-5 font-bold" disabled>
+                {t("evaluate")}
+              </Button>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {!readiness.rubricReady
+                  ? isAdmin
+                    ? t.rich("notReadyRubricAdmin", { link: (chunks) => <Link className="underline" href="/rubrica">{chunks}</Link> })
+                    : t("notReadyRubric")
+                  : isAdmin
+                    ? t.rich("notReadyPageAdmin", { link: (chunks) => <Link className="underline" href="/admin/evaluacion">{chunks}</Link> })
+                    : t("notReadyPage")}
+              </p>
+            </div>
+          ) : canVote && canVoteThisTeam ? (
             <Button asChild className="h-11 px-5 font-bold">
               <Link href={`/equipos/${team.id}/evaluar`}>
                 {evaluation?.status === "submitted"
@@ -149,7 +166,7 @@ export default async function TeamPage({
           {isAdmin ? (
             <details className="rounded-xl border border-border bg-white p-4 dark:bg-card">
               <summary className="cursor-pointer font-display text-lg">
-                {t("edit")}
+                {t("edit", { mode: words.mode })}
               </summary>
               <div className="mt-4">
                 <AdminTeamEditor
