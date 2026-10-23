@@ -34,7 +34,7 @@ const round = (n: number) => Math.round(n * 100) / 100;
  * Secciones de resultados: una por reto y otra con lo que no tiene reto. En
  * una asignatura (sin retos) todo queda en una sola sección.
  */
-export function resultSections(data: ResultsData, fallbackTitle: string) {
+export function resultSections(data: ResultsData, fallbackTitle: string, noChallengeTitle: string) {
   const known = new Set(data.challenges.map((challenge) => challenge.id));
   return [
     ...data.challenges.map((challenge) => ({
@@ -44,7 +44,7 @@ export function resultSections(data: ResultsData, fallbackTitle: string) {
     })),
     {
       id: "none",
-      name: data.challenges.length ? "Sin reto" : fallbackTitle,
+      name: data.challenges.length ? noChallengeTitle : fallbackTitle,
       teams: data.teams.filter((team) => !team.challengeId || !known.has(team.challengeId)),
     },
   ].filter((section) => section.teams.length);

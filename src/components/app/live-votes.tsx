@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getTranslations } from "next-intl/server";
 
 const timeFormat = new Intl.DateTimeFormat("es-ES", {
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
+  timeZone: "Europe/Madrid",
 });
 
 const cell = "px-3 py-2";
@@ -64,28 +66,28 @@ export async function LiveVotes({
   });
 
   const submitted = rows.filter((r) => r.status === "submitted").length;
+  const t = await getTranslations("liveVotes");
 
   return (
     <section className="space-y-3">
-      <h2 className="font-display text-xl">Votaciones en directo</h2>
+      <h2 className="font-display text-xl">{t("title")}</h2>
       <p className="text-sm text-muted-foreground">
-        {rows.length} evaluaciones · {submitted} enviadas · {rows.length - submitted} en
-        borrador. Se actualiza solo cada vez que un juez puntúa.
+        {t("summary", { total: rows.length, submitted, drafts: rows.length - submitted })}
       </p>
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
             <tr>
-              <th className={cell}>Hora</th>
-              <th className={cell}>Juez</th>
-              <th className={cell}>Equipo</th>
-              <th className={cell}>Estado</th>
+              <th className={cell}>{t("time")}</th>
+              <th className={cell}>{t("judge")}</th>
+              <th className={cell}>{t("team")}</th>
+              <th className={cell}>{t("status")}</th>
               {criteria.map((c) => (
                 <th className={`${cell} text-center`} key={c.id} title={c.title}>
                   {c.title.split(/[\s/]+/)[0]}
                 </th>
               ))}
-              <th className={`${cell} text-right`}>Total</th>
+              <th className={`${cell} text-right`}>{t("total")}</th>
             </tr>
           </thead>
           <tbody>
@@ -100,11 +102,11 @@ export async function LiveVotes({
                   <td className={cell}>
                     {row.status === "submitted" ? (
                       <span className="rounded-full bg-leaf-500/15 px-2 py-0.5 text-xs font-semibold">
-                        ✔ Enviada
+                        {t("sent")}
                       </span>
                     ) : (
                       <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-xs font-semibold">
-                        Borrador {row.scored}/{criteria.length}
+                        {t("draft", { scored: row.scored, total: criteria.length })}
                       </span>
                     )}
                   </td>
@@ -119,7 +121,7 @@ export async function LiveVotes({
             ) : (
               <tr>
                 <td className="px-3 py-6 text-center text-muted-foreground" colSpan={5 + criteria.length}>
-                  Nadie ha empezado a evaluar todavía.
+                  {t("empty")}
                 </td>
               </tr>
             )}
