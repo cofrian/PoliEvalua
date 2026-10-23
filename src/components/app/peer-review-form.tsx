@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ export function PeerReviewForm({
   locked: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("peer.form");
   const supabase = useMemo(() => createClient(), []);
   const [scores, setScores] = useState<Record<string, number>>(initial?.scores ?? {});
   const [comment, setComment] = useState(initial?.comment ?? "");
@@ -44,7 +46,7 @@ export function PeerReviewForm({
 
   async function save(nextStatus: "draft" | "submitted") {
     if (nextStatus === "submitted" && !complete) {
-      toast.error("Puntúa todos los criterios antes de enviar.");
+      toast.error(t("incomplete"));
       return;
     }
     setBusy(true);
@@ -64,11 +66,11 @@ export function PeerReviewForm({
     );
     setBusy(false);
     if (error) {
-      toast.error("No se ha podido guardar. Puede que la coevaluación esté cerrada.");
+      toast.error(t("saveError"));
       return;
     }
     setStatus(nextStatus);
-    toast.success(nextStatus === "submitted" ? "Enviada. ¡Gracias!" : "Borrador guardado.");
+    toast.success(nextStatus === "submitted" ? t("sentToast") : t("draftSaved"));
     router.refresh();
   }
 
@@ -76,7 +78,7 @@ export function PeerReviewForm({
     <div className="space-y-4">
       {status === "submitted" ? (
         <p className="rounded-lg border border-leaf-500/50 bg-leaf-500/10 px-3 py-2 text-sm">
-          Ya la has enviado. Puedes corregirla hasta que se cierre el espacio.
+          {t("alreadySent")}
         </p>
       ) : null}
       <ol className="space-y-4">
@@ -110,7 +112,7 @@ export function PeerReviewForm({
       </ol>
       <div className="space-y-1">
         <label className="text-sm font-semibold" htmlFor={`comment-${teamId}-${kind}`}>
-          {kind === "self" ? "¿Qué haríais distinto?" : "Comentario para el grupo"}
+          {kind === "self" ? t("selfComment") : t("peerComment")}
         </label>
         <Textarea
           disabled={locked}
@@ -123,11 +125,11 @@ export function PeerReviewForm({
       {!locked ? (
         <div className="flex flex-wrap gap-2">
           <Button disabled={busy || !complete} onClick={() => void save("submitted")} type="button">
-            {status === "submitted" ? "Actualizar" : "Enviar"}
+            {status === "submitted" ? t("update") : t("send")}
           </Button>
           {status !== "submitted" ? (
             <Button disabled={busy} onClick={() => void save("draft")} type="button" variant="outline">
-              Guardar borrador
+              {t("saveDraft")}
             </Button>
           ) : null}
         </div>
@@ -149,6 +151,7 @@ export function ContributionForm({
   locked: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("peer.contribution");
   const supabase = useMemo(() => createClient(), []);
   const [scores, setScores] = useState<Record<string, number>>(initial);
   const [busy, setBusy] = useState(false);
@@ -165,14 +168,12 @@ export function ContributionForm({
     const { error } = await supabase.from("contribution_reviews").upsert(rows, { onConflict: "reviewer_id,member_id" });
     setBusy(false);
     if (error) {
-      toast.error("No se ha podido guardar la valoración.");
+      toast.error(t("saveError"));
       return;
     }
-    toast.success("Valoración guardada.");
+    toast.success(t("saved"));
     router.refresh();
   }
-
-  const labels = ["", "Casi nada", "Poco", "Lo esperado", "Mucho", "Muchísimo"];
 
   return (
     <div className="space-y-3">
@@ -180,7 +181,7 @@ export function ContributionForm({
         {members.map((member) => (
           <li className="flex flex-wrap items-center justify-between gap-2" key={member.id}>
             <span className="font-semibold">{member.name}</span>
-            <span className="flex gap-1" role="radiogroup" aria-label={`Aportación de ${member.name}`}>
+            <span className="flex gap-1" role="radiogroup" aria-label={t("of", { name: member.name })}>
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
                   aria-checked={scores[member.id] === value}
@@ -191,7 +192,7 @@ export function ContributionForm({
                   key={value}
                   onClick={() => setScores((current) => ({ ...current, [member.id]: value }))}
                   role="radio"
-                  title={labels[value]}
+                  title={t(`levels.${value}`)}
                   type="button"
                 >
                   {value}
@@ -201,10 +202,10 @@ export function ContributionForm({
           </li>
         ))}
       </ul>
-      <p className="text-xs text-muted-foreground">1 = casi nada · 3 = lo esperado · 5 = muchísimo. Nadie del grupo verá tu valoración.</p>
+      <p className="text-xs text-muted-foreground">{t("legend")}</p>
       {!locked ? (
         <Button disabled={busy || !Object.keys(scores).length} onClick={() => void save()} type="button">
-          Guardar valoración
+          {t("save")}
         </Button>
       ) : null}
     </div>

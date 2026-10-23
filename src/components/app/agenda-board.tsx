@@ -1,11 +1,11 @@
 import { ArrowDown, ArrowUp, Radio } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { moveSlotAction } from "@/app/(app)/admin/actions";
 import {
   byRoom,
   scheduleRoom,
-  slotStatusLabels,
   timeFormat,
   type AgendaSlot,
 } from "@/lib/app/agenda";
@@ -34,8 +34,9 @@ export function AgendaBoard({
   canRunRoom?: boolean;
   highlightTeamId?: string | null;
 }) {
+  const t = useTranslations("agenda");
   if (!slots.length) {
-    return <p className="text-sm text-muted-foreground">Todavía no hay agenda.</p>;
+    return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
 
   return (
@@ -50,7 +51,7 @@ export function AgendaBoard({
               <div className="flex items-center gap-3 text-sm">
                 {delay ? (
                   <span className="font-semibold text-orange-600 dark:text-orange-400">
-                    Va con {delay} min de retraso
+                    {t("roomDelay", { minutes: delay })}
                   </span>
                 ) : null}
                 {canRunRoom ? (
@@ -58,7 +59,7 @@ export function AgendaBoard({
                     className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 font-semibold text-primary-foreground"
                     href={`/sala?room=${encodeURIComponent(room)}`}
                   >
-                    <Radio aria-hidden="true" className="size-4" /> Abrir sala
+                    <Radio aria-hidden="true" className="size-4" /> {t("openRoom")}
                   </Link>
                 ) : null}
               </div>
@@ -79,13 +80,13 @@ export function AgendaBoard({
                       #{slot.team.number} · {slot.team.name}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {slotStatusLabels[slot.status]} · {slot.duration_minutes} min
-                      {slot.delayMinutes && slot.status === "pending" ? ` · previsto antes a las ${timeFormat.format(new Date(slot.starts_at!))}` : ""}
+                      {t(`status.${slot.status}`)} · {slot.duration_minutes} min
+                      {slot.delayMinutes && slot.status === "pending" ? ` · ${t("plannedBefore", { time: timeFormat.format(new Date(slot.starts_at!)) })}` : ""}
                     </span>
                   </span>
                   {slot.status === "live" ? (
                     <span className="flex items-center gap-1 text-xs font-bold text-destructive">
-                      <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> En directo
+                      <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-destructive" /> {t("live")}
                     </span>
                   ) : null}
                   {canReorder && slot.status === "pending" ? (
@@ -94,7 +95,7 @@ export function AgendaBoard({
                         <input name="id" type="hidden" value={slot.id} />
                         <input name="direction" type="hidden" value="up" />
                         <button
-                          aria-label={`Adelantar ${slot.team.name}`}
+                          aria-label={t("moveUp", { name: slot.team.name })}
                           className="rounded p-1 hover:bg-muted disabled:opacity-30"
                           disabled={index === 0}
                           type="submit"
@@ -106,7 +107,7 @@ export function AgendaBoard({
                         <input name="id" type="hidden" value={slot.id} />
                         <input name="direction" type="hidden" value="down" />
                         <button
-                          aria-label={`Retrasar ${slot.team.name}`}
+                          aria-label={t("moveDown", { name: slot.team.name })}
                           className="rounded p-1 hover:bg-muted disabled:opacity-30"
                           disabled={index === scheduled.length - 1}
                           type="submit"
