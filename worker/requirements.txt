@@ -1,4 +1,6 @@
 faster-whisper==1.1.1
+# faster-whisper llama a av.open(metadata_errors=...); otras versiones lo rechazan.
+av==18.1.0
 fastapi==0.115.6
 uvicorn==0.34.0
 requests==2.32.3
