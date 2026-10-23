@@ -1,4 +1,5 @@
 import { CalendarDays } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { clearAgendaAction } from "@/app/(app)/admin/actions";
 import { EmptyState } from "@/components/app/empty-state";
@@ -19,19 +20,18 @@ function suggestedStart() {
 
 export default async function AdminAgendaPage() {
   const { supabase, event, words } = await getSession();
-  const slots = await loadAgenda(supabase, event.id);
+  const [slots, t] = await Promise.all([loadAgenda(supabase, event.id), getTranslations("agendaAdmin")]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Turnos de exposición, salas y orden. El jurado y el alumnado la ven al momento."
-        title="Organizar agenda"
+        description={t("description")}
+        title={t("title")}
       />
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-lg">{slots.length ? "Rehacer la agenda" : "Generar la agenda"}</h2>
+        <h2 className="mb-2 font-display text-lg">{slots.length ? t("redo") : t("generate")}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          Reparte los {words.unitsLower} entre las salas y calcula la hora de cada turno. Todo el espacio
-          ve la agenda; el alumnado ve resaltado su turno y los retrasos se recalculan solos.
+          {t("text", { units: words.unitsLower })}
         </p>
         <AgendaGenerator defaultStart={suggestedStart()} hasAgenda={slots.length > 0} />
       </section>
@@ -39,14 +39,14 @@ export default async function AdminAgendaPage() {
       {slots.length ? (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg">Turnos ({slots.length})</h2>
+            <h2 className="font-display text-lg">{t("slots", { count: slots.length })}</h2>
             <form action={clearAgendaAction}>
               <ConfirmSubmit
-                confirmLabel="Borrar agenda"
-                description="Se eliminan todos los turnos. Las evaluaciones y grabaciones no se tocan."
-                title="¿Borrar toda la agenda?"
+                confirmLabel={t("clear")}
+                description={t("clearText")}
+                title={t("clearTitle")}
               >
-                Borrar agenda
+                {t("clear")}
               </ConfirmSubmit>
             </form>
           </div>
@@ -54,9 +54,9 @@ export default async function AdminAgendaPage() {
         </section>
       ) : (
         <EmptyState
-          description={`Elige salas, duración y hora de inicio arriba y se repartirán los ${words.unitsLower} en turnos. Después podrás reordenarlos arrastrando.`}
+          description={t("emptyText", { units: words.unitsLower })}
           icon={<CalendarDays aria-hidden="true" />}
-          title="Aún no hay turnos"
+          title={t("emptyTitle")}
         />
       )}
     </div>

@@ -1,4 +1,5 @@
 import { MonitorPlay } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/app/page-header";
 import Link from "next/link";
 
@@ -15,34 +16,35 @@ import { cardClass } from "@/lib/app/ui";
 export default async function PublicAdminPage() {
   const { supabase, event } = await getSession();
   const settings = publicVoteSettings(event.settings);
+  const t = await getTranslations("publicAdmin");
   const url = await publicVoteUrl(event.slug);
   const [svg, counts] = await Promise.all([qrSvg(url), publicVoteCounts(supabase, event.id)]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Un QR para que el público vote y una pantalla con el recuento en directo."
-        title="Voto del público"
+        description={t("description")}
+        title={t("title")}
       />
       <SettingsForm
         action={updatePublicVoteAction}
-        description="Cualquiera con el enlace o el QR vota sin crear cuenta: un voto por dispositivo, que puede cambiar mientras esté abierta. No cuenta en la evaluación del jurado."
-        title="Votación"
+        description={t("formDescription")}
+        title={t("formTitle")}
       >
-        <SettingRow htmlFor="title" label="Título" description="Lo que verá el público al abrir el enlace.">
-          <Input defaultValue={settings.title} id="title" maxLength={120} name="title" />
+        <SettingRow htmlFor="title" label={t("titleLabel")} description={t("titleHint")}>
+          <Input defaultValue={settings.title ?? ""} id="title" maxLength={120} name="title" placeholder={t("defaultTitle")} />
         </SettingRow>
-        <SettingRow htmlFor="open" label="Votación abierta" description="Mientras esté cerrada, el enlace solo muestra un aviso.">
+        <SettingRow htmlFor="open" label={t("open")} description={t("openHint")}>
           <SettingSwitch defaultChecked={settings.open} id="open" name="open" />
         </SettingRow>
-        <SettingRow htmlFor="showResults" label="Mostrar el recuento en el proyector" description="Si no, la pantalla solo muestra el QR.">
+        <SettingRow htmlFor="showResults" label={t("showResults")} description={t("showResultsHint")}>
           <SettingSwitch defaultChecked={settings.showResults} id="showResults" name="showResults" />
         </SettingRow>
       </SettingsForm>
 
       <section className={`${cardClass} grid gap-6 sm:grid-cols-[200px_1fr]`}>
         <div
-          aria-label={`Código QR para votar: ${url}`}
+          aria-label={t("qr", { url })}
           className="aspect-square w-full max-w-[200px] rounded-lg bg-white p-2 [&_svg]:size-full"
           dangerouslySetInnerHTML={{ __html: svg }}
           role="img"
@@ -52,11 +54,11 @@ export default async function PublicAdminPage() {
           <div className="flex flex-wrap gap-2">
             <Button asChild>
               <Link href="/proyector" target="_blank">
-                <MonitorPlay className="size-4" /> Abrir pantalla del proyector
+                <MonitorPlay className="size-4" /> {t("projector")}
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <a href={url} rel="noopener noreferrer" target="_blank">Probar la votación</a>
+              <a href={url} rel="noopener noreferrer" target="_blank">{t("try")}</a>
             </Button>
           </div>
         </div>
@@ -64,15 +66,15 @@ export default async function PublicAdminPage() {
 
       <section className={`${cardClass} space-y-3`}>
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl">Recuento ({counts.total})</h2>
+          <h2 className="font-display text-xl">{t("count", { count: counts.total })}</h2>
           {counts.total ? (
             <form action={resetPublicVotesAction}>
               <ConfirmSubmit
-                confirmLabel="Borrar votos"
-                description={`Se eliminan los ${counts.total} votos del público. No se puede deshacer.`}
-                title="¿Borrar todos los votos?"
+                confirmLabel={t("reset")}
+                description={t("resetText", { count: counts.total })}
+                title={t("resetTitle")}
               >
-                Borrar todos los votos
+                {t("resetButton")}
               </ConfirmSubmit>
             </form>
           ) : null}

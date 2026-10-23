@@ -1,3 +1,6 @@
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+
 import { deleteChallengeAction, saveChallengeAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
@@ -14,28 +17,30 @@ type Challenge = {
 };
 
 function ChallengeForm({ challenge }: { challenge: Challenge | null }) {
+  const t = useTranslations("challengesAdmin");
   return (
     <form action={saveChallengeAction} className="grid gap-3 sm:grid-cols-[6rem_1fr_2fr_auto] sm:items-end">
       <input name="id" type="hidden" value={challenge?.id ?? ""} />
       <label className="space-y-1 text-sm font-semibold">
-        <span className="block">Orden</span>
+        <span className="block">{t("order")}</span>
         <Input defaultValue={challenge?.order ?? ""} inputMode="numeric" name="order" />
       </label>
       <label className="space-y-1 text-sm font-semibold">
-        <span className="block">Nombre</span>
+        <span className="block">{t("name")}</span>
         <Input defaultValue={challenge?.name ?? ""} name="name" required />
       </label>
       <label className="space-y-1 text-sm font-semibold">
-        <span className="block">Descripción</span>
+        <span className="block">{t("description")}</span>
         <Input defaultValue={challenge?.description ?? ""} name="description" />
       </label>
-      <Button type="submit">{challenge ? "Guardar" : "Crear reto"}</Button>
+      <Button type="submit">{challenge ? t("save") : t("create")}</Button>
     </form>
   );
 }
 
 export default async function AdminChallengesPage() {
   const { supabase, event } = await getSession();
+  const t = await getTranslations("challengesAdmin");
   const [{ data: challenges }, { data: teams }] = await Promise.all([
     supabase.from("challenges").select("id, name, description, order").eq("event_id", event.id).order("order"),
     supabase.from("teams").select("challenge_id").eq("event_id", event.id),
@@ -44,22 +49,22 @@ export default async function AdminChallengesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Las categorías en las que compiten los equipos."
-        title="Retos"
+        description={t("pageDescription")}
+        title={t("title")}
       />
     <div className="space-y-4">
       {(challenges ?? []).map((challenge) => {
-        const count = (teams ?? []).filter((t) => t.challenge_id === challenge.id).length;
+        const count = (teams ?? []).filter((team) => team.challenge_id === challenge.id).length;
         return (
           <section className={cardClass} key={challenge.id}>
             <ChallengeForm challenge={challenge} />
             <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-              <span>{count} equipos</span>
+              <span>{t("teams", { count })}</span>
               {count === 0 ? (
                 <form action={deleteChallengeAction}>
                   <input name="id" type="hidden" value={challenge.id} />
-                  <ConfirmSubmit confirmLabel="Borrar reto" title={`¿Borrar «${challenge.name}»?`}>
-                    Borrar reto
+                  <ConfirmSubmit confirmLabel={t("delete")} title={t("deleteTitle", { name: challenge.name })}>
+                    {t("delete")}
                   </ConfirmSubmit>
                 </form>
               ) : null}
@@ -68,7 +73,7 @@ export default async function AdminChallengesPage() {
         );
       })}
       <section className={cardClass}>
-        <h2 className="mb-3 font-display text-xl">Nuevo reto</h2>
+        <h2 className="mb-3 font-display text-xl">{t("new")}</h2>
         <ChallengeForm challenge={null} />
       </section>
     </div>

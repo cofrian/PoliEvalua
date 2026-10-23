@@ -56,7 +56,7 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
         <LocaleSwitcher />
       </div>
       <p className="text-sm font-semibold text-muted-foreground">{event.name}</p>
-      <h1 className="font-display text-3xl">{settings.title}</h1>
+      <h1 className="font-display text-3xl">{settings.title ?? t("defaultTitle")}</h1>
       {settings.open ? (
         <>
           <p className="mt-2 text-sm text-muted-foreground">

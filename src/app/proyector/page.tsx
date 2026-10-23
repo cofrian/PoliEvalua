@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AutoRefresh } from "@/components/app/auto-refresh";
 import { UpvBrand } from "@/components/brand/upv-brand";
@@ -8,16 +9,25 @@ import { loadAgenda } from "@/lib/app/agenda-data";
 import { publicVoteSettings } from "@/lib/app/public-vote";
 import { publicVoteCounts, publicVoteUrl, qrSvg } from "@/lib/app/public-vote-data";
 import { getSession } from "@/lib/app/session";
+import { vocabulary } from "@/lib/app/vocabulary";
 
-export const metadata: Metadata = { title: "Proyector" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("projector"))("meta") };
+}
 
 /**
  * Pantalla para proyectar en la sala: quién expone ahora y quién va después en
  * cada sala, el QR para votar y, si se activa, el recuento en directo.
  */
 export default async function ProjectorPage() {
-  const { supabase, event, isAdmin, words } = await getSession();
+  const { supabase, event, isAdmin } = await getSession();
   if (!isAdmin) redirect("/agenda");
+  // Lo ve el público de la sala: va en el idioma del espacio, no en el de quien lo abre.
+  const [t, tVote] = await Promise.all([
+    getTranslations({ locale: event.locale, namespace: "projector" }),
+    getTranslations({ locale: event.locale, namespace: "publicVote" }),
+  ]);
+  const words = vocabulary(event, event.locale);
 
   const vote = publicVoteSettings(event.settings);
   const [agenda, url] = await Promise.all([loadAgenda(supabase, event.id), publicVoteUrl(event.slug)]);
@@ -37,7 +47,7 @@ export default async function ProjectorPage() {
   const max = Math.max(1, ...top.map((team) => team.votes));
 
   return (
-    <main className="min-h-svh bg-ink-950 p-8 text-white">
+    <main className="min-h-svh bg-ink-950 p-8 text-white" lang={event.locale}>
       <AutoRefresh seconds={5} />
       <header className="mb-10 flex items-center justify-between gap-6">
         <UpvBrand className="[&_*]:text-white" href="/admin" />
@@ -53,14 +63,14 @@ export default async function ProjectorPage() {
                 {live ? (
                   <div className="rounded-2xl border-2 border-red-500 bg-red-500/10 p-6">
                     <p className="flex items-center gap-2 text-lg font-bold text-red-400">
-                      <span aria-hidden="true" className="size-3 animate-pulse rounded-full bg-red-500" /> Exponiendo ahora
+                      <span aria-hidden="true" className="size-3 animate-pulse rounded-full bg-red-500" /> {t("live")}
                     </p>
                     <p className="mt-2 font-display text-5xl">
                       {words.unit} #{live.team.number} · {live.team.name}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-2xl text-white/60">Ahora no expone nadie.</p>
+                  <p className="text-2xl text-white/60">{t("nobody")}</p>
                 )}
                 {next.length ? (
                   <ul className="space-y-1 text-2xl text-white/80">
@@ -77,16 +87,16 @@ export default async function ProjectorPage() {
               </div>
             ))
           ) : (
-            <p className="text-3xl text-white/60">Todavía no hay agenda.</p>
+            <p className="text-3xl text-white/60">{t("noAgenda")}</p>
           )}
         </section>
 
         {svg ? (
           <aside className="space-y-6">
             <div className="rounded-2xl bg-white p-6 text-center text-ink-950">
-              <p className="font-display text-3xl">{vote.title}</p>
+              <p className="font-display text-3xl">{vote.title ?? tVote("defaultTitle")}</p>
               <div
-                aria-label={`Código QR para votar: ${url}`}
+                aria-label={t("qr", { url })}
                 className="mx-auto mt-4 aspect-square w-full max-w-xs [&_svg]:size-full"
                 dangerouslySetInnerHTML={{ __html: svg }}
                 role="img"

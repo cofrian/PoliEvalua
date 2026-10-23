@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { generatePeerAssignmentsAction, type PeerAssignState } from "@/app/(app)/admin/actions";
@@ -7,12 +8,13 @@ import { SubmitButton } from "@/components/auth/submit-button";
 
 export function PeerAssignButton({ hasAssignments }: { hasAssignments: boolean }) {
   const [state, formAction] = useActionState<PeerAssignState, FormData>(generatePeerAssignmentsAction, null);
+  const t = useTranslations("peerAdmin");
   return (
     <form action={formAction} className="space-y-2">
       <div className="max-w-xs">
         <SubmitButton
-          idleLabel={hasAssignments ? "Repartir de nuevo" : "Repartir grupos a evaluar"}
-          pendingLabel="Repartiendo…"
+          idleLabel={hasAssignments ? t("reassign") : t("assign")}
+          pendingLabel={t("assigning")}
         />
       </div>
       {state ? (
