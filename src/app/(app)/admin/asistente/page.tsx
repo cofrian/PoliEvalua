@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { AssistantBuilder, type AssistantProposalItem } from "@/components/app/assistant-builder";
 import { PageHeader } from "@/components/app/page-header";
 import { evaluationProposalSchema } from "@/lib/ai/evaluation-proposal";
@@ -6,6 +8,7 @@ import { getSession } from "@/lib/app/session";
 
 export default async function AssistantPage() {
   const { supabase, event } = await getSession();
+  const t = await getTranslations("assistantPage");
   const { data } = await supabase
     .from("assistant_proposals")
     .select("id, prompt, reply, proposal, status, created_at")
@@ -28,8 +31,8 @@ export default async function AssistantPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Describe lo que necesitas y la IA prepara rúbrica, grupos y ajustes para que los revises."
-        title="Asistente IA"
+        description={t("description")}
+        title={t("title")}
       />
     <AssistantBuilder
       configured={aiConfigured()}

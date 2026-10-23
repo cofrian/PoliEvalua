@@ -1,16 +1,11 @@
+import { getFormatter, getTranslations } from "next-intl/server";
+
 import { PageHeader } from "@/components/app/page-header";
 import { getSession } from "@/lib/app/session";
 
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
-
 export default async function AuditPage() {
   const { supabase, event } = await getSession();
+  const [t, format] = await Promise.all([getTranslations("auditAdmin"), getFormatter()]);
   const [{ data: entries }, { data: memberships }, { data: rubricChanges }] =
     await Promise.all([
       supabase
@@ -52,7 +47,7 @@ export default async function AuditPage() {
       key: `r${c.id}`,
       at: c.created_at,
       who: name(c.user_id),
-      what: "rúbrica",
+      what: t("rubric"),
       detail: c.summary ?? "",
     })),
   ].sort((a, b) => b.at.localeCompare(a.at));
@@ -60,17 +55,17 @@ export default async function AuditPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Registro de todo lo que ha cambiado en el espacio y quién lo hizo."
-        title="Auditoría"
+        description={t("description")}
+        title={t("title")}
       />
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full text-sm">
         <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
           <tr>
-            <th className="px-3 py-2">Cuándo</th>
-            <th className="px-3 py-2">Quién</th>
-            <th className="px-3 py-2">Acción</th>
-            <th className="px-3 py-2">Detalle</th>
+            <th className="px-3 py-2">{t("when")}</th>
+            <th className="px-3 py-2">{t("who")}</th>
+            <th className="px-3 py-2">{t("action")}</th>
+            <th className="px-3 py-2">{t("detail")}</th>
           </tr>
         </thead>
         <tbody>
@@ -78,7 +73,7 @@ export default async function AuditPage() {
             rows.map((row) => (
               <tr className="border-b border-border align-top last:border-0" key={row.key}>
                 <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                  {dateFormat.format(new Date(row.at))}
+                  {format.dateTime(new Date(row.at), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">{row.who}</td>
                 <td className="px-3 py-2 whitespace-nowrap font-semibold">{row.what}</td>
@@ -90,7 +85,7 @@ export default async function AuditPage() {
           ) : (
             <tr>
               <td className="px-3 py-6 text-center text-muted-foreground" colSpan={4}>
-                Todavía no hay actividad registrada.
+                {t("empty")}
               </td>
             </tr>
           )}

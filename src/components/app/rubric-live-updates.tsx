@@ -57,7 +57,7 @@ export function RubricLiveUpdates({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [supabase, rubricId, userId, router]);
+  }, [supabase, rubricId, userId, router, t]);
 
   return null;
 }

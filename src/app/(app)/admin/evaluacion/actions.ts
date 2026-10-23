@@ -1,5 +1,6 @@
 "use server";
 
+import { adminMessage } from "@/lib/app/admin-messages";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,7 +11,7 @@ import { evaluationProposalSchema } from "@/lib/ai/evaluation-proposal";
 
 async function requireManager() {
   const session = await getSession();
-  if (!session.isAdmin) throw new Error("Solo el gestor puede hacer esto.");
+  if (!session.isAdmin) throw new Error(await adminMessage("onlyAdmin"));
   return session;
 }
 
@@ -92,7 +93,7 @@ export async function saveEvaluationSettingsAction(formData: FormData) {
     },
     { onConflict: "event_id" },
   );
-  if (error) throw new Error("No se ha podido guardar la página de evaluación.");
+  if (error) throw new Error(await adminMessage("evaluationSaveFailed"));
 
   await logAudit(
     supabase,
@@ -141,7 +142,7 @@ export async function saveAcademicContextAction(formData: FormData) {
     },
     { onConflict: "event_id" },
   );
-  if (error) throw new Error("No se han podido guardar los datos académicos.");
+  if (error) throw new Error(await adminMessage("academicSaveFailed"));
 
   await logAudit(
     supabase,
@@ -168,7 +169,7 @@ export async function applyAssistantProposalAction(formData: FormData) {
     .maybeSingle();
 
   if (!row || row.status !== "pending") {
-    throw new Error("La propuesta ya no está pendiente.");
+    throw new Error(await adminMessage("proposalNotPending"));
   }
   const proposal = evaluationProposalSchema.parse(row.proposal);
   const { error } = await supabase.rpc("apply_evaluation_proposal", {

@@ -110,7 +110,7 @@ export function NotesPanel({
       toast.success(t("synced"));
       void reload();
     }
-  }, [supabase, eventId, teamId, reload]);
+  }, [supabase, eventId, teamId, reload, t]);
 
   useEffect(() => {
     void flushQueue();
@@ -156,7 +156,7 @@ export function NotesPanel({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [supabase, eventId, teamId, userId, reload]);
+  }, [supabase, eventId, teamId, userId, reload, t]);
 
   function queueNote(text: string) {
     const note: PendingNote = {
