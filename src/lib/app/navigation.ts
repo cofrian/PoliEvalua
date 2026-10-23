@@ -68,7 +68,7 @@ export function buildNavigation(session: Session, t: NavT): NavGroup[] {
     ...(words.hasModule("participants") ? [{ href: "/admin/equipos", label: t("tabs.edit") }] : []),
     { href: "/admin/personas", label: t("people") },
     { href: "/admin/paneles", label: t("panels", { evaluator: words.evaluator }) },
-    ...(words.showChallenges ? [{ href: "/admin/retos", label: t("challenges") }] : []),
+    { href: "/admin/retos", label: t("challengesTab") },
   ];
   const evaluation: NavTab[] = [
     ...(words.hasModule("rubric") ? [{ href: "/rubrica", label: t("rubric") }] : []),

@@ -53,7 +53,8 @@
       "edit": "Editar e importar",
       "form": "Formulario de evaluación",
       "general": "General"
-    }
+    },
+    "challengesTab": "Retos o categorías"
   },
   "userMenu": {
     "open": "Menú de usuario",
@@ -296,7 +297,10 @@
   "evaluate": {
     "title": "Evaluar · {team}",
     "aiSupport": "Apoyo de la IA",
-    "notes": "Notas"
+    "notes": "Notas",
+    "record": "Grabar la exposición",
+    "recordHint": "el audio se transcribe y no se guarda",
+    "recordingsCount": "{count, plural, one {# grabación} other {# grabaciones}}"
   },
   "rubric": {
     "hiddenForStudents": "La rúbrica de este espacio todavía no está visible para el alumnado.",
@@ -369,12 +373,14 @@
     "question": "Pregunta:"
   },
   "room": {
-    "noAgenda": "No hay agenda",
+    "noAgenda": "Sin agenda",
     "createAgenda": "Crea la agenda en <link>Admin → Agenda</link>.",
     "notReady": "La gestión del espacio todavía no ha preparado la agenda.",
     "expectedAt": "previsto a las {time}",
     "next": "Siguiente: {name}",
-    "notes": "Notas"
+    "notes": "Notas",
+    "pickTitle": "¿A quién vas a evaluar?",
+    "pickText": "Elige el grupo que expone: en su pantalla puedes grabar la exposición, puntuar y tomar notas a la vez."
   },
   "slot": {
     "updateError": "No se ha podido actualizar el turno.",
@@ -1094,7 +1100,9 @@
     "add": "Añadir",
     "delete": "Borrar",
     "deleteText": "Solo se puede si nadie lo ha evaluado todavía. No se puede deshacer.",
-    "deleteTitle": "¿Borrar «{name}»?"
+    "deleteTitle": "¿Borrar «{name}»?",
+    "noChallenge": "Sin reto",
+    "noChallenges": "Aún no hay retos. <link>Créalos aquí</link> si quieres agrupar por categorías."
   },
   "importTeams": {
     "help": "Mismo formato que <code>equipos.txt</code>: Reto, Nº, Equipo, Miembro 1, Miembro 2… (separado por tabuladores o comas). Crea o actualiza por nombre y añade los integrantes que falten; no borra nada.",
@@ -1348,7 +1356,8 @@
     "assistantGroupsFailed": "No se han podido crear los grupos.",
     "publishNoCriteria": "Antes de publicar, añade los criterios de la rúbrica (Evaluación → Rúbrica).",
     "publishWeights": "Los pesos de la rúbrica suman {total} %; deben sumar 100 % para publicar.",
-    "brandingFailed": "No se ha podido guardar la imagen del espacio."
+    "brandingFailed": "No se ha podido guardar la imagen del espacio.",
+    "generic": "No se ha podido completar la acción. Inténtalo de nuevo."
   },
   "rubricEditor": {
     "levels": {

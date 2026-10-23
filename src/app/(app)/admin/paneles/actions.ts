@@ -2,6 +2,7 @@
 
 import { adminMessage } from "@/lib/app/admin-messages";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { logAudit } from "@/lib/app/audit";
@@ -20,7 +21,7 @@ function text(formData: FormData, key: string) {
 
 const uuidSchema = z.string().uuid();
 
-export async function savePanelAction(formData: FormData) {
+async function savePanelActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const id = text(formData, "id");
   const name = z.string().min(2).max(100).parse(text(formData, "name"));
@@ -50,7 +51,7 @@ export async function savePanelAction(formData: FormData) {
   revalidatePath("/admin/paneles");
 }
 
-export async function deactivatePanelAction(formData: FormData) {
+async function deactivatePanelActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const id = uuidSchema.parse(formData.get("id"));
   await supabase
@@ -62,7 +63,7 @@ export async function deactivatePanelAction(formData: FormData) {
   revalidatePath("/admin/paneles");
 }
 
-export async function updatePanelMembersAction(formData: FormData) {
+async function updatePanelMembersActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const panelId = uuidSchema.parse(formData.get("panelId"));
   const requested = formData.getAll("members").map(String);
@@ -92,7 +93,7 @@ export async function updatePanelMembersAction(formData: FormData) {
   revalidatePath("/admin/paneles");
 }
 
-export async function updatePanelTeamsAction(formData: FormData) {
+async function updatePanelTeamsActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const panelId = uuidSchema.parse(formData.get("panelId"));
   const round = z.coerce.number().int().min(1).max(20).parse(formData.get("round"));
@@ -115,7 +116,7 @@ export async function updatePanelTeamsAction(formData: FormData) {
   revalidatePath("/admin/paneles");
 }
 
-export async function autoAssignPanelsAction(formData: FormData) {
+async function autoAssignPanelsActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const round = z.coerce.number().int().min(1).max(20).parse(formData.get("round"));
   const [{ data: panels }, { data: teams }] = await Promise.all([
@@ -143,3 +144,41 @@ export async function autoAssignPanelsAction(formData: FormData) {
   revalidatePath("/admin/paneles");
 }
 
+// ========== RESULTADO PARA LOS FORMULARIOS ==========
+
+export type ActionResult = { error?: string } | void;
+
+/**
+ * Las acciones de los formularios devuelven el error en vez de lanzarlo: así
+ * el formulario lo enseña como aviso y la página no se rompe (en producción,
+ * Next oculta el texto de los errores lanzados). Las redirecciones siguen.
+ */
+async function guard(run: () => Promise<unknown>): Promise<ActionResult> {
+  try {
+    await run();
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Acción de gestión fallida:", error instanceof Error ? error.message : error);
+    return { error: error instanceof Error && error.message ? error.message : await adminMessage("generic") };
+  }
+}
+
+export async function savePanelAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => savePanelActionRun(formData));
+}
+
+export async function deactivatePanelAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => deactivatePanelActionRun(formData));
+}
+
+export async function updatePanelMembersAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updatePanelMembersActionRun(formData));
+}
+
+export async function updatePanelTeamsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updatePanelTeamsActionRun(formData));
+}
+
+export async function autoAssignPanelsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => autoAssignPanelsActionRun(formData));
+}

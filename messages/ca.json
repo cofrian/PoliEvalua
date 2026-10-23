@@ -53,7 +53,8 @@
       "edit": "Editar i importar",
       "form": "Formulari d'avaluació",
       "general": "General"
-    }
+    },
+    "challengesTab": "Reptes o categories"
   },
   "userMenu": {
     "open": "Menú d'usuari",
@@ -296,7 +297,10 @@
   "evaluate": {
     "title": "Avaluar · {team}",
     "aiSupport": "Suport de la IA",
-    "notes": "Notes"
+    "notes": "Notes",
+    "record": "Gravar l'exposició",
+    "recordHint": "l'àudio es transcriu i no es guarda",
+    "recordingsCount": "{count, plural, one {# gravació} other {# gravacions}}"
   },
   "rubric": {
     "hiddenForStudents": "La rúbrica d'este espai encara no és visible per a l'alumnat.",
@@ -369,12 +373,14 @@
     "question": "Pregunta:"
   },
   "room": {
-    "noAgenda": "No hi ha agenda",
+    "noAgenda": "Sense agenda",
     "createAgenda": "Crea l'agenda en <link>Admin → Agenda</link>.",
     "notReady": "La gestió de l'espai encara no ha preparat l'agenda.",
     "expectedAt": "previst a les {time}",
     "next": "Següent: {name}",
-    "notes": "Notes"
+    "notes": "Notes",
+    "pickTitle": "A qui avaluaràs?",
+    "pickText": "Tria el grup que exposa: en la seua pantalla pots gravar l'exposició, puntuar i prendre notes alhora."
   },
   "slot": {
     "updateError": "No s'ha pogut actualitzar el torn.",
@@ -1094,7 +1100,9 @@
     "add": "Afegir",
     "delete": "Esborrar",
     "deleteText": "Només es pot si ningú no l'ha avaluat encara. No es pot desfer.",
-    "deleteTitle": "Vols esborrar «{name}»?"
+    "deleteTitle": "Vols esborrar «{name}»?",
+    "noChallenge": "Sense repte",
+    "noChallenges": "Encara no hi ha reptes. <link>Crea'ls ací</link> si vols agrupar per categories."
   },
   "importTeams": {
     "help": "El mateix format que <code>equipos.txt</code>: Repte, Núm., Equip, Membre 1, Membre 2… (separat per tabuladors o comes). Crea o actualitza per nom i afig els integrants que falten; no esborra res.",
@@ -1348,7 +1356,8 @@
     "assistantGroupsFailed": "No s'han pogut crear els grups.",
     "publishNoCriteria": "Abans de publicar, afig els criteris de la rúbrica (Avaluació → Rúbrica).",
     "publishWeights": "Els pesos de la rúbrica sumen {total} %; han de sumar 100 % per a publicar.",
-    "brandingFailed": "No s'ha pogut guardar la imatge de l'espai."
+    "brandingFailed": "No s'ha pogut guardar la imatge de l'espai.",
+    "generic": "No s'ha pogut completar l'acció. Torna-ho a provar."
   },
   "rubricEditor": {
     "levels": {

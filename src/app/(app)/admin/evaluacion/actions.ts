@@ -2,7 +2,7 @@
 
 import { adminMessage } from "@/lib/app/admin-messages";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { logAudit } from "@/lib/app/audit";
@@ -51,7 +51,7 @@ const evaluationSettingsSchema = z.object({
   questions: z.array(z.string().min(2).max(240)).max(30),
 });
 
-export async function saveEvaluationSettingsAction(formData: FormData) {
+async function saveEvaluationSettingsActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const parsed = evaluationSettingsSchema.parse({
     title: value(formData, "title"),
@@ -133,7 +133,7 @@ const academicSchema = z.object({
   term: z.string().max(80).nullable(),
 });
 
-export async function saveAcademicContextAction(formData: FormData) {
+async function saveAcademicContextActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const parsed = academicSchema.parse({
     institution: value(formData, "institution"),
@@ -183,7 +183,7 @@ function storedAction(action: string, proposal: unknown): AssistantAction {
 }
 
 /** Aplica lo que propuso el asistente, solo después de que la persona lo confirme. */
-export async function applyAssistantProposalAction(formData: FormData) {
+async function applyAssistantProposalActionRun(formData: FormData) {
   const session = await requireManager();
   const { supabase, user, event } = session;
   const proposalId = proposalIdSchema.parse(formData.get("proposalId"));
@@ -266,7 +266,7 @@ export async function applyAssistantProposalAction(formData: FormData) {
   redirect(target);
 }
 
-export async function rejectAssistantProposalAction(formData: FormData) {
+async function rejectAssistantProposalActionRun(formData: FormData) {
   const { supabase, user, event } = await requireManager();
   const proposalId = proposalIdSchema.parse(formData.get("proposalId"));
   await supabase
@@ -287,3 +287,37 @@ export async function rejectAssistantProposalAction(formData: FormData) {
   redirect("/admin/asistente");
 }
 
+// ========== RESULTADO PARA LOS FORMULARIOS ==========
+
+export type ActionResult = { error?: string } | void;
+
+/**
+ * Las acciones de los formularios devuelven el error en vez de lanzarlo: así
+ * el formulario lo enseña como aviso y la página no se rompe (en producción,
+ * Next oculta el texto de los errores lanzados). Las redirecciones siguen.
+ */
+async function guard(run: () => Promise<unknown>): Promise<ActionResult> {
+  try {
+    await run();
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Acción de gestión fallida:", error instanceof Error ? error.message : error);
+    return { error: error instanceof Error && error.message ? error.message : await adminMessage("generic") };
+  }
+}
+
+export async function saveEvaluationSettingsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => saveEvaluationSettingsActionRun(formData));
+}
+
+export async function saveAcademicContextAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => saveAcademicContextActionRun(formData));
+}
+
+export async function applyAssistantProposalAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => applyAssistantProposalActionRun(formData));
+}
+
+export async function rejectAssistantProposalAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => rejectAssistantProposalActionRun(formData));
+}

@@ -53,7 +53,8 @@
       "edit": "Edit and import",
       "form": "Evaluation form",
       "general": "General"
-    }
+    },
+    "challengesTab": "Challenges or categories"
   },
   "userMenu": {
     "open": "User menu",
@@ -296,7 +297,10 @@
   "evaluate": {
     "title": "Evaluate · {team}",
     "aiSupport": "AI support",
-    "notes": "Notes"
+    "notes": "Notes",
+    "record": "Record the presentation",
+    "recordHint": "the audio is transcribed and not kept",
+    "recordingsCount": "{count, plural, one {# recording} other {# recordings}}"
   },
   "rubric": {
     "hiddenForStudents": "This space's rubric isn't visible to students yet.",
@@ -374,7 +378,9 @@
     "notReady": "The organizers haven't prepared the schedule yet.",
     "expectedAt": "expected at {time}",
     "next": "Next: {name}",
-    "notes": "Notes"
+    "notes": "Notes",
+    "pickTitle": "Who are you evaluating?",
+    "pickText": "Pick the group that's presenting: on its screen you can record, score and take notes at the same time."
   },
   "slot": {
     "updateError": "The slot couldn't be updated.",
@@ -1094,7 +1100,9 @@
     "add": "Add",
     "delete": "Delete",
     "deleteText": "Only possible if nobody has evaluated it yet. This can't be undone.",
-    "deleteTitle": "Delete “{name}”?"
+    "deleteTitle": "Delete “{name}”?",
+    "noChallenge": "No challenge",
+    "noChallenges": "No challenges yet. <link>Create them here</link> if you want to group by category."
   },
   "importTeams": {
     "help": "Same format as <code>equipos.txt</code>: Challenge, No., Team, Member 1, Member 2… (tab- or comma-separated). Creates or updates by name and adds missing members; deletes nothing.",
@@ -1348,7 +1356,8 @@
     "assistantGroupsFailed": "The groups couldn't be created.",
     "publishNoCriteria": "Before publishing, add the rubric criteria (Evaluation → Rubric).",
     "publishWeights": "The rubric weights add up to {total} %; they must add up to 100 % to publish.",
-    "brandingFailed": "The space's look couldn't be saved."
+    "brandingFailed": "The space's look couldn't be saved.",
+    "generic": "The action couldn't be completed. Try again."
   },
   "rubricEditor": {
     "levels": {

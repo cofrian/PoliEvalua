@@ -137,6 +137,7 @@ test.beforeAll(async () => {
   const { data: teams } = await db
     .from("teams")
     .select("id, name")
+    .eq("event_id", eventId)
     .order("number")
     .limit(2);
   [team, secondTeam] = teams as { id: string; name: string }[];

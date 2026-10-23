@@ -8,6 +8,7 @@ import {
   updatePanelMembersAction,
   updatePanelTeamsAction,
 } from "@/app/(app)/admin/paneles/actions";
+import { ActionForm } from "@/components/app/action-form";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
@@ -62,10 +63,10 @@ export default async function PanelsPage() {
               {t("autoText")}
             </p>
           </div>
-          <form action={autoAssignPanelsAction} className="flex items-end gap-2">
+          <ActionForm action={autoAssignPanelsAction} className="flex items-end gap-2">
             <label className="space-y-1 text-sm font-semibold"><span className="block">{t("round")}</span><Input className="w-20" defaultValue={currentRound} max={20} min={1} name="round" type="number" /></label>
             <Button disabled={!activePanels.length} type="submit" variant="outline">{t("autoButton")}</Button>
-          </form>
+          </ActionForm>
         </div>
       </section>
 
@@ -82,14 +83,14 @@ export default async function PanelsPage() {
         return (
           <section className={cardClass} key={panel.id}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <form action={savePanelAction} className="grid flex-1 gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
+              <ActionForm action={savePanelAction} className="grid flex-1 gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
                 <input name="id" type="hidden" value={panel.id} />
                 <Input aria-label={t("name")} defaultValue={panel.name} name="name" required />
                 <Input aria-label={t("descriptionLabel")} defaultValue={panel.description ?? ""} name="description" placeholder={t("descriptionPlaceholder")} />
                 <Input aria-label={t("order")} defaultValue={panel.order} min={0} name="order" type="number" />
                 <Button type="submit" variant="outline">{t("save")}</Button>
-              </form>
-              <form action={deactivatePanelAction}>
+              </ActionForm>
+              <ActionForm action={deactivatePanelAction}>
                 <input name="id" type="hidden" value={panel.id} />
                 <ConfirmSubmit
                   confirmLabel={t("deactivate")}
@@ -98,11 +99,11 @@ export default async function PanelsPage() {
                 >
                   {t("deactivate")}
                 </ConfirmSubmit>
-              </form>
+              </ActionForm>
             </div>
 
             <div className="mt-5 grid gap-6 lg:grid-cols-2">
-              <form action={updatePanelMembersAction}>
+              <ActionForm action={updatePanelMembersAction}>
                 <input name="panelId" type="hidden" value={panel.id} />
                 <h3 className="font-display text-lg">{t("members")}</h3>
                 <div className="mt-2 grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-border p-3">
@@ -117,9 +118,9 @@ export default async function PanelsPage() {
                   })}
                 </div>
                 <Button className="mt-3" type="submit" variant="outline">{t("saveMembers")}</Button>
-              </form>
+              </ActionForm>
 
-              <form action={updatePanelTeamsAction}>
+              <ActionForm action={updatePanelTeamsAction}>
                 <input name="panelId" type="hidden" value={panel.id} />
                 <div className="flex items-end justify-between gap-2">
                   <h3 className="font-display text-lg">{t("teams")}</h3>
@@ -134,7 +135,7 @@ export default async function PanelsPage() {
                   ))}
                 </div>
                 <Button className="mt-3" type="submit" variant="outline">{t("saveTeams")}</Button>
-              </form>
+              </ActionForm>
             </div>
           </section>
         );
@@ -142,12 +143,12 @@ export default async function PanelsPage() {
 
       <section className={cardClass}>
         <h2 className="font-display text-lg">{t("newTitle")}</h2>
-        <form action={savePanelAction} className="mt-3 grid gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
+        <ActionForm action={savePanelAction} className="mt-3 grid gap-3 sm:grid-cols-[1fr_2fr_6rem_auto]">
           <Input aria-label={t("newName")} name="name" placeholder={t("newNamePlaceholder")} required />
           <Input aria-label={t("newDescription")} name="description" placeholder={t("newDescriptionPlaceholder")} />
           <Input aria-label={t("order")} defaultValue={activePanels.length + 1} min={0} name="order" type="number" />
           <Button type="submit">{t("create")}</Button>
-        </form>
+        </ActionForm>
       </section>
     </div>
   );

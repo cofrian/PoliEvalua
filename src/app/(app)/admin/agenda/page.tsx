@@ -1,6 +1,7 @@
 import { CalendarDays } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { ActionForm } from "@/components/app/action-form";
 import { clearAgendaAction } from "@/app/(app)/admin/actions";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
@@ -40,7 +41,7 @@ export default async function AdminAgendaPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg">{t("slots", { count: slots.length })}</h2>
-            <form action={clearAgendaAction}>
+            <ActionForm action={clearAgendaAction}>
               <ConfirmSubmit
                 confirmLabel={t("clear")}
                 description={t("clearText")}
@@ -48,7 +49,7 @@ export default async function AdminAgendaPage() {
               >
                 {t("clear")}
               </ConfirmSubmit>
-            </form>
+            </ActionForm>
           </div>
           <AgendaBoard canReorder canRunRoom slots={slots} />
         </section>

@@ -5,6 +5,7 @@ import {
   setUserRoleAction,
   toggleUserDisabledAction,
 } from "@/app/(app)/admin/actions";
+import { ActionForm } from "@/components/app/action-form";
 import { CopyButton } from "@/components/app/copy-button";
 import { InvitationForm } from "@/components/app/invitation-form";
 import { PageHeader } from "@/components/app/page-header";
@@ -100,10 +101,10 @@ export default async function AdminPeoplePage({
                     </p>
                   </div>
                   {!closed ? (
-                    <form action={revokeInvitationAction}>
+                    <ActionForm action={revokeInvitationAction}>
                       <input name="id" type="hidden" value={invitation.id} />
                       <Button className="h-8" type="submit" variant="outline">{t("revoke")}</Button>
-                    </form>
+                    </ActionForm>
                   ) : null}
                 </li>
               );
@@ -181,7 +182,7 @@ export default async function AdminPeoplePage({
                       {self ? (
                         roleLabel(membership.role)
                       ) : (
-                        <form action={setUserRoleAction} className="flex gap-2">
+                        <ActionForm action={setUserRoleAction} className="flex gap-2">
                           <input name="id" type="hidden" value={profile.id} />
                           <select className={selectClass} defaultValue={membership.role} name="role">
                             {ROLES.filter((value) => value !== "owner").map((value) => (
@@ -193,7 +194,7 @@ export default async function AdminPeoplePage({
                           <Button className="h-9" type="submit" variant="outline">
                             {t("change")}
                           </Button>
-                        </form>
+                        </ActionForm>
                       )}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
@@ -212,7 +213,7 @@ export default async function AdminPeoplePage({
                       {self ? (
                         t("active")
                       ) : (
-                        <form action={toggleUserDisabledAction}>
+                        <ActionForm action={toggleUserDisabledAction}>
                           <input name="id" type="hidden" value={profile.id} />
                           <input
                             name="disabled"
@@ -226,7 +227,7 @@ export default async function AdminPeoplePage({
                           >
                             {membership.status === "inactive" ? t("reactivate") : t("deactivate")}
                           </Button>
-                        </form>
+                        </ActionForm>
                       )}
                     </td>
                   </tr>

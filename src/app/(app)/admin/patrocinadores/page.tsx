@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
+import { ActionForm } from "@/components/app/action-form";
 import { FileField } from "@/components/app/file-field";
 import { deleteSponsorAction, saveSponsorAction } from "@/app/(app)/admin/actions";
 import { PageHeader } from "@/components/app/page-header";
@@ -25,7 +26,7 @@ type Sponsor = {
 function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
   const t = useTranslations("sponsorsAdmin");
   return (
-    <form action={saveSponsorAction} className="grid gap-3 sm:grid-cols-6">
+    <ActionForm action={saveSponsorAction} className="grid gap-3 sm:grid-cols-6">
       <input name="id" type="hidden" value={sponsor?.id ?? ""} />
       <label className="space-y-1 text-sm font-semibold sm:col-span-3">
         <span className="block">{t("name")}</span>
@@ -74,7 +75,7 @@ function SponsorForm({ sponsor }: { sponsor: Sponsor | null }) {
       <div className="sm:col-span-6">
         <Button type="submit">{sponsor ? t("save") : t("add")}</Button>
       </div>
-    </form>
+    </ActionForm>
   );
 }
 
@@ -115,12 +116,12 @@ export default async function AdminSponsorsPage() {
             )}
           </div>
           <SponsorForm sponsor={sponsor} />
-          <form action={deleteSponsorAction} className="mt-2">
+          <ActionForm action={deleteSponsorAction} className="mt-2">
             <input name="id" type="hidden" value={sponsor.id} />
             <ConfirmSubmit confirmLabel={t("remove")} title={t("removeTitle", { name: sponsor.name })}>
               {t("removeButton")}
             </ConfirmSubmit>
-          </form>
+          </ActionForm>
         </section>
       ))}
       <section className={cardClass}>

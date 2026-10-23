@@ -7,6 +7,7 @@ import { isSpokenLanguage } from "@/lib/app/recording-notice";
 import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 
@@ -91,7 +92,7 @@ export async function createInvitationAction(
   return { link: `${siteUrl}/login?invite=${token}` };
 }
 
-export async function revokeInvitationAction(formData: FormData) {
+async function revokeInvitationActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   await supabase
@@ -105,7 +106,7 @@ export async function revokeInvitationAction(formData: FormData) {
 
 // ========== USUARIOS ==========
 
-export async function setUserRoleAction(formData: FormData) {
+async function setUserRoleActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const role = roleSchema.parse(formData.get("role"));
@@ -120,7 +121,7 @@ export async function setUserRoleAction(formData: FormData) {
   refreshAll();
 }
 
-export async function toggleUserDisabledAction(formData: FormData) {
+async function toggleUserDisabledActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const disabled = formData.get("disabled") === "true";
@@ -137,7 +138,7 @@ export async function toggleUserDisabledAction(formData: FormData) {
 
 // ========== EVENTO ==========
 
-export async function updateEventAction(formData: FormData) {
+async function updateEventActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const status = statusSchema.parse(formData.get("status"));
@@ -159,7 +160,7 @@ export async function updateEventAction(formData: FormData) {
 
 // ========== GRABACIÓN ==========
 
-export async function updateRecordingSettingsAction(formData: FormData) {
+async function updateRecordingSettingsActionRun(formData: FormData) {
   const { supabase, user, event, recording } = await requireAdmin();
   const enabled = formData.get("enabled") === "on";
   const customText = text(formData, "noticeText").slice(0, 2000) || null;
@@ -190,7 +191,7 @@ export async function updateRecordingSettingsAction(formData: FormData) {
 
 // ========== ALUMNADO ==========
 
-export async function updateStudentVisibilityAction(formData: FormData) {
+async function updateStudentVisibilityActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const showRubric = formData.get("showRubric") === "on";
   const publishResults = formData.get("publishResults") === "on";
@@ -214,7 +215,7 @@ export async function updateStudentVisibilityAction(formData: FormData) {
 
 // ========== ENTREGAS ==========
 
-export async function updateMaterialsSettingsAction(formData: FormData) {
+async function updateMaterialsSettingsActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const driveUrl = text(formData, "driveUrl");
   if (driveUrl && !/^https?:\/\//i.test(driveUrl)) {
@@ -238,7 +239,7 @@ export async function updateMaterialsSettingsAction(formData: FormData) {
 
 // ========== INTELIGENCIA ARTIFICIAL ==========
 
-export async function updateAiSettingsAction(formData: FormData) {
+async function updateAiSettingsActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const rawInstructions = text(formData, "aiInstructions");
   if (rawInstructions.length > INSTRUCTIONS_MAX) {
@@ -292,7 +293,7 @@ export async function generateAgendaAction(
 }
 
 /** Mueve un turno una posición arriba o abajo dentro de su sala y recalcula horas. */
-export async function moveSlotAction(formData: FormData) {
+async function moveSlotActionRun(formData: FormData) {
   const { supabase, event } = await requireAdmin();
   const id = text(formData, "id");
   const direction = text(formData, "direction") === "up" ? -1 : 1;
@@ -325,7 +326,7 @@ export async function moveSlotAction(formData: FormData) {
   refreshAll();
 }
 
-export async function clearAgendaAction() {
+async function clearAgendaActionRun() {
   const { supabase, user, event } = await requireAdmin();
   await supabase.from("presentation_slots").delete().eq("event_id", event.id);
   await logAudit(supabase, event.id, user.id, "borrar_agenda", "presentation_slots", null);
@@ -334,7 +335,7 @@ export async function clearAgendaAction() {
 
 // ========== COEVALUACIÓN ==========
 
-export async function updatePeerReviewSettingsAction(formData: FormData) {
+async function updatePeerReviewSettingsActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const number = (key: string, min: number, max: number, fallback: number) => {
     const value = Number(text(formData, key));
@@ -402,7 +403,7 @@ export async function generatePeerAssignmentsAction(): Promise<PeerAssignState> 
 
 // ========== PÚBLICO ==========
 
-export async function updatePublicVoteAction(formData: FormData) {
+async function updatePublicVoteActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const publicVote = {
     open: formData.get("open") === "on",
@@ -417,7 +418,7 @@ export async function updatePublicVoteAction(formData: FormData) {
   refreshAll();
 }
 
-export async function resetPublicVotesAction() {
+async function resetPublicVotesActionRun() {
   const { user, event, supabase } = await requireAdmin();
   // Los votos no tienen política de borrado para nadie: se borran con la clave de servicio.
   await createAdminClient().from("public_votes").delete().eq("event_id", event.id);
@@ -427,7 +428,7 @@ export async function resetPublicVotesAction() {
 
 // ========== RETOS ==========
 
-export async function saveChallengeAction(formData: FormData) {
+async function saveChallengeActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const values = {
@@ -451,7 +452,7 @@ export async function saveChallengeAction(formData: FormData) {
   refreshAll();
 }
 
-export async function deleteChallengeAction(formData: FormData) {
+async function deleteChallengeActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const { count } = await supabase
@@ -468,7 +469,7 @@ export async function deleteChallengeAction(formData: FormData) {
 
 // ========== EQUIPOS Y PARTICIPANTES ==========
 
-export async function saveTeamAction(formData: FormData) {
+async function saveTeamActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const values = {
@@ -492,7 +493,7 @@ export async function saveTeamAction(formData: FormData) {
   refreshAll();
 }
 
-export async function deleteTeamAction(formData: FormData) {
+async function deleteTeamActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const { count } = await supabase
@@ -509,7 +510,7 @@ export async function deleteTeamAction(formData: FormData) {
   refreshAll();
 }
 
-export async function addMemberAction(formData: FormData) {
+async function addMemberActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const teamId = text(formData, "teamId");
   const fullName = text(formData, "fullName");
@@ -527,7 +528,7 @@ export async function addMemberAction(formData: FormData) {
   refreshAll();
 }
 
-export async function renameMemberAction(formData: FormData) {
+async function renameMemberActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const fullName = text(formData, "fullName");
@@ -547,7 +548,7 @@ export async function renameMemberAction(formData: FormData) {
   refreshAll();
 }
 
-export async function removeMemberAction(formData: FormData) {
+async function removeMemberActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
 
@@ -753,7 +754,7 @@ async function uploadLogo(file: FormDataEntryValue | null, name: string) {
 // ========== BIENVENIDA ==========
 
 /** Oculta la guía de bienvenida del Inicio para esta persona y este espacio. */
-export async function hideWelcomeAction() {
+async function hideWelcomeActionRun() {
   const { event } = await requireAdmin();
   (await cookies()).set(`welcome_hidden_${event.id.slice(0, 8)}`, "1", { maxAge: 60 * 60 * 24 * 365, path: "/" });
   refreshAll();
@@ -762,7 +763,7 @@ export async function hideWelcomeAction() {
 // ========== IMAGEN DEL ESPACIO ==========
 
 /** Logo y color propios del espacio: salen en su portada y en el menú. */
-export async function updateBrandingAction(formData: FormData) {
+async function updateBrandingActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const color = text(formData, "accentColor");
   const logo = await uploadLogo(formData.get("logo"), "logo-espacio");
@@ -781,7 +782,7 @@ export async function updateBrandingAction(formData: FormData) {
   refreshAll();
 }
 
-export async function saveSponsorAction(formData: FormData) {
+async function saveSponsorActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   const name = text(formData, "name");
@@ -811,10 +812,125 @@ export async function saveSponsorAction(formData: FormData) {
   refreshAll();
 }
 
-export async function deleteSponsorAction(formData: FormData) {
+async function deleteSponsorActionRun(formData: FormData) {
   const { supabase, user, event } = await requireAdmin();
   const id = text(formData, "id");
   await supabase.from("sponsors").delete().eq("id", id).eq("event_id", event.id);
   await logAudit(supabase, event.id, user.id, "borrar_patrocinador", "sponsors", id);
   refreshAll();
+}
+
+// ========== RESULTADO PARA LOS FORMULARIOS ==========
+
+export type ActionResult = { error?: string } | void;
+
+/**
+ * Las acciones de los formularios devuelven el error en vez de lanzarlo: así
+ * el formulario lo enseña como aviso y la página no se rompe (en producción,
+ * Next oculta el texto de los errores lanzados). Las redirecciones siguen.
+ */
+async function guard(run: () => Promise<unknown>): Promise<ActionResult> {
+  try {
+    await run();
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Acción de gestión fallida:", error instanceof Error ? error.message : error);
+    return { error: error instanceof Error && error.message ? error.message : await adminMessage("generic") };
+  }
+}
+
+export async function revokeInvitationAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => revokeInvitationActionRun(formData));
+}
+
+export async function setUserRoleAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => setUserRoleActionRun(formData));
+}
+
+export async function toggleUserDisabledAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => toggleUserDisabledActionRun(formData));
+}
+
+export async function updateEventAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateEventActionRun(formData));
+}
+
+export async function updateRecordingSettingsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateRecordingSettingsActionRun(formData));
+}
+
+export async function updateStudentVisibilityAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateStudentVisibilityActionRun(formData));
+}
+
+export async function updateMaterialsSettingsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateMaterialsSettingsActionRun(formData));
+}
+
+export async function updateAiSettingsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateAiSettingsActionRun(formData));
+}
+
+export async function moveSlotAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => moveSlotActionRun(formData));
+}
+
+export async function clearAgendaAction(): Promise<ActionResult> {
+  return guard(() => clearAgendaActionRun());
+}
+
+export async function updatePeerReviewSettingsAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updatePeerReviewSettingsActionRun(formData));
+}
+
+export async function updatePublicVoteAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updatePublicVoteActionRun(formData));
+}
+
+export async function resetPublicVotesAction(): Promise<ActionResult> {
+  return guard(() => resetPublicVotesActionRun());
+}
+
+export async function saveChallengeAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => saveChallengeActionRun(formData));
+}
+
+export async function deleteChallengeAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => deleteChallengeActionRun(formData));
+}
+
+export async function saveTeamAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => saveTeamActionRun(formData));
+}
+
+export async function deleteTeamAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => deleteTeamActionRun(formData));
+}
+
+export async function addMemberAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => addMemberActionRun(formData));
+}
+
+export async function renameMemberAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => renameMemberActionRun(formData));
+}
+
+export async function removeMemberAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => removeMemberActionRun(formData));
+}
+
+export async function hideWelcomeAction(): Promise<ActionResult> {
+  return guard(() => hideWelcomeActionRun());
+}
+
+export async function updateBrandingAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateBrandingActionRun(formData));
+}
+
+export async function saveSponsorAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => saveSponsorActionRun(formData));
+}
+
+export async function deleteSponsorAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => deleteSponsorActionRun(formData));
 }

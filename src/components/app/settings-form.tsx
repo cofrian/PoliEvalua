@@ -19,7 +19,7 @@ export function SettingsForm({
   description,
   children,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<{ error?: string } | void>;
   title: ReactNode;
   description?: ReactNode;
   children: ReactNode;
@@ -32,7 +32,11 @@ export function SettingsForm({
   function submit(formData: FormData) {
     startTransition(async () => {
       try {
-        await action(formData);
+        const result = await action(formData);
+        if (result && result.error) {
+          toast.error(result.error);
+          return;
+        }
         setDirty(false);
         toast.success(t("saved"));
       } catch (error) {

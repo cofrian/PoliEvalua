@@ -34,9 +34,41 @@ export default async function RoomPage({
   const agenda = await loadAgenda(supabase, event.id);
   const rooms = [...new Set(agenda.map((slot) => slot.room))];
   if (!rooms.length) {
+    // Sin agenda la sala también sirve: se elige el grupo y se evalúa y graba.
+    const { data: teams } = await supabase
+      .from("teams")
+      .select("id, number, name, project_title")
+      .eq("event_id", event.id)
+      .order("number");
     return (
-      <div className={`${cardClass} mx-auto max-w-xl space-y-2`}>
-        <h1 className="font-display text-xl">{t("noAgenda")}</h1>
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("pickTitle")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("pickText")}</p>
+        </div>
+        {teams?.length ? (
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {teams.map((team) => (
+              <li key={team.id}>
+                <Link
+                  className={`${cardClass} flex h-full items-start gap-3 transition hover:-translate-y-0.5 hover:bg-muted`}
+                  href={`/equipos/${team.id}/evaluar`}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-bold text-muted-foreground">#{team.number}</span>
+                    <span className="block font-display text-lg leading-tight">{team.name}</span>
+                    {team.project_title ? (
+                      <span className="mt-1 block text-sm text-muted-foreground">{team.project_title}</span>
+                    ) : null}
+                  </span>
+                  <ArrowRight aria-hidden="true" className="mt-1 size-4 shrink-0 text-muted-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      <div className={`${cardClass} space-y-2`}>
+        <h2 className="font-display text-lg">{t("noAgenda")}</h2>
         <p className="text-sm text-muted-foreground">
           {isAdmin ? (
             t.rich("createAgenda", {
@@ -50,6 +82,7 @@ export default async function RoomPage({
             t("notReady")
           )}
         </p>
+      </div>
       </div>
     );
   }
