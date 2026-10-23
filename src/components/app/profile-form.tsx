@@ -40,11 +40,13 @@ export function ProfileForm({
     <form action={formAction} className="max-w-xl space-y-5">
       <div className="flex items-center gap-4">
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            alt={t("photoAlt")}
-            className="size-20 rounded-full object-cover"
-            src={preview}
+          // Fondo en vez de <img src>: la vista previa local (blob:) no pasa por
+          // ningún atributo que el navegador interprete como HTML o script.
+          <span
+            aria-label={t("photoAlt")}
+            className="block size-20 rounded-full bg-muted bg-cover bg-center"
+            role="img"
+            style={{ backgroundImage: `url("${encodeURI(preview)}")` }}
           />
         ) : (
           <span className="flex size-20 items-center justify-center rounded-full bg-sky-400 font-display text-xl text-white">
