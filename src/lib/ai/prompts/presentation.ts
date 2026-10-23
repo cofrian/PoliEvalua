@@ -3,11 +3,12 @@
 // Si cambia cualquier texto de este archivo, sube PROMPT_VERSION y registra el
 // hash nuevo en PROMPT_HASHES (lo comprueba `npm run test:prompts`).
 
-export const PROMPT_VERSION = "2026.10.1";
+export const PROMPT_VERSION = "2026.10.2";
 
 /** Hash de los textos por versión; lo calcula scripts/check-prompt-version.mjs. */
 export const PROMPT_HASHES: Record<string, string> = {
   "2026.10.1": "54dff2db863f5145",
+  "2026.10.2": "a2daf877e4ec40d4",
 };
 
 export type SpaceKind = "hackathon" | "class" | "awards" | "project" | "custom";
@@ -32,7 +33,6 @@ Presta especial atención a la claridad y a la evidencia que respalda lo que se 
 };
 
 export const INSTRUCTIONS_MAX = 500;
-export const GLOSSARY_MAX = 300;
 
 /** Limpia texto escrito por la gestión del espacio antes de llevarlo a un prompt. */
 export function cleanAdminText(value: unknown, max: number) {
@@ -90,20 +90,19 @@ const ASR_PROMPT_MAX = 600;
 
 /**
  * Pista para Whisper con los nombres propios y términos que probablemente
- * aparezcan. Una frase natural funciona mejor que una lista suelta.
+ * aparezcan, sacados solo de lo que el espacio ya tiene (nadie escribe
+ * términos). Una frase natural funciona mejor que una lista suelta.
  */
 export function buildAsrPrompt({
   teamName,
   projectTitle,
   challengeName,
   criteria,
-  glossary,
 }: {
   teamName?: string | null;
   projectTitle?: string | null;
   challengeName?: string | null;
   criteria?: string[];
-  glossary?: string | null;
 }): string | null {
   const seen = new Set<string>();
   const terms: string[] = [];
@@ -115,7 +114,6 @@ export function buildAsrPrompt({
       terms.push(term);
     }
   };
-  for (const item of (glossary ?? "").split(/[,;\n]/)) add(item);
   add(challengeName);
   for (const title of criteria ?? []) add(title);
 

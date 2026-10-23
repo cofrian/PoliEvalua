@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { buildAsrPrompt, cleanAdminText, GLOSSARY_MAX } from "@/lib/ai/prompts/presentation";
+import { buildAsrPrompt } from "@/lib/ai/prompts/presentation";
 import {
   getPresentationApiSession,
   PresentationAccessError,
@@ -71,7 +71,6 @@ export async function POST(request: Request) {
       .limit(1)
       .maybeSingle();
     const challenge = team.challenge as unknown as { name: string } | { name: string }[] | null;
-    const settings = event?.settings as { ai?: { glossary?: unknown } } | null;
     const asrPrompt = buildAsrPrompt({
       teamName: team.name,
       projectTitle: team.project_title,
@@ -79,7 +78,6 @@ export async function POST(request: Request) {
       criteria: ((rubric?.rubric_criteria ?? []) as { title: string; deleted_at: string | null }[])
         .filter((criterion) => !criterion.deleted_at)
         .map((criterion) => criterion.title),
-      glossary: cleanAdminText(settings?.ai?.glossary, GLOSSARY_MAX),
     });
     const { error } = await session.supabase.from("presentation_recordings").insert({
       id,

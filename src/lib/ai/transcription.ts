@@ -2,11 +2,12 @@ import "server-only";
 
 import { spawn } from "node:child_process";
 
-// Whisper alojado en Groq (API compatible con OpenAI, plan gratuito con cupo
+// Whisper large-v3 (no turbo: acierta más nombres y términos casi al mismo
+// tiempo) alojado en Groq (API compatible con OpenAI, plan gratuito con cupo
 // por hora y por día). Si no está configurado o se agota, el trozo pasa al
 // trabajador Whisper propio (Kaggle, Colab o PC).
 const GROQ_ASR_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
-const GROQ_ASR_MODEL = process.env.GROQ_ASR_MODEL || "whisper-large-v3-turbo";
+const GROQ_ASR_MODEL = process.env.GROQ_ASR_MODEL || "whisper-large-v3";
 
 /** Error del proveedor con la información necesaria para decidir el reintento. */
 export class TranscriptionError extends Error {
