@@ -1,11 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useActionState, useEffect, useState } from "react";
 
 import { updateProfileAction, type ProfileState } from "@/app/(app)/perfil/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
+import { LOCALES, localeNames } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 
 export function ProfileForm({
@@ -13,12 +15,17 @@ export function ProfileForm({
   organization,
   avatarUrl,
   email,
+  locale,
 }: {
   fullName: string;
   organization: string | null;
   avatarUrl: string | null;
   email: string;
+  locale: string | null;
 }) {
+  const t = useTranslations("profile");
+  const tLocale = useTranslations("locale");
+  const tTheme = useTranslations("userMenu");
   const [state, formAction] = useActionState<ProfileState, FormData>(
     updateProfileAction,
     null,
@@ -34,7 +41,7 @@ export function ProfileForm({
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            alt="Tu foto"
+            alt={t("photoAlt")}
             className="size-20 rounded-full object-cover"
             src={preview}
           />
@@ -45,7 +52,7 @@ export function ProfileForm({
         )}
         <div className="space-y-2 text-sm">
           <label className="block font-semibold">
-            Foto
+            {t("photo")}
             <input
               accept="image/*"
               className="mt-1 block text-sm font-normal"
@@ -59,33 +66,50 @@ export function ProfileForm({
           </label>
           {avatarUrl ? (
             <label className="flex items-center gap-2">
-              <input name="removeAvatar" type="checkbox" /> Quitar foto
+              <input name="removeAvatar" type="checkbox" /> {t("removePhoto")}
             </label>
           ) : null}
         </div>
       </div>
 
       <label className="block space-y-1 text-sm font-semibold">
-        <span>Nombre completo</span>
+        <span>{t("fullName")}</span>
         <Input defaultValue={fullName} name="fullName" required />
       </label>
       <label className="block space-y-1 text-sm font-semibold">
-        <span>Organización</span>
+        <span>{t("organization")}</span>
         <Input
           defaultValue={organization ?? ""}
           name="organization"
-          placeholder="Empresa, universidad…"
+          placeholder={t("organizationPlaceholder")}
         />
       </label>
-      <p className="text-sm text-muted-foreground">Correo: {email}</p>
+      <p className="text-sm text-muted-foreground">{t("email", { email })}</p>
+
+      <label className="block space-y-1 text-sm font-semibold">
+        <span>{tLocale("label")}</span>
+        <select
+          className="block h-9 w-full max-w-xs rounded-md border border-input bg-transparent px-3 text-sm font-normal"
+          defaultValue={locale ?? ""}
+          name="locale"
+        >
+          <option value="">{tLocale("browser")}</option>
+          {LOCALES.map((value) => (
+            <option key={value} lang={value} value={value}>
+              {localeNames[value]}
+            </option>
+          ))}
+        </select>
+        <span className="block text-xs font-normal text-muted-foreground">{tLocale("hint")}</span>
+      </label>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-semibold">Tema</legend>
+        <legend className="text-sm font-semibold">{t("theme")}</legend>
         <div className="flex gap-2">
           {[
-            ["light", "Claro"],
-            ["dark", "Oscuro"],
-            ["system", "Automático"],
+            ["light", tTheme("light")],
+            ["dark", tTheme("dark")],
+            ["system", t("auto")],
           ].map(([value, label]) => (
             <button
               aria-pressed={mounted && theme === value}
@@ -118,7 +142,7 @@ export function ProfileForm({
         </p>
       ) : null}
       <div className="max-w-xs">
-        <SubmitButton idleLabel="Guardar perfil" pendingLabel="Guardando…" />
+        <SubmitButton idleLabel={t("save")} pendingLabel={t("saving")} />
       </div>
     </form>
   );

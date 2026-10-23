@@ -1,5 +1,6 @@
 "use server";
 
+import { isLocale } from "@/i18n/config";
 import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
@@ -138,11 +139,13 @@ export async function updateEventAction(formData: FormData) {
   const id = text(formData, "id");
   const status = statusSchema.parse(formData.get("status"));
   const signupCode = text(formData, "signupCode").toUpperCase();
+  const locale = formData.get("locale");
   const changes = {
     name: text(formData, "name") || undefined,
     status,
     signup_open: formData.get("signupOpen") === "on",
     ...(signupCode ? { signup_code: signupCode } : {}),
+    ...(isLocale(locale) ? { locale } : {}),
   };
 
   if (id !== event.id) throw new Error("El espacio activo no coincide.");

@@ -16,6 +16,7 @@ import {
   INSTRUCTIONS_MAX,
   PROMPT_VERSION,
   type SpaceKind,
+  type SpaceLocale,
 } from "@/lib/ai/prompts/presentation";
 import { TranscriptionError, groqConfigured, transcribeWithGroq } from "@/lib/ai/transcription";
 import { mergeTranscripts } from "@/lib/app/merge-transcripts";
@@ -62,7 +63,7 @@ type TeamRelation =
   | { name: string; project_title: string | null; challenge_id: string | null }[]
   | null;
 
-type EventRow = { kind: SpaceKind; settings: { ai?: { instructions?: unknown } } | null };
+type EventRow = { kind: SpaceKind; locale?: SpaceLocale; settings: { ai?: { instructions?: unknown } } | null };
 type EventRelation = EventRow | EventRow[] | null;
 
 function shortHash(text: string) {
@@ -527,7 +528,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     .update({ status: "analyzing", error_message: null })
     .eq("id", job.recording_id)
     .select(
-      "id, event_id, team_id, transcript, analysis_state, team:teams(name, project_title, challenge_id), event:events(kind, settings)",
+      "id, event_id, team_id, transcript, analysis_state, team:teams(name, project_title, challenge_id), event:events(kind, settings, locale)",
     )
     .maybeSingle();
   if (!recording?.transcript) throw new TranscriptionError("No hay transcripción.", false);
@@ -550,6 +551,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     criteria: await rubricCriteria(admin, recording.event_id),
     kind,
     instructions,
+    locale: event?.locale ?? "es",
     previous: state,
     deps: {
       acquireSlot: () => acquireSlot(admin, "nvidia"),

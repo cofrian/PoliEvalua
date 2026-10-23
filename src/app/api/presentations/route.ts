@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         .eq("id", parsed.data.teamId)
         .eq("event_id", session.eventId)
         .maybeSingle(),
-      session.supabase.from("events").select("settings").eq("id", session.eventId).maybeSingle(),
+      session.supabase.from("events").select("settings, locale").eq("id", session.eventId).maybeSingle(),
     ]);
     if (!team) throw new PresentationAccessError(404, "No se encuentra el proyecto.");
     // Sin activar, nadie ha visto el aviso de grabación: no se puede grabar.
@@ -87,7 +87,8 @@ export async function POST(request: Request) {
       title: parsed.data.title,
       storage_path: `events/${session.eventId}/presentations/${team.id}/${id}/`,
       mime_type: "audio/webm",
-      language: process.env.TRANSCRIPTION_LANGUAGE || "es",
+      // Idioma hablado: el del espacio (Whisper entiende «ca» como valenciano).
+      language: event?.locale || process.env.TRANSCRIPTION_LANGUAGE || "es",
       visibility: parsed.data.visibility,
       status: "uploading",
       asr_prompt: asrPrompt,

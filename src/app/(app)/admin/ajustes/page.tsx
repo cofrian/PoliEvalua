@@ -4,23 +4,27 @@ import {
   updateMaterialsSettingsAction,
   updateStudentVisibilityAction,
 } from "@/app/(app)/admin/actions";
+import { getTranslations } from "next-intl/server";
+
 import { PageHeader } from "@/components/app/page-header";
 import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
+import { LOCALES, localeNames } from "@/i18n/config";
 import { getSession } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
 export default async function AdminSettingsPage() {
   const { supabase, event, words } = await getSession();
   const statusLabels = words.stageLabels;
+  const tLocale = await getTranslations("locale");
   const enabledRoles = ((event.settings ?? {}) as { enabled_roles?: string[] }).enabled_roles ?? [];
   const ai = ((event.settings ?? {}) as { ai?: { instructions?: string | null } }).ai;
 
   const { data: eventSettings } = await supabase
     .from("events")
-    .select("id, name, status, signup_code, signup_open")
+    .select("id, name, status, signup_code, signup_open, locale")
     .eq("id", event.id)
     .single();
 
@@ -39,6 +43,15 @@ export default async function AdminSettingsPage() {
           <input name="id" type="hidden" value={eventSettings.id} />
           <SettingRow htmlFor="name" label="Nombre del espacio">
             <Input defaultValue={eventSettings.name} id="name" name="name" />
+          </SettingRow>
+          <SettingRow description={tLocale("spaceHint")} htmlFor="locale" label={tLocale("spaceLabel")}>
+            <select className={`${selectClass} w-full`} defaultValue={eventSettings.locale} id="locale" name="locale">
+              {LOCALES.map((value) => (
+                <option key={value} lang={value} value={value}>
+                  {localeNames[value]}
+                </option>
+              ))}
+            </select>
           </SettingRow>
           <SettingRow
             description="Al cerrar, nadie puede modificar evaluaciones y todo el profesorado y jurado ve los resultados."

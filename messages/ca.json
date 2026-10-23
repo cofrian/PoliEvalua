@@ -1,0 +1,99 @@
+{
+  "locale": {
+    "label": "Idioma",
+    "browser": "Com el navegador",
+    "hint": "S'aplica a la interfície. Els textos de la IA ixen en l'idioma de l'espai.",
+    "spaceLabel": "Idioma de l'espai",
+    "spaceHint": "Idioma dels textos de la IA, de la votació del públic i el que es parla per defecte en les gravacions."
+  },
+  "roles": {
+    "owner": "Propietari",
+    "manager": "Gestor",
+    "judge": "Jutge",
+    "mentor": "Mentor",
+    "teacher": "Docent",
+    "student": "Estudiant",
+    "reviewer": "Avaluador",
+    "viewer": "Consulta"
+  },
+  "nav": {
+    "main": "Principal",
+    "quick": "Accessos ràpids",
+    "more": "Més",
+    "menu": "Menú",
+    "myUnit": "{mode, select, teams {El meu equip} groups {El meu grup} candidates {La meua candidatura} other {El meu projecte}}",
+    "peerReview": "Coavaluació",
+    "agenda": "Agenda",
+    "room": "Sala",
+    "rubric": "Rúbrica",
+    "results": "Resultats",
+    "prepare": "Preparar",
+    "during": "Durant",
+    "close": "Tancar",
+    "overview": "Resum",
+    "settings": "Configuració",
+    "people": "Persones",
+    "manageUnits": "Gestionar {units}",
+    "evaluation": "Avaluació",
+    "panels": "Panells de {evaluator}",
+    "challenges": "Reptes",
+    "academic": "Dades acadèmiques",
+    "sponsors": "Patrocinadors",
+    "assistant": "Assistent IA",
+    "organizeAgenda": "Organitzar l'agenda",
+    "recordings": "Gravacions",
+    "publicVote": "Vot del públic",
+    "audit": "Auditoria"
+  },
+  "userMenu": {
+    "open": "Menú d'usuari",
+    "profile": "El meu perfil",
+    "theme": "Tema",
+    "light": "Clar",
+    "dark": "Fosc",
+    "system": "Com el sistema",
+    "logout": "Tancar la sessió"
+  },
+  "profile": {
+    "title": "Perfil",
+    "role": "Rol: {role}",
+    "photoAlt": "La teua foto",
+    "photo": "Foto",
+    "removePhoto": "Llevar la foto",
+    "fullName": "Nom complet",
+    "organization": "Organització",
+    "organizationPlaceholder": "Empresa, universitat…",
+    "email": "Correu: {email}",
+    "theme": "Tema",
+    "auto": "Automàtic",
+    "save": "Guardar el perfil",
+    "saving": "Guardant…",
+    "errors": {
+      "name": "Escriu el teu nom complet.",
+      "image": "La foto ha de ser una imatge.",
+      "size": "La foto no pot passar de 4 MB.",
+      "upload": "No s'ha pogut pujar la foto.",
+      "save": "No s'ha pogut guardar el perfil."
+    },
+    "saved": "Perfil guardat."
+  },
+  "publicVote": {
+    "metaTitle": "Votació del públic",
+    "intro": "Tria el teu projecte preferit. Un vot per dispositiu; pots canviar-lo mentre la votació continue oberta.",
+    "closed": "La votació està tancada en este moment.",
+    "options": "Projectes",
+    "yourVote": "El teu vot",
+    "change": "Canviar el meu vot",
+    "again": "Tornar a votar",
+    "vote": "Votar",
+    "sending": "Enviant…",
+    "errors": {
+      "choose": "Tria una opció.",
+      "rate": "Hi ha massa vots des d'esta xarxa. Espera uns minuts.",
+      "closed": "La votació està tancada.",
+      "gone": "Eixa opció ja no existix.",
+      "save": "No s'ha pogut registrar el vot. Torna-ho a provar."
+    },
+    "saved": "Vot registrat! Pots canviar-lo mentre la votació continue oberta."
+  }
+}

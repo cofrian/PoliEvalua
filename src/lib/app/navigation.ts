@@ -1,7 +1,10 @@
+import type { getTranslations } from "next-intl/server";
+
 import { peerReviewSettings } from "@/lib/app/peer-review";
 import type { getSession } from "@/lib/app/session";
 
 type Session = Awaited<ReturnType<typeof getSession>>;
+type NavT = Awaited<ReturnType<typeof getTranslations<"nav">>>;
 
 /** Nombre de icono que resuelve el menú en el cliente (los componentes no viajan por props). */
 export type NavIcon =
@@ -32,7 +35,7 @@ export type NavGroup = { label?: string; items: NavItem[] };
  * Menú según el rol: lo que usa cada persona arriba y, para quien gestiona,
  * la administración ordenada por momentos (preparar, durante, cerrar).
  */
-export function buildNavigation(session: Session): NavGroup[] {
+export function buildNavigation(session: Session, t: NavT): NavGroup[] {
   const { isAdmin, event, eventClosed, role, canVote, words } = session;
   const settings = (event.settings ?? {}) as { enabled_roles?: string[] };
   const hasStudents = (settings.enabled_roles ?? []).includes("student");
@@ -41,18 +44,18 @@ export function buildNavigation(session: Session): NavGroup[] {
 
   const main: NavItem[] = [
     ...(role === "student"
-      ? [{ href: "/mi-grupo", label: `Mi ${words.unitLower}`, icon: "home" as const, primary: true }]
+      ? [{ href: "/mi-grupo", label: t("myUnit", { mode: words.mode }), icon: "home" as const, primary: true }]
       : []),
     ...(role === "student" && peerReviewSettings(event.settings).enabled
-      ? [{ href: "/coevaluacion", label: "Coevaluación", icon: "star" as const, primary: true }]
+      ? [{ href: "/coevaluacion", label: t("peerReview"), icon: "star" as const, primary: true }]
       : []),
     { href: "/equipos", label: words.units, icon: "users", primary: true },
-    { href: "/agenda", label: "Agenda", icon: "calendar", primary: true },
-    ...(canVote ? [{ href: "/sala", label: "Sala", icon: "mic" as const, primary: true }] : []),
+    { href: "/agenda", label: t("agenda"), icon: "calendar", primary: true },
+    ...(canVote ? [{ href: "/sala", label: t("room"), icon: "mic" as const, primary: true }] : []),
     ...(words.hasModule("rubric") && (role !== "student" || words.studentsSeeRubric)
-      ? [{ href: "/rubrica", label: "Rúbrica", icon: "list" as const }]
+      ? [{ href: "/rubrica", label: t("rubric"), icon: "list" as const }]
       : []),
-    ...(showResults ? [{ href: "/resultados", label: "Resultados", icon: "chart" as const }] : []),
+    ...(showResults ? [{ href: "/resultados", label: t("results"), icon: "chart" as const }] : []),
   ];
 
   if (!isAdmin) return [{ items: main }];
@@ -60,38 +63,38 @@ export function buildNavigation(session: Session): NavGroup[] {
   return [
     { items: main },
     {
-      label: "Preparar",
+      label: t("prepare"),
       items: [
-        { href: "/admin", label: "Resumen", icon: "home" },
-        { href: "/admin/ajustes", label: "Ajustes", icon: "settings" },
-        { href: "/admin/personas", label: "Personas", icon: "user-plus" },
+        { href: "/admin", label: t("overview"), icon: "home" },
+        { href: "/admin/ajustes", label: t("settings"), icon: "settings" },
+        { href: "/admin/personas", label: t("people"), icon: "user-plus" },
         ...(words.hasModule("participants")
-          ? [{ href: "/admin/equipos", label: `Gestionar ${words.unitsLower}`, icon: "group" as const }]
+          ? [{ href: "/admin/equipos", label: t("manageUnits", { units: words.unitsLower }), icon: "group" as const }]
           : []),
         ...(words.hasModule("rubric")
-          ? [{ href: "/admin/evaluacion", label: "Evaluación", icon: "clipboard" as const }]
+          ? [{ href: "/admin/evaluacion", label: t("evaluation"), icon: "clipboard" as const }]
           : []),
-        { href: "/admin/paneles", label: `Paneles de ${words.evaluator}`, icon: "layers" },
-        ...(words.showChallenges ? [{ href: "/admin/retos", label: "Retos", icon: "flag" as const }] : []),
-        ...(academic ? [{ href: "/admin/academico", label: "Datos académicos", icon: "graduation" as const }] : []),
+        { href: "/admin/paneles", label: t("panels", { evaluator: words.evaluator }), icon: "layers" },
+        ...(words.showChallenges ? [{ href: "/admin/retos", label: t("challenges"), icon: "flag" as const }] : []),
+        ...(academic ? [{ href: "/admin/academico", label: t("academic"), icon: "graduation" as const }] : []),
         ...(words.hasModule("sponsors")
-          ? [{ href: "/admin/patrocinadores", label: "Patrocinadores", icon: "gift" as const }]
+          ? [{ href: "/admin/patrocinadores", label: t("sponsors"), icon: "gift" as const }]
           : []),
-        { href: "/admin/asistente", label: "Asistente IA", icon: "sparkles" },
+        { href: "/admin/asistente", label: t("assistant"), icon: "sparkles" },
       ],
     },
     {
-      label: "Durante",
+      label: t("during"),
       items: [
-        { href: "/admin/agenda", label: "Organizar agenda", icon: "calendar" },
-        ...(hasStudents ? [{ href: "/admin/coevaluacion", label: "Coevaluación", icon: "star" as const }] : []),
-        { href: "/admin/grabaciones", label: "Grabaciones", icon: "video" },
-        { href: "/admin/publico", label: "Voto del público", icon: "qr" },
+        { href: "/admin/agenda", label: t("organizeAgenda"), icon: "calendar" },
+        ...(hasStudents ? [{ href: "/admin/coevaluacion", label: t("peerReview"), icon: "star" as const }] : []),
+        { href: "/admin/grabaciones", label: t("recordings"), icon: "video" },
+        { href: "/admin/publico", label: t("publicVote"), icon: "qr" },
       ],
     },
     {
-      label: "Cerrar",
-      items: [{ href: "/admin/auditoria", label: "Auditoría", icon: "shield" }],
+      label: t("close"),
+      items: [{ href: "/admin/auditoria", label: t("audit"), icon: "shield" }],
     },
   ];
 }

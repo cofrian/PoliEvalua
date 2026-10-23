@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState, type ReactNode } from "react";
 
@@ -101,8 +102,9 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
 }
 
 function NavGroups({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
+  const t = useTranslations("nav");
   return (
-    <nav aria-label="Principal" className="space-y-6">
+    <nav aria-label={t("main")} className="space-y-6">
       {groups.map((group, index) => (
         <div className="space-y-1" key={group.label ?? index}>
           {group.label ? (
@@ -137,10 +139,11 @@ function Avatar({ profile, className }: { profile: Profile; className?: string }
 
 export function UserMenu({ profile }: { profile: Profile }) {
   const { setTheme, theme } = useTheme();
+  const t = useTranslations("userMenu");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Menú de usuario"
+        aria-label={t("open")}
         className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-muted sm:pr-3"
       >
         <Avatar profile={profile} />
@@ -157,16 +160,16 @@ export function UserMenu({ profile }: { profile: Profile }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/perfil">
-            <UserRound aria-hidden="true" className="size-4" /> Mi perfil
+            <UserRound aria-hidden="true" className="size-4" /> {t("profile")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Tema</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">{t("theme")}</DropdownMenuLabel>
         {(
           [
-            ["light", "Claro", Sun],
-            ["dark", "Oscuro", Moon],
-            ["system", "Como el sistema", Monitor],
+            ["light", t("light"), Sun],
+            ["dark", t("dark"), Moon],
+            ["system", t("system"), Monitor],
           ] as const
         ).map(([value, label, Icon]) => (
           <DropdownMenuItem key={value} onSelect={() => setTheme(value)}>
@@ -178,7 +181,7 @@ export function UserMenu({ profile }: { profile: Profile }) {
         <form action={logoutAction}>
           <DropdownMenuItem asChild>
             <button className="w-full" type="submit">
-              <LogOut aria-hidden="true" className="size-4" /> Cerrar sesión
+              <LogOut aria-hidden="true" className="size-4" /> {t("logout")}
             </button>
           </DropdownMenuItem>
         </form>
@@ -206,6 +209,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const t = useTranslations("nav");
   const primary = groups.flatMap((group) => group.items).filter((item) => item.primary).slice(0, 4);
   const moreActive = !primary.some((item) => isActive(pathname, item.href));
 
@@ -243,7 +247,7 @@ export function AppShell({
       </div>
 
       <nav
-        aria-label="Accesos rápidos"
+        aria-label={t("quick")}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur print:hidden lg:hidden"
       >
         <ul
@@ -282,10 +286,10 @@ export function AppShell({
                 <span className={cn("rounded-full px-4 py-1", moreActive && "bg-upv-yellow/30 dark:bg-upv-yellow/20")}>
                   <Menu aria-hidden="true" className="size-5" />
                 </span>
-                Más
+                {t("more")}
               </SheetTrigger>
               <SheetContent className="w-[85vw] max-w-sm overflow-y-auto p-4" side="left">
-                <SheetTitle className="sr-only">Menú</SheetTitle>
+                <SheetTitle className="sr-only">{t("menu")}</SheetTitle>
                 <div className="mb-4 pt-2">
                   <UpvBrand compact href="/equipos" />
                 </div>

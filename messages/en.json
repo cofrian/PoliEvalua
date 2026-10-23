@@ -1,0 +1,99 @@
+{
+  "locale": {
+    "label": "Language",
+    "browser": "Same as browser",
+    "hint": "Applies to the interface. AI texts use the space's language.",
+    "spaceLabel": "Space language",
+    "spaceHint": "Language of AI texts and the audience vote, and the default spoken language in recordings."
+  },
+  "roles": {
+    "owner": "Owner",
+    "manager": "Manager",
+    "judge": "Judge",
+    "mentor": "Mentor",
+    "teacher": "Teacher",
+    "student": "Student",
+    "reviewer": "Reviewer",
+    "viewer": "Viewer"
+  },
+  "nav": {
+    "main": "Main",
+    "quick": "Quick access",
+    "more": "More",
+    "menu": "Menu",
+    "myUnit": "{mode, select, teams {My team} groups {My group} candidates {My entry} other {My project}}",
+    "peerReview": "Peer review",
+    "agenda": "Schedule",
+    "room": "Room",
+    "rubric": "Rubric",
+    "results": "Results",
+    "prepare": "Prepare",
+    "during": "During",
+    "close": "Wrap up",
+    "overview": "Overview",
+    "settings": "Settings",
+    "people": "People",
+    "manageUnits": "Manage {units}",
+    "evaluation": "Evaluation",
+    "panels": "{evaluator} panels",
+    "challenges": "Challenges",
+    "academic": "Academic data",
+    "sponsors": "Sponsors",
+    "assistant": "AI assistant",
+    "organizeAgenda": "Organize schedule",
+    "recordings": "Recordings",
+    "publicVote": "Public vote",
+    "audit": "Audit"
+  },
+  "userMenu": {
+    "open": "User menu",
+    "profile": "My profile",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Same as system",
+    "logout": "Sign out"
+  },
+  "profile": {
+    "title": "Profile",
+    "role": "Role: {role}",
+    "photoAlt": "Your photo",
+    "photo": "Photo",
+    "removePhoto": "Remove photo",
+    "fullName": "Full name",
+    "organization": "Organization",
+    "organizationPlaceholder": "Company, university…",
+    "email": "Email: {email}",
+    "theme": "Theme",
+    "auto": "Automatic",
+    "save": "Save profile",
+    "saving": "Saving…",
+    "errors": {
+      "name": "Enter your full name.",
+      "image": "The photo must be an image.",
+      "size": "The photo can't be larger than 4 MB.",
+      "upload": "The photo couldn't be uploaded.",
+      "save": "The profile couldn't be saved."
+    },
+    "saved": "Profile saved."
+  },
+  "publicVote": {
+    "metaTitle": "Audience vote",
+    "intro": "Pick your favourite project. One vote per device; you can change it while voting is open.",
+    "closed": "Voting is closed right now.",
+    "options": "Projects",
+    "yourVote": "Your vote",
+    "change": "Change my vote",
+    "again": "Vote again",
+    "vote": "Vote",
+    "sending": "Sending…",
+    "errors": {
+      "choose": "Pick an option.",
+      "rate": "Too many votes from this network. Wait a few minutes.",
+      "closed": "Voting is closed.",
+      "gone": "That option no longer exists.",
+      "save": "Your vote couldn't be recorded. Try again."
+    },
+    "saved": "Vote recorded! You can change it while voting is open."
+  }
+}

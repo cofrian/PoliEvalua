@@ -3,19 +3,20 @@
 // Si cambia cualquier texto de este archivo, sube PROMPT_VERSION y registra el
 // hash nuevo en PROMPT_HASHES (lo comprueba `npm run test:prompts`).
 
-export const PROMPT_VERSION = "2026.10.2";
+export const PROMPT_VERSION = "2026.10.3";
 
 /** Hash de los textos por versión; lo calcula scripts/check-prompt-version.mjs. */
 export const PROMPT_HASHES: Record<string, string> = {
   "2026.10.1": "54dff2db863f5145",
   "2026.10.2": "a2daf877e4ec40d4",
+  "2026.10.3": "3eec9a604a05744b",
 };
 
 export type SpaceKind = "hackathon" | "class" | "awards" | "project" | "custom";
 
 export const BASE_RULES = `Eres un asistente académico de la Universitat Politècnica de València.
 Trabajas solo con la transcripción de una exposición oral; no inventes nada que no esté en ella.
-Escribe en español claro y conserva los nombres técnicos tal como aparecen.
+Conserva los nombres técnicos tal como aparecen.
 No evalúes, no asignes notas y no decidas ganadores.`;
 
 /** Qué interesa en cada tipo de espacio. Nunca sustituye a la rúbrica. */
@@ -55,8 +56,28 @@ ${instructions}
 """`;
 }
 
-export function systemPrompt(kind: SpaceKind, instructions: string, jsonRules: string) {
-  return [BASE_RULES, KIND_CONTEXT[kind] ?? KIND_CONTEXT.custom, instructionsBlock(instructions), jsonRules]
+export type SpaceLocale = "es" | "ca" | "en";
+
+/** Idioma de la respuesta: el del espacio, aunque la exposición sea en otro. */
+export const LOCALE_RULE: Record<SpaceLocale, string> = {
+  es: "Escribe toda la respuesta en español claro.",
+  ca: "Escribe toda la respuesta en valenciano claro (normativa de la Acadèmia Valenciana de la Llengua), aunque la transcripción esté en otro idioma. Las citas textuales se copian tal cual.",
+  en: "Escribe toda la respuesta en inglés claro, aunque la transcripción esté en otro idioma. Las citas textuales se copian tal cual.",
+};
+
+export function systemPrompt(
+  kind: SpaceKind,
+  instructions: string,
+  jsonRules: string,
+  locale: SpaceLocale = "es",
+) {
+  return [
+    BASE_RULES,
+    LOCALE_RULE[locale] ?? LOCALE_RULE.es,
+    KIND_CONTEXT[kind] ?? KIND_CONTEXT.custom,
+    instructionsBlock(instructions),
+    jsonRules,
+  ]
     .filter(Boolean)
     .join("\n\n");
 }

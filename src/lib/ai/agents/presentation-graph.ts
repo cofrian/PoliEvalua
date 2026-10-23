@@ -18,6 +18,7 @@ import {
   AGENT_TASKS,
   systemPrompt,
   type SpaceKind,
+  type SpaceLocale,
 } from "@/lib/ai/prompts/presentation";
 import {
   jsonInstruction,
@@ -96,6 +97,7 @@ const GraphState = Annotation.Root({
   criteria: Annotation<Criterion[]>,
   kind: Annotation<SpaceKind>,
   instructions: Annotation<string>,
+  locale: Annotation<SpaceLocale>,
   summary: Annotation<Summary | undefined>,
   outline: Annotation<Outline | undefined>,
   mindMap: Annotation<MindMap | undefined>,
@@ -178,6 +180,7 @@ export async function runPresentationGraph({
   criteria,
   kind,
   instructions,
+  locale = "es",
   previous,
   deps,
 }: {
@@ -188,6 +191,7 @@ export async function runPresentationGraph({
   kind: SpaceKind;
   /** Indicaciones ya limpias de la gestión del espacio ("" si no hay). */
   instructions: string;
+  locale?: SpaceLocale;
   previous: AnalysisState;
   deps: GraphDependencies;
 }): Promise<{
@@ -217,7 +221,7 @@ export async function runPresentationGraph({
               [
                 {
                   role: "system",
-                  content: systemPrompt(state.kind, state.instructions, jsonInstruction(schema)),
+                  content: systemPrompt(state.kind, state.instructions, jsonInstruction(schema), state.locale),
                 },
                 { role: "user", content: `${task(state)}\n\n${context(state)}` },
               ],
@@ -294,7 +298,7 @@ export async function runPresentationGraph({
     .addEdge("reviewer", END)
     .compile();
 
-  const final = await graph.invoke({ transcript, teamName, projectTitle, criteria, kind, instructions });
+  const final = await graph.invoke({ transcript, teamName, projectTitle, criteria, kind, instructions, locale });
   if (!final.summary || !final.outline || !final.mindMap || !final.questions) {
     throw new Error("Algún agente no devolvió resultado.");
   }

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -39,13 +41,15 @@ export const viewport: Viewport = {
   themeColor: "#3f4444",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${poppins.variable} ${inter.variable} font-sans antialiased`}
       >
@@ -55,7 +59,9 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <NextIntlClientProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </NextIntlClientProvider>
           <Toaster richColors />
           <ServiceWorkerRegister />
         </ThemeProvider>

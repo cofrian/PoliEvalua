@@ -1,0 +1,99 @@
+{
+  "locale": {
+    "label": "Idioma",
+    "browser": "Como el navegador",
+    "hint": "Se aplica a la interfaz. Los textos de la IA salen en el idioma del espacio.",
+    "spaceLabel": "Idioma del espacio",
+    "spaceHint": "Idioma de los textos de la IA, de la votación del público y el que se habla por defecto en las grabaciones."
+  },
+  "roles": {
+    "owner": "Propietario",
+    "manager": "Gestor",
+    "judge": "Juez",
+    "mentor": "Mentor",
+    "teacher": "Docente",
+    "student": "Estudiante",
+    "reviewer": "Evaluador",
+    "viewer": "Consulta"
+  },
+  "nav": {
+    "main": "Principal",
+    "quick": "Accesos rápidos",
+    "more": "Más",
+    "menu": "Menú",
+    "myUnit": "{mode, select, teams {Mi equipo} groups {Mi grupo} candidates {Mi candidatura} other {Mi proyecto}}",
+    "peerReview": "Coevaluación",
+    "agenda": "Agenda",
+    "room": "Sala",
+    "rubric": "Rúbrica",
+    "results": "Resultados",
+    "prepare": "Preparar",
+    "during": "Durante",
+    "close": "Cerrar",
+    "overview": "Resumen",
+    "settings": "Ajustes",
+    "people": "Personas",
+    "manageUnits": "Gestionar {units}",
+    "evaluation": "Evaluación",
+    "panels": "Paneles de {evaluator}",
+    "challenges": "Retos",
+    "academic": "Datos académicos",
+    "sponsors": "Patrocinadores",
+    "assistant": "Asistente IA",
+    "organizeAgenda": "Organizar agenda",
+    "recordings": "Grabaciones",
+    "publicVote": "Voto del público",
+    "audit": "Auditoría"
+  },
+  "userMenu": {
+    "open": "Menú de usuario",
+    "profile": "Mi perfil",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Como el sistema",
+    "logout": "Cerrar sesión"
+  },
+  "profile": {
+    "title": "Perfil",
+    "role": "Rol: {role}",
+    "photoAlt": "Tu foto",
+    "photo": "Foto",
+    "removePhoto": "Quitar foto",
+    "fullName": "Nombre completo",
+    "organization": "Organización",
+    "organizationPlaceholder": "Empresa, universidad…",
+    "email": "Correo: {email}",
+    "theme": "Tema",
+    "auto": "Automático",
+    "save": "Guardar perfil",
+    "saving": "Guardando…",
+    "errors": {
+      "name": "Escribe tu nombre completo.",
+      "image": "La foto debe ser una imagen.",
+      "size": "La foto no puede pasar de 4 MB.",
+      "upload": "No se ha podido subir la foto.",
+      "save": "No se ha podido guardar el perfil."
+    },
+    "saved": "Perfil guardado."
+  },
+  "publicVote": {
+    "metaTitle": "Votación del público",
+    "intro": "Elige tu proyecto favorito. Un voto por dispositivo; puedes cambiarlo mientras la votación siga abierta.",
+    "closed": "La votación está cerrada en este momento.",
+    "options": "Proyectos",
+    "yourVote": "Tu voto",
+    "change": "Cambiar mi voto",
+    "again": "Votar de nuevo",
+    "vote": "Votar",
+    "sending": "Enviando…",
+    "errors": {
+      "choose": "Elige una opción.",
+      "rate": "Hay demasiados votos desde esta red. Espera unos minutos.",
+      "closed": "La votación está cerrada.",
+      "gone": "Esa opción ya no existe.",
+      "save": "No se ha podido registrar el voto. Inténtalo de nuevo."
+    },
+    "saved": "¡Voto registrado! Puedes cambiarlo mientras la votación siga abierta."
+  }
+}

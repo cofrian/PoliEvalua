@@ -1,10 +1,12 @@
 import { cookies } from "next/headers";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { recordingSettings } from "@/lib/app/recording-notice";
 import { vocabulary } from "@/lib/app/vocabulary";
 import { createClient } from "@/lib/supabase/server";
+import type { Locale } from "@/i18n/config";
 
 export type SpaceRole =
   | "owner"
@@ -36,6 +38,7 @@ type EventSummary = {
   kind: "hackathon" | "class" | "awards" | "project" | "custom";
   status: "setup" | "building" | "judging" | "closed";
   audit_mode: boolean;
+  locale: Locale;
   settings: Record<string, unknown> | null;
 };
 
@@ -61,7 +64,7 @@ export const getAccount = cache(async () => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, disabled, avatar_url, organization")
+    .select("id, full_name, disabled, avatar_url, organization, locale")
     .eq("id", user.id)
     .single();
 
@@ -78,7 +81,7 @@ export const getSession = cache(async () => {
   const { data } = await supabase
     .from("event_members")
     .select(
-      "event_id, role, status, recording_notice_version, events(id, name, slug, kind, status, audit_mode, settings)",
+      "event_id, role, status, recording_notice_version, events(id, name, slug, kind, status, audit_mode, settings, locale)",
     )
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -93,6 +96,7 @@ export const getSession = cache(async () => {
   if (!membership || !event) redirect("/login?reason=no-space");
 
   const role = membership.role;
+  const locale = (await getLocale()) as Locale;
   const isAdmin = role === "owner" || role === "manager";
   const canVote = ["owner", "manager", "judge", "reviewer", "teacher"].includes(
     role,
@@ -110,6 +114,7 @@ export const getSession = cache(async () => {
     event,
     eventClosed: event.status === "closed",
     recording: recordingSettings(event.settings),
-    words: vocabulary(event),
+    locale,
+    words: vocabulary(event, locale),
   };
 });
