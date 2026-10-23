@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import {
@@ -18,42 +19,43 @@ export function InvitationForm() {
     createInvitationAction,
     initialState,
   );
+  const t = useTranslations("invite");
+  const tRoles = useTranslations("roles");
 
   return (
     <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-[1fr_10rem_7rem_auto] sm:items-end">
         <div className="space-y-1.5">
-          <Label htmlFor="invite-email">Correo</Label>
-          <Input id="invite-email" name="email" placeholder="persona@upv.es" required type="email" />
+          <Label htmlFor="invite-email">{t("email")}</Label>
+          <Input id="invite-email" name="email" placeholder={t("emailPlaceholder")} required type="email" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="invite-role">Rol</Label>
+          <Label htmlFor="invite-role">{t("role")}</Label>
           <select className={`${selectClass} w-full`} defaultValue="judge" id="invite-role" name="role">
-            <option value="manager">Gestor</option>
-            <option value="judge">Juez</option>
-            <option value="mentor">Mentor</option>
-            <option value="teacher">Docente</option>
-            <option value="student">Estudiante</option>
-            <option value="reviewer">Evaluador</option>
-            <option value="viewer">Consulta</option>
+            {(["manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"] as const).map((role) => (
+              <option key={role} value={role}>
+                {tRoles(role)}
+              </option>
+            ))}
           </select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="invite-days">Caduca</Label>
+          <Label htmlFor="invite-days">{t("expires")}</Label>
           <select className={`${selectClass} w-full`} defaultValue="7" id="invite-days" name="days">
-            <option value="1">1 día</option>
-            <option value="7">7 días</option>
-            <option value="14">14 días</option>
-            <option value="30">30 días</option>
+            {[1, 7, 14, 30].map((days) => (
+              <option key={days} value={days}>
+                {t("days", { count: days })}
+              </option>
+            ))}
           </select>
         </div>
-        <Button disabled={pending} type="submit">{pending ? "Creando…" : "Crear enlace"}</Button>
+        <Button disabled={pending} type="submit">{pending ? t("creating") : t("create")}</Button>
       </div>
       {state.error ? <p className="text-sm text-destructive" role="alert">{state.error}</p> : null}
       {state.link ? (
         <div className="rounded-md bg-muted p-3 dark:bg-ink-950">
-          <p className="mb-1 text-xs font-semibold">Enlace privado (solo se muestra ahora)</p>
-          <input aria-label="Enlace de invitación" className="w-full bg-transparent font-mono text-xs" readOnly value={state.link} />
+          <p className="mb-1 text-xs font-semibold">{t("linkTitle")}</p>
+          <input aria-label={t("linkLabel")} className="w-full bg-transparent font-mono text-xs" readOnly value={state.link} />
         </div>
       ) : null}
     </form>

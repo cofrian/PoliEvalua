@@ -1,5 +1,6 @@
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import type { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
@@ -16,6 +17,8 @@ export async function AdminOverview({ session }: { session: Session }) {
   const { supabase, event, recording, words } = session;
   const settings = (event.settings ?? {}) as { enabled_roles?: string[] };
   const hasStudents = (settings.enabled_roles ?? []).includes("student");
+  const academic = event.kind === "class" || event.kind === "project";
+  const t = await getTranslations("overview");
 
   const [
     { data: rubric },
@@ -66,33 +69,33 @@ export async function AdminOverview({ session }: { session: Session }) {
 
   const steps: Step[] = [
     {
-      label: "Rúbrica",
+      label: t("rubric"),
       done: criteria.length > 0 && Math.round(weightTotal) === 100,
       detail: criteria.length
-        ? `${criteria.length} criterios · pesos ${Math.round(weightTotal)} %`
-        : "Sin criterios",
+        ? t("rubricDetail", { count: criteria.length, weight: Math.round(weightTotal) })
+        : t("noCriteria"),
       href: "/rubrica",
     },
     {
-      label: "Página de evaluación",
+      label: t("page"),
       done: page?.status === "published",
-      detail: page?.status === "published" ? "Publicada" : page?.status === "closed" ? "Cerrada" : "En preparación",
+      detail: page?.status === "published" ? t("published") : page?.status === "closed" ? t("closed") : t("draft"),
       href: "/admin/evaluacion",
     },
     {
       label: words.units,
       done: teamList.length > 0 && teamList.every((team) => team.team_members.length > 0),
       detail: teamList.length
-        ? `${teamList.length} · ${teamList.filter((team) => !team.team_members.length).length} sin integrantes`
-        : "Ninguno todavía",
+        ? t("unitsDetail", { count: teamList.length, empty: teamList.filter((team) => !team.team_members.length).length })
+        : t("noneYet"),
       href: "/admin/equipos",
     },
     ...(hasStudents
       ? [
           {
-            label: "Alumnado con cuenta",
+            label: t("students"),
             done: roster.length > 0 && linked === roster.length,
-            detail: roster.length ? `${linked}/${roster.length} han entrado con su correo` : "Sin lista de alumnado",
+            detail: roster.length ? t("studentsDetail", { linked, total: roster.length }) : t("noRoster"),
             href: "/admin/equipos",
           },
         ]
@@ -100,24 +103,24 @@ export async function AdminOverview({ session }: { session: Session }) {
     {
       label: words.evaluator.charAt(0).toUpperCase() + words.evaluator.slice(1),
       done: evaluators.length > 0,
-      detail: `${evaluators.length} ${evaluators.length === 1 ? "persona" : "personas"} · ${panelCount ?? 0} ${panelCount === 1 ? "panel" : "paneles"}`,
+      detail: t("evaluatorsDetail", { people: evaluators.length, panels: panelCount ?? 0 }),
       href: "/admin/personas",
     },
     {
-      label: "Agenda",
+      label: t("agenda"),
       done: (slotCount ?? 0) > 0,
-      detail: slotCount ? `${slotCount} turnos` : "Sin agenda",
+      detail: slotCount ? t("slots", { count: slotCount }) : t("noAgenda"),
       href: "/admin/agenda",
       optional: true,
     },
     {
-      label: "Aviso de grabación",
+      label: t("notice"),
       done: recording.enabled && pendingNotice === 0,
       detail: recording.enabled
         ? pendingNotice
-          ? `${pendingNotice} ${pendingNotice === 1 ? "persona aún no lo ha" : "personas aún no lo han"} confirmado`
-          : "Todos lo han confirmado"
-        : "Grabación desactivada",
+          ? t("noticePending", { count: pendingNotice })
+          : t("noticeDone")
+        : t("recordingOff"),
       href: "/admin/grabaciones",
       optional: true,
     },
@@ -155,13 +158,13 @@ export async function AdminOverview({ session }: { session: Session }) {
     <div className="grid gap-6 lg:grid-cols-2">
       <section className={`${cardClass} lg:row-span-2`}>
         <div className="mb-4 flex items-baseline justify-between gap-3">
-          <h2 className="font-display text-xl">Preparación</h2>
+          <h2 className="font-display text-xl">{t("prep")}</h2>
           <span className="text-sm text-muted-foreground">
-            {required.filter((step) => step.done).length} de {required.length} pasos
+            {t("stepsDone", { done: required.filter((step) => step.done).length, total: required.length })}
           </span>
         </div>
         <div
-          aria-label="Progreso de la preparación"
+          aria-label={t("progress")}
           aria-valuemax={100}
           aria-valuemin={0}
           aria-valuenow={progress}
@@ -177,7 +180,7 @@ export async function AdminOverview({ session }: { session: Session }) {
           >
             <span>
               <span className="block text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Siguiente paso
+                {t("next")}
               </span>
               <strong className="block">{next.label}</strong>
               <span className="text-sm text-muted-foreground">{next.detail}</span>
@@ -186,7 +189,7 @@ export async function AdminOverview({ session }: { session: Session }) {
           </Link>
         ) : (
           <p className="mb-5 rounded-xl bg-leaf-500/10 p-4 text-sm font-medium">
-            Todo listo. Cuando empiecen las {words.presentation === "exposición" ? "exposiciones" : "defensas"}, sigue el progreso aquí.
+            {t("allReady", { academic: String(academic) })}
           </p>
         )}
         <ol className="space-y-1">
@@ -194,10 +197,10 @@ export async function AdminOverview({ session }: { session: Session }) {
             <li key={step.label}>
               <Link className="flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted" href={step.href}>
                 {step.done ? (
-                  <CheckCircle2 aria-label="Hecho" className="mt-0.5 size-5 shrink-0 text-leaf-500" />
+                  <CheckCircle2 aria-label={t("done")} className="mt-0.5 size-5 shrink-0 text-leaf-500" />
                 ) : (
                   <span
-                    aria-label="Pendiente"
+                    aria-label={t("pending")}
                     className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-border text-[10px] font-bold text-muted-foreground"
                   >
                     {index + 1}
@@ -206,7 +209,7 @@ export async function AdminOverview({ session }: { session: Session }) {
                 <span className="min-w-0 flex-1">
                   <strong className={step.done ? "block text-sm text-muted-foreground" : "block text-sm"}>
                     {step.label}
-                    {step.optional ? <span className="font-normal text-muted-foreground"> · opcional</span> : null}
+                    {step.optional ? <span className="font-normal text-muted-foreground">{t("optional")}</span> : null}
                   </strong>
                   <span className="text-sm text-muted-foreground">{step.detail}</span>
                 </span>
@@ -218,49 +221,49 @@ export async function AdminOverview({ session }: { session: Session }) {
       </section>
 
       <section className={`${cardClass} space-y-4`}>
-        <h2 className="font-display text-xl">Evaluación</h2>
+        <h2 className="font-display text-xl">{t("evaluation")}</h2>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="rounded-lg bg-muted p-3">
             <p className="text-2xl font-bold">{submitted.length}</p>
-            <p className="text-xs text-muted-foreground">enviadas</p>
+            <p className="text-xs text-muted-foreground">{t("sent")}</p>
           </div>
           <div className="rounded-lg bg-muted p-3">
             <p className="text-2xl font-bold">{teamList.length - behind.length}/{teamList.length}</p>
-            <p className="text-xs text-muted-foreground">{words.unitsLower} con ≥ {minimum}</p>
+            <p className="text-xs text-muted-foreground">{t("withMin", { units: words.unitsLower, min: minimum })}</p>
           </div>
           <div className="rounded-lg bg-muted p-3">
             <p className="text-2xl font-bold">{perJudge.filter((judge) => judge.count === 0).length}</p>
-            <p className="text-xs text-muted-foreground">evaluadores sin empezar</p>
+            <p className="text-xs text-muted-foreground">{t("notStarted")}</p>
           </div>
         </div>
         {behind.length && teamList.length ? (
           <div>
-            <p className="mb-1 text-sm font-semibold">Les faltan evaluaciones</p>
+            <p className="mb-1 text-sm font-semibold">{t("missing")}</p>
             <ul className="flex flex-wrap gap-2 text-sm">
               {behind.slice(0, 24).map((team) => (
                 <li key={team.id}>
                   <Link className="rounded-full border border-border px-2.5 py-0.5 hover:bg-muted" href={`/equipos/${team.id}`}>
                     #{team.number} {team.name} · {team.submitted}/{minimum}
-                    {team.drafts ? ` (+${team.drafts} borrador)` : ""}
+                    {team.drafts ? t("drafts", { count: team.drafts }) : ""}
                   </Link>
                 </li>
               ))}
-              {behind.length > 24 ? <li className="text-muted-foreground">… y {behind.length - 24} más</li> : null}
+              {behind.length > 24 ? <li className="text-muted-foreground">{t("more", { count: behind.length - 24 })}</li> : null}
             </ul>
           </div>
         ) : null}
         {recording.enabled ? (
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <span>Grabaciones: {recordingCounts.ready} listas · {recordingCounts.processing} en proceso</span>
+            <span>{t("recordings", { ready: recordingCounts.ready, processing: recordingCounts.processing })}</span>
             {recordingCounts.failed ? (
               <span className="flex items-center gap-1 font-semibold text-destructive">
-                <AlertTriangle aria-hidden="true" className="size-4" /> {recordingCounts.failed} requieren atención
+                <AlertTriangle aria-hidden="true" className="size-4" /> {t("failed", { count: recordingCounts.failed })}
               </span>
             ) : null}
           </p>
         ) : null}
         <Link className="inline-block text-sm font-semibold underline" href="/resultados">
-          Ver resultados
+          {t("results")}
         </Link>
       </section>
     </div>

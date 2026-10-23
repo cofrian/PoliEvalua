@@ -1,3 +1,5 @@
+import { getFormatter, getTranslations } from "next-intl/server";
+
 import {
   revokeInvitationAction,
   setUserRoleAction,
@@ -8,15 +10,11 @@ import { InvitationForm } from "@/components/app/invitation-form";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getSession, roleLabels, type SpaceRole } from "@/lib/app/session";
+import { getSession, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
 
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const ROLES: SpaceRole[] = ["owner", "manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"];
+const DATE = { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" } as const;
 
 export default async function AdminPeoplePage({
   searchParams,
@@ -25,9 +23,11 @@ export default async function AdminPeoplePage({
 }) {
   const { q = "", rol = "" } = await searchParams;
   const { supabase, user, event } = await getSession();
+  const [t, tRoles, format] = await Promise.all([getTranslations("people"), getTranslations("roles"), getFormatter()]);
+  const roleLabel = (role: string) => (ROLES.includes(role as SpaceRole) ? tRoles(role as SpaceRole) : role);
   const settings = (event.settings ?? {}) as { join_roles?: string[] };
   const joinRoles = (settings.join_roles ?? ["judge", "mentor"])
-    .map((role) => roleLabels[role as SpaceRole]?.toLowerCase())
+    .map((role) => roleLabel(role).toLowerCase())
     .filter(Boolean);
 
   const [{ data: eventSettings }, { data: memberships }, { data: evals }, { data: invitations }] =
@@ -62,29 +62,28 @@ export default async function AdminPeoplePage({
 
   return (
     <div className="space-y-6">
-      <PageHeader description="Cómo entra la gente, invitaciones y quién participa." title="Personas" />
+      <PageHeader description={t("description")} title={t("title")} />
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-lg">Acceso por código</h2>
+        <h2 className="mb-2 font-display text-lg">{t("codeTitle")}</h2>
         <p className="text-sm text-muted-foreground">
-          Comparte el enlace y el código. Cada persona entra con su nombre, su correo y su rol
-          {joinRoles.length ? ` (${joinRoles.join(", ")})` : ""}.
+          {t("codeText", { roles: joinRoles.length ? ` (${joinRoles.join(", ")})` : "" })}
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3">
             <span className="min-w-0 truncate font-mono text-sm">{loginUrl}</span>
-            <CopyButton label="Copiar enlace" value={loginUrl} />
+            <CopyButton label={t("copyLink")} value={loginUrl} />
           </div>
           <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3">
             <span className="font-mono text-sm font-semibold tracking-wider">{eventSettings?.signup_code}</span>
-            <CopyButton label="Copiar código" value={eventSettings?.signup_code ?? ""} />
+            <CopyButton label={t("copyCode")} value={eventSettings?.signup_code ?? ""} />
           </div>
         </div>
       </section>
 
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-lg">Invitaciones individuales</h2>
+        <h2 className="mb-2 font-display text-lg">{t("invitationsTitle")}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          El enlace queda vinculado al correo y al rol elegido. No necesita correo automático: puedes copiarlo y enviarlo por el canal que prefieras.
+          {t("invitationsText")}
         </p>
         <InvitationForm />
         {invitations?.length ? (
@@ -97,13 +96,13 @@ export default async function AdminPeoplePage({
                   <div>
                     <p className="font-semibold">{invitation.email}</p>
                     <p className="text-xs text-muted-foreground">
-                      {roleLabels[invitation.role as SpaceRole]} · {invitation.accepted_at ? "Aceptada" : invitation.revoked_at ? "Revocada" : expired ? "Caducada" : `Caduca ${dateFormat.format(new Date(invitation.expires_at))}`}
+                      {roleLabel(invitation.role)} · {invitation.accepted_at ? t("accepted") : invitation.revoked_at ? t("revoked") : expired ? t("expired") : t("expires", { date: format.dateTime(new Date(invitation.expires_at), DATE) })}
                     </p>
                   </div>
                   {!closed ? (
                     <form action={revokeInvitationAction}>
                       <input name="id" type="hidden" value={invitation.id} />
-                      <Button className="h-8" type="submit" variant="outline">Revocar</Button>
+                      <Button className="h-8" type="submit" variant="outline">{t("revoke")}</Button>
                     </form>
                   ) : null}
                 </li>
@@ -116,20 +115,22 @@ export default async function AdminPeoplePage({
       <section>
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-display text-lg">
-            Miembros ({members.length === (memberships?.length ?? 0) ? members.length : `${members.length} de ${memberships?.length ?? 0}`})
+            {members.length === (memberships?.length ?? 0)
+              ? t("members", { count: members.length })
+              : t("membersFiltered", { count: members.length, total: memberships?.length ?? 0 })}
           </h2>
           <form className="flex flex-wrap gap-2" role="search">
-            <Input aria-label="Buscar miembros" className="h-9 w-full sm:w-56" defaultValue={q} name="q" placeholder="Buscar por nombre u organización" />
-            <select aria-label="Filtrar por rol" className={selectClass} defaultValue={rol} name="rol">
-              <option value="">Todos los roles</option>
+            <Input aria-label={t("search")} className="h-9 w-full sm:w-56" defaultValue={q} name="q" placeholder={t("searchPlaceholder")} />
+            <select aria-label={t("filterRole")} className={selectClass} defaultValue={rol} name="rol">
+              <option value="">{t("allRoles")}</option>
               {presentRoles.map((role) => (
                 <option key={role} value={role}>
-                  {roleLabels[role]}
+                  {roleLabel(role)}
                 </option>
               ))}
             </select>
             <Button className="h-9" type="submit" variant="outline">
-              Filtrar
+              {t("filter")}
             </Button>
           </form>
         </div>
@@ -137,18 +138,18 @@ export default async function AdminPeoplePage({
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs text-muted-foreground uppercase">
               <tr>
-                <th className="px-3 py-2">Nombre</th>
-                <th className="px-3 py-2">Rol</th>
-                <th className="px-3 py-2">Última actividad</th>
-                <th className="px-3 py-2 text-right">Evaluaciones enviadas</th>
-                <th className="px-3 py-2 text-right">Estado</th>
+                <th className="px-3 py-2">{t("name")}</th>
+                <th className="px-3 py-2">{t("role")}</th>
+                <th className="px-3 py-2">{t("lastSeen")}</th>
+                <th className="px-3 py-2 text-right">{t("sent")}</th>
+                <th className="px-3 py-2 text-right">{t("status")}</th>
               </tr>
             </thead>
             <tbody>
               {members.length === 0 ? (
                 <tr>
                   <td className="px-3 py-8 text-center text-muted-foreground" colSpan={5}>
-                    Nadie coincide con el filtro.
+                    {t("noMatch")}
                   </td>
                 </tr>
               ) : null}
@@ -167,8 +168,8 @@ export default async function AdminPeoplePage({
                   >
                     <td className="px-3 py-2">
                       <span className="font-semibold">
-                        {profile.full_name || "(sin nombre)"}
-                        {self ? " (tú)" : ""}
+                        {profile.full_name || t("noName")}
+                        {self ? t("you") : ""}
                       </span>
                       {profile.organization ? (
                         <span className="block text-xs text-muted-foreground">
@@ -178,26 +179,26 @@ export default async function AdminPeoplePage({
                     </td>
                     <td className="px-3 py-2">
                       {self ? (
-                        roleLabels[membership.role as SpaceRole]
+                        roleLabel(membership.role)
                       ) : (
                         <form action={setUserRoleAction} className="flex gap-2">
                           <input name="id" type="hidden" value={profile.id} />
                           <select className={selectClass} defaultValue={membership.role} name="role">
-                            {Object.entries(roleLabels).filter(([value]) => value !== "owner").map(([value, label]) => (
+                            {ROLES.filter((value) => value !== "owner").map((value) => (
                               <option key={value} value={value}>
-                                {label}
+                                {tRoles(value)}
                               </option>
                             ))}
                           </select>
                           <Button className="h-9" type="submit" variant="outline">
-                            Cambiar
+                            {t("change")}
                           </Button>
                         </form>
                       )}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {profile.last_seen_at
-                        ? dateFormat.format(new Date(profile.last_seen_at))
+                        ? format.dateTime(new Date(profile.last_seen_at), DATE)
                         : "—"}
                     </td>
                     <td className="px-3 py-2 text-right">
@@ -209,7 +210,7 @@ export default async function AdminPeoplePage({
                     </td>
                     <td className="px-3 py-2 text-right">
                       {self ? (
-                        "Activo"
+                        t("active")
                       ) : (
                         <form action={toggleUserDisabledAction}>
                           <input name="id" type="hidden" value={profile.id} />
@@ -223,7 +224,7 @@ export default async function AdminPeoplePage({
                             type="submit"
                             variant={membership.status === "inactive" ? "default" : "outline"}
                           >
-                            {membership.status === "inactive" ? "Reactivar" : "Desactivar"}
+                            {membership.status === "inactive" ? t("reactivate") : t("deactivate")}
                           </Button>
                         </form>
                       )}
@@ -235,8 +236,7 @@ export default async function AdminPeoplePage({
           </table>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Desactivar no borra nada: la persona deja de poder entrar y sus notas y
-          evaluaciones se conservan.
+          {t("deactivateNote")}
         </p>
       </section>
     </div>
