@@ -501,7 +501,22 @@
     "manualPlaceholder": "Apega ací una transcripció manual o corregida…",
     "analyzeText": "Analitzar este text",
     "retry": "Tornar-ho a intentar",
-    "privacy": "L'àudio només existix mentre es transcriu, en un contenidor privat, i s'esborra després. Una gravació privada només la veuen el seu autor i la gestió de l'espai; una compartida, els membres actius d'este espai. L'informe per al jurat només el veuen el jurat i la gestió."
+    "privacy": "L'àudio només existix mentre es transcriu, en un contenidor privat, i s'esborra després. Una gravació privada només la veuen el seu autor i la gestió de l'espai; una compartida, els membres actius d'este espai. L'informe per al jurat només el veuen el jurat i la gestió.",
+    "errors": {
+      "backup": "Transcrivint amb el servidor de reserva; pot tardar uns minuts.",
+      "analysisFailed": "La transcripció està llesta, però no s'ha pogut generar l'anàlisi: {reason} Prem «Tornar-ho a intentar».",
+      "transcribeFailed": "No s'ha pogut transcriure l'àudio: {reason} L'àudio s'ha esborrat; apega la transcripció per a generar els materials.",
+      "reasons": {
+        "notConfigured": "la IA no està configurada en el servidor.",
+        "modelsDown": "els models d'IA no estan disponibles ara mateix.",
+        "noSpeech": "no s'ha detectat veu en la gravació.",
+        "backupFailed": "el servidor de reserva tampoc no ha pogut transcriure-la.",
+        "timeout": "el servei ha tardat massa a respondre.",
+        "format": "el format de l'àudio no és compatible.",
+        "audioGone": "l'àudio temporal ja no està disponible.",
+        "failed": "el servei d'IA ha fallat."
+      }
+    }
   },
   "apiErrors": {
     "closeData": "Dades de tancament no vàlides.",
@@ -1057,7 +1072,10 @@
     "more": "… i {count} més.",
     "preview": "Previsualització: {students} estudiants en {groups} {units}",
     "submit": "Donar d'alta {count} estudiants",
-    "saving": "Guardant…"
+    "saving": "Guardant…",
+    "groupName": "{unit} {index}",
+    "errorEmail": "Línia {line}: falta un correu vàlid.",
+    "errorDuplicate": "Línia {line}: {email} està repetit."
   },
   "evalAdmin": {
     "description": "Quan s'obri l'avaluació, quantes opinions calen i com es calcula la nota.",
@@ -1334,5 +1352,16 @@
     "saving": "Guardant…",
     "save": "Guardar",
     "cancel": "Cancel·lar"
+  },
+  "evaluationContext": {
+    "cannotVote": "{role, select, mentor {El teu perfil de mentoria} student {El teu perfil d'estudiant} other {El teu perfil de consulta}} pot consultar i prendre notes, però no votar.",
+    "notAssigned": "Este projecte no està assignat a cap dels teus panells de jurat.",
+    "noRubric": "No hi ha cap rúbrica activa en este espai.",
+    "pageDraft": "La pàgina d'avaluació encara està en preparació.",
+    "presentation": "Exposició",
+    "noCriteria": "La rúbrica encara no té criteris. Podràs avaluar tan prompte com l'organització els afegisca."
+  },
+  "meta": {
+    "description": "Plataforma per a crear i gestionar avaluacions de projectes, assignatures, premis i hackatons."
   }
 }

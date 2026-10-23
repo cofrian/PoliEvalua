@@ -501,7 +501,22 @@
     "manualPlaceholder": "Pega aquí una transcripción manual o corregida…",
     "analyzeText": "Analizar este texto",
     "retry": "Reintentar",
-    "privacy": "El audio solo existe mientras se transcribe, en un contenedor privado, y se borra después. Una grabación privada solo la ve su autor y la gestión del espacio; una compartida, los miembros activos de este espacio. El informe para el jurado solo lo ven jurado y gestión."
+    "privacy": "El audio solo existe mientras se transcribe, en un contenedor privado, y se borra después. Una grabación privada solo la ve su autor y la gestión del espacio; una compartida, los miembros activos de este espacio. El informe para el jurado solo lo ven jurado y gestión.",
+    "errors": {
+      "backup": "Transcribiendo con el servidor de respaldo; puede tardar unos minutos.",
+      "analysisFailed": "La transcripción está lista, pero no se pudo generar el análisis: {reason} Pulsa «Reintentar».",
+      "transcribeFailed": "No se pudo transcribir el audio: {reason} El audio se ha borrado; pega la transcripción para generar los materiales.",
+      "reasons": {
+        "notConfigured": "la IA no está configurada en el servidor.",
+        "modelsDown": "los modelos de IA no están disponibles ahora mismo.",
+        "noSpeech": "no se detectó voz en la grabación.",
+        "backupFailed": "el servidor de respaldo tampoco pudo transcribirlo.",
+        "timeout": "el servicio tardó demasiado en responder.",
+        "format": "el formato del audio no es compatible.",
+        "audioGone": "el audio temporal ya no está disponible.",
+        "failed": "el servicio de IA ha fallado."
+      }
+    }
   },
   "apiErrors": {
     "closeData": "Datos de cierre no válidos.",
@@ -1057,7 +1072,10 @@
     "more": "… y {count} más.",
     "preview": "Vista previa: {students} estudiantes en {groups} {units}",
     "submit": "Dar de alta {count} estudiantes",
-    "saving": "Guardando…"
+    "saving": "Guardando…",
+    "groupName": "{unit} {index}",
+    "errorEmail": "Línea {line}: falta un correo válido.",
+    "errorDuplicate": "Línea {line}: {email} está repetido."
   },
   "evalAdmin": {
     "description": "Cuándo se abre la evaluación, cuántas opiniones hacen falta y cómo se calcula la nota.",
@@ -1334,5 +1352,16 @@
     "saving": "Guardando…",
     "save": "Guardar",
     "cancel": "Cancelar"
+  },
+  "evaluationContext": {
+    "cannotVote": "{role, select, mentor {Tu perfil de mentoría} student {Tu perfil de estudiante} other {Tu perfil de consulta}} puede consultar y tomar notas, pero no votar.",
+    "notAssigned": "Este proyecto no está asignado a ninguno de tus paneles de jurado.",
+    "noRubric": "No hay ninguna rúbrica activa en este espacio.",
+    "pageDraft": "La página de evaluación todavía está en preparación.",
+    "presentation": "Exposición",
+    "noCriteria": "La rúbrica todavía no tiene criterios. Podrás evaluar en cuanto la organización los añada."
+  },
+  "meta": {
+    "description": "Plataforma para crear y gestionar evaluaciones de proyectos, asignaturas, premios y hackathones."
   }
 }

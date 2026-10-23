@@ -501,7 +501,22 @@
     "manualPlaceholder": "Paste a manual or corrected transcript here…",
     "analyzeText": "Analyse this text",
     "retry": "Retry",
-    "privacy": "Audio only exists while it's being transcribed, in a private container, and is deleted afterwards. A private recording is visible only to its author and the space's organizers; a shared one, to the space's active members. The jury report is visible only to the jury and organizers."
+    "privacy": "Audio only exists while it's being transcribed, in a private container, and is deleted afterwards. A private recording is visible only to its author and the space's organizers; a shared one, to the space's active members. The jury report is visible only to the jury and organizers.",
+    "errors": {
+      "backup": "Transcribing with the backup server; it may take a few minutes.",
+      "analysisFailed": "The transcript is ready, but the analysis couldn't be generated: {reason} Press “Retry”.",
+      "transcribeFailed": "The audio couldn't be transcribed: {reason} The audio has been deleted; paste the transcript to generate the materials.",
+      "reasons": {
+        "notConfigured": "the AI isn't configured on the server.",
+        "modelsDown": "the AI models aren't available right now.",
+        "noSpeech": "no speech was detected in the recording.",
+        "backupFailed": "the backup server couldn't transcribe it either.",
+        "timeout": "the service took too long to respond.",
+        "format": "the audio format isn't supported.",
+        "audioGone": "the temporary audio is no longer available.",
+        "failed": "the AI service failed."
+      }
+    }
   },
   "apiErrors": {
     "closeData": "Invalid closing data.",
@@ -1057,7 +1072,10 @@
     "more": "… and {count} more.",
     "preview": "Preview: {students} students in {groups} {units}",
     "submit": "Add {count} students",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "groupName": "{unit} {index}",
+    "errorEmail": "Line {line}: a valid email is missing.",
+    "errorDuplicate": "Line {line}: {email} is repeated."
   },
   "evalAdmin": {
     "description": "When the evaluation opens, how many opinions are needed and how the grade is calculated.",
@@ -1334,5 +1352,16 @@
     "saving": "Saving…",
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "evaluationContext": {
+    "cannotVote": "{role, select, mentor {As a mentor} student {As a student} other {As a viewer}} you can view and take notes, but not vote.",
+    "notAssigned": "This project isn't assigned to any of your jury panels.",
+    "noRubric": "There's no active rubric in this space.",
+    "pageDraft": "The evaluation page is still being prepared.",
+    "presentation": "Presentation",
+    "noCriteria": "The rubric has no criteria yet. You'll be able to evaluate as soon as the organizers add them."
+  },
+  "meta": {
+    "description": "Platform to create and manage evaluations for projects, courses, awards and hackathons."
   }
 }

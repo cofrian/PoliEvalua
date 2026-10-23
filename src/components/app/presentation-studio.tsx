@@ -113,6 +113,18 @@ const FILE_TYPES: Record<string, string> = {
 
 type StudioT = ReturnType<typeof useTranslations<"studio">>;
 
+const FAILURE_REASONS = ["notConfigured", "modelsDown", "noSpeech", "backupFailed", "timeout", "format", "audioGone", "failed"];
+
+/** error_message llega como código («@tipo:motivo») o como texto de grabaciones antiguas. */
+function recordingErrorText(message: string, t: StudioT) {
+  if (!message.startsWith("@")) return message;
+  const [kind, reason = "failed"] = message.slice(1).split(":");
+  const why = t(`errors.reasons.${FAILURE_REASONS.includes(reason) ? reason : "failed"}`);
+  if (kind === "backup") return t("errors.backup");
+  if (kind === "analysisFailed") return t("errors.analysisFailed", { reason: why });
+  return t("errors.transcribeFailed", { reason: why });
+}
+
 /** Los errores de getUserMedia llegan en inglés y con nombres técnicos. */
 function microphoneErrorMessage(error: unknown, t: StudioT) {
   const name = error instanceof DOMException ? error.name : "";
@@ -881,7 +893,7 @@ export function PresentationStudio({
 
                     {record.error_message ? (
                       <p className="rounded-xl border border-upv-red/30 bg-upv-red/5 p-3 text-sm">
-                        {record.error_message}
+                        {recordingErrorText(record.error_message, t)}
                       </p>
                     ) : null}
 

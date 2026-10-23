@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -22,20 +22,22 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Evalúa · UPV",
-    template: "%s · Evalúa UPV",
-  },
-  description:
-    "Plataforma para crear y gestionar evaluaciones de proyectos, asignaturas, premios y hackathones.",
-  appleWebApp: {
-    capable: true,
-    title: "Evalúa UPV",
-    statusBarStyle: "default",
-  },
-  icons: { icon: "/icons/upv-evalua.svg" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: {
+      default: "Evalúa · UPV",
+      template: "%s · Evalúa UPV",
+    },
+    description: t("description"),
+    appleWebApp: {
+      capable: true,
+      title: "Evalúa UPV",
+      statusBarStyle: "default",
+    },
+    icons: { icon: "/icons/upv-evalua.svg" },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#3f4444",

@@ -306,8 +306,7 @@ export async function handleJobFailure(
     await admin
       .from("presentation_recordings")
       .update({
-        error_message:
-          "Transcribiendo con el servidor de respaldo; puede tardar unos minutos.",
+        error_message: "@backup",
       })
       .eq("id", job.recording_id);
     await wakeWorkers(admin);
@@ -325,7 +324,7 @@ export async function handleJobFailure(
       .from("presentation_recordings")
       .update({
         status: "transcribed",
-        error_message: `La transcripción está lista, pero no se pudo generar el análisis: ${friendlyError(message)} Pulsa «Reintentar».`,
+        error_message: `@analysisFailed:${failureReason(message)}`,
       })
       .eq("id", job.recording_id);
     return;
@@ -338,21 +337,25 @@ export async function handleJobFailure(
   await markRecordingFailed(
     admin,
     job.recording_id,
-    `No se pudo transcribir el audio: ${friendlyError(message)} El audio se ha borrado; pega la transcripción para generar los materiales.`,
+    `@transcribeFailed:${failureReason(message)}`,
   );
   await deleteRecordingAudio(admin, job.recording_id);
 }
 
 /** Mensaje para la persona usuaria; el detalle técnico queda en last_error. */
-export function friendlyError(message: string) {
-  if (/NVIDIA_API_KEY|GROQ_API_KEY|clave/i.test(message)) return "la IA no está configurada en el servidor.";
-  if (/ninguno de los modelos/i.test(message)) return "los modelos de IA no están disponibles ahora mismo.";
-  if (/no se detectó voz/i.test(message)) return "no se detectó voz en la grabación.";
-  if (/trabajador de respaldo|transcriptor de respaldo/i.test(message)) return message;
-  if (/ejecutor no respondió|timeout|tiempo|abort/i.test(message)) return "el servicio tardó demasiado en responder.";
-  if (/formato|ffmpeg|unsupported/i.test(message)) return "el formato del audio no es compatible.";
-  if (/audio temporal|ya no existe/i.test(message)) return "el audio temporal ya no está disponible.";
-  return "el servicio de IA ha fallado.";
+/**
+ * Motivo de un fallo como código. error_message guarda «@tipo:motivo» y la
+ * pantalla lo traduce al idioma de quien lo mira (studio.errors en messages/).
+ */
+export function failureReason(message: string) {
+  if (/NVIDIA_API_KEY|GROQ_API_KEY|clave/i.test(message)) return "notConfigured";
+  if (/ninguno de los modelos/i.test(message)) return "modelsDown";
+  if (/no se detectó voz/i.test(message)) return "noSpeech";
+  if (/trabajador de respaldo|transcriptor de respaldo/i.test(message)) return "backupFailed";
+  if (/ejecutor no respondió|timeout|tiempo|abort/i.test(message)) return "timeout";
+  if (/formato|ffmpeg|unsupported/i.test(message)) return "format";
+  if (/audio temporal|ya no existe/i.test(message)) return "audioGone";
+  return "failed";
 }
 
 /** Espera turno en el limitador global del proveedor o aplaza el trabajo. */

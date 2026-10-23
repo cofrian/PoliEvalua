@@ -18,7 +18,9 @@ const headerHints = {
   group: /^(grupo|group|equipo|team|grup)$/i,
 };
 
-export function parseRoster(raw: string): { students: RosterStudent[]; errors: string[] } {
+export type RosterError = { line: number; kind: "email" | "duplicate"; email?: string };
+
+export function parseRoster(raw: string): { students: RosterStudent[]; errors: RosterError[] } {
   const text = raw.replace(/^﻿/, "").trim();
   if (!text) return { students: [], errors: [] };
   const delimiter = text.includes("\t") ? "\t" : text.includes(";") ? ";" : ",";
@@ -42,7 +44,7 @@ export function parseRoster(raw: string): { students: RosterStudent[]; errors: s
     : null;
 
   const students: RosterStudent[] = [];
-  const errors: string[] = [];
+  const errors: RosterError[] = [];
   const seen = new Set<string>();
 
   (hasHeader ? rows.slice(1) : rows).forEach((row, index) => {
@@ -69,11 +71,11 @@ export function parseRoster(raw: string): { students: RosterStudent[]; errors: s
 
     email = email.toLowerCase();
     if (!EMAIL.test(email)) {
-      errors.push(`Línea ${line}: falta un correo válido.`);
+      errors.push({ line, kind: "email" });
       return;
     }
     if (seen.has(email)) {
-      errors.push(`Línea ${line}: ${email} está repetido.`);
+      errors.push({ line, kind: "duplicate", email });
       return;
     }
     seen.add(email);
@@ -97,6 +99,7 @@ export function assignGroups(
   students: RosterStudent[],
   mode: GroupingMode,
   groupSize: number,
+  groupName: (index: number) => string = (index) => `Grupo ${index}`,
 ): RosterStudent[] {
   if (mode === "column" || mode === "none") {
     return students.map((student) => ({ ...student, group: mode === "none" ? null : student.group }));
@@ -109,6 +112,6 @@ export function assignGroups(
   // Bloques consecutivos: en orden alfabético, cada grupo es un tramo de la lista.
   return ordered.map((student, index) => ({
     ...student,
-    group: `Grupo ${Math.floor((index * groups) / ordered.length) + 1}`,
+    group: groupName(Math.floor((index * groups) / ordered.length) + 1),
   }));
 }

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getTranslations } from "next-intl/server";
+
 import type { AiEvidence } from "@/components/app/ai-evidence-panel";
 import type { Criterion, EvaluationPageConfig } from "@/components/app/evaluation-form";
 import type { Note } from "@/components/app/notes-panel";
@@ -36,13 +38,13 @@ export async function loadEvaluationContext(
   teamId: string,
 ): Promise<EvaluationContext> {
   const { supabase, user, canVote, isAdmin, event, role } = session;
+  const t = await getTranslations("evaluationContext");
 
   if (!canVote) {
-    const profileName = role === "mentor" ? "mentoría" : role === "student" ? "estudiante" : "consulta";
     return {
       ok: false,
       tone: "info",
-      message: `Tu perfil de ${profileName} puede consultar y tomar notas, pero no votar.`,
+      message: t("cannotVote", { role: role === "mentor" || role === "student" ? role : "viewer" }),
     };
   }
 
@@ -54,7 +56,7 @@ export async function loadEvaluationContext(
     return {
       ok: false,
       tone: "warning",
-      message: "Este proyecto no está asignado a ninguno de tus paneles de jurado.",
+      message: t("notAssigned"),
     };
   }
 
@@ -75,9 +77,9 @@ export async function loadEvaluationContext(
       .maybeSingle(),
   ]);
 
-  if (!rubric) return { ok: false, tone: "info", message: "No hay ninguna rúbrica activa para este evento." };
+  if (!rubric) return { ok: false, tone: "info", message: t("noRubric") };
   if (evaluationPage?.status === "draft" && !isAdmin) {
-    return { ok: false, tone: "info", message: "La página de evaluación todavía está en preparación." };
+    return { ok: false, tone: "info", message: t("pageDraft") };
   }
 
   const [{ data: evaluation }, { data: notes }, { data: reports }, { count: processingCount }] =
@@ -123,7 +125,7 @@ export async function loadEvaluationContext(
     ? {
         recordingTitle:
           (Array.isArray(recordingRelation) ? recordingRelation[0]?.title : recordingRelation?.title) ??
-          "Exposición",
+          t("presentation"),
         criteria: (report.criteria_evidence ?? []) as CriterionEvidence[],
         questions: (report.questions ?? []) as string[],
         risks: (report.risks ?? []) as string[],
@@ -146,7 +148,7 @@ export async function loadEvaluationContext(
     return {
       ok: false,
       tone: "info",
-      message: "La rúbrica todavía no tiene criterios. Podrás evaluar en cuanto la organización los añada.",
+      message: t("noCriteria"),
     };
   }
 

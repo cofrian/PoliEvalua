@@ -14,6 +14,17 @@ import {
 
 const RETRY_DELAYS_MS = [1_000, 3_000, 9_000];
 
+// Fuera de React no hay traductor: se usa el idioma que ha pintado la página.
+const UPLOAD_ERRORS = {
+  prepare: { es: "No se pudo preparar la subida.", ca: "No s'ha pogut preparar la pujada.", en: "The upload couldn't be prepared." },
+  upload: { es: "No se pudo subir el audio.", ca: "No s'ha pogut pujar l'àudio.", en: "The audio couldn't be uploaded." },
+} as const;
+
+function uploadError(kind: keyof typeof UPLOAD_ERRORS) {
+  const lang = (typeof document === "undefined" ? "es" : document.documentElement.lang) as "es" | "ca" | "en";
+  return new Error(UPLOAD_ERRORS[kind][lang] ?? UPLOAD_ERRORS[kind].es);
+}
+
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
@@ -72,14 +83,14 @@ export async function uploadSegment(supabase: SupabaseClient, segment: PendingSe
       },
     );
     if (!signed.alreadyUploaded) {
-      if (!signed.path || !signed.token) throw new Error("No se pudo preparar la subida.");
+      if (!signed.path || !signed.token) throw uploadError("prepare");
       const { error } = await supabase.storage
         .from("presentation-audio")
         .uploadToSignedUrl(signed.path, signed.token, segment.blob, {
           contentType: segment.mimeType,
           upsert: true,
         });
-      if (error) throw new Error("No se pudo subir el audio.");
+      if (error) throw uploadError("upload");
       await postJson(
         `/api/presentations/${segment.recordingId}/segments/${segment.seq}/uploaded`,
         {},

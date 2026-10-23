@@ -28,8 +28,11 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
   const effectiveMode: GroupingMode = mode === "column" && !hasGroupColumn ? "random" : mode;
   // seed solo sirve para volver a barajar al pulsar «Repartir de nuevo».
   const assigned = useMemo(
-    () => (seed >= 0 ? assignGroups(students, effectiveMode, groupSize) : []),
-    [students, effectiveMode, groupSize, seed],
+    () =>
+      seed >= 0
+        ? assignGroups(students, effectiveMode, groupSize, (index) => t("groupName", { unit, index }))
+        : [],
+    [students, effectiveMode, groupSize, seed, t, unit],
   );
   const groups = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -105,7 +108,13 @@ export function RosterImport({ unit, units }: { unit: string; units: string }) {
 
       {errors.length ? (
         <ul className="rounded-lg border border-coral-400/50 bg-coral-400/10 px-4 py-2 text-sm" role="alert">
-          {errors.slice(0, 8).map((error) => <li key={error}>{error}</li>)}
+          {errors.slice(0, 8).map((error) => (
+            <li key={`${error.line}-${error.kind}`}>
+              {error.kind === "email"
+                ? t("errorEmail", { line: error.line })
+                : t("errorDuplicate", { line: error.line, email: error.email ?? "" })}
+            </li>
+          ))}
           {errors.length > 8 ? <li>{t("more", { count: errors.length - 8 })}</li> : null}
         </ul>
       ) : null}
