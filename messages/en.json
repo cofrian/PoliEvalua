@@ -991,7 +991,9 @@
     "logoHint": "PNG or SVG with a transparent background, ideally square.",
     "removeLogo": "Remove logo",
     "color": "Color",
-    "colorHint": "For the cover. If it's light, the text turns dark automatically."
+    "colorHint": "For the cover. If it's light, the text turns dark automatically.",
+    "participantMode": "Who takes part",
+    "participantModeHint": "Are people evaluated one by one or in groups? You can change it anytime."
   },
   "recordingsAdmin": {
     "noName": "(no name)",
@@ -1131,7 +1133,10 @@
     "deleteText": "Only possible if nobody has evaluated it yet. This can't be undone.",
     "deleteTitle": "Delete “{name}”?",
     "noChallenge": "No challenge",
-    "noChallenges": "No challenges yet. <link>Create them here</link> if you want to group by category."
+    "noChallenges": "No challenges yet. <link>Create them here</link> if you want to group by category.",
+    "personName": "Full name",
+    "personEmail": "Email (so they can sign in and see their grade)",
+    "personEmailHint": "name@upv.es"
   },
   "importTeams": {
     "help": "Same format as <code>equipos.txt</code>: Challenge, No., Team, Member 1, Member 2… (tab- or comma-separated). Creates or updates by name and adds missing members; deletes nothing.",

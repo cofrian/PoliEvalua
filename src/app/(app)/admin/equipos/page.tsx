@@ -87,7 +87,8 @@ export default async function AdminTeamsPage() {
               title={t("newUnit", { mode: words.mode })}
               wide
             >
-              <AdminTeamEditor challenges={challenges ?? []} team={null} />
+              <AdminTeamEditor
+                  individual={words.mode === "individuals"} challenges={challenges ?? []} team={null} />
             </ModalButton>
           </>
         }
@@ -130,7 +131,8 @@ export default async function AdminTeamsPage() {
                     <span className="ml-auto text-sm font-normal text-muted-foreground">{t("edit")}</span>
                   </summary>
                   <div className="mt-4">
-                    <AdminTeamEditor challenges={challenges ?? []} team={team} />
+                    <AdminTeamEditor
+                  individual={words.mode === "individuals"} challenges={challenges ?? []} team={team} />
                   </div>
                 </details>
               ))}
