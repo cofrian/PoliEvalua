@@ -76,7 +76,7 @@ export function RubricScene() {
             </div>
           </div>
         ))}
-        <p className="tour-pop flex items-center justify-end gap-1 font-bold text-leaf-500" style={delay(1300)}>
+        <p className="tour-pop flex items-center justify-end gap-1 font-bold text-leaf-500 dark:text-green-400" style={delay(1300)}>
           <Check className="size-3.5" /> 100 %
         </p>
       </Card>

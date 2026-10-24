@@ -83,7 +83,8 @@
       "academic": "Assignatura, competències i resultats d'aprenentatge.",
       "sponsors": "Logos de patrocinadors en la portada.",
       "audit": "Registre de tot el que s'ha canviat i qui."
-    }
+    },
+    "skip": "Saltar al contingut"
   },
   "userMenu": {
     "open": "Menú d'usuari",
@@ -1052,7 +1053,8 @@
     "active": "Actiu",
     "reactivate": "Reactivar",
     "deactivate": "Desactivar",
-    "deactivateNote": "Desactivar no esborra res: la persona deixa de poder entrar i les seues notes i avaluacions es conserven."
+    "deactivateNote": "Desactivar no esborra res: la persona deixa de poder entrar i les seues notes i avaluacions es conserven.",
+    "roleFor": "Perfil de {name}"
   },
   "invite": {
     "email": "Correu",

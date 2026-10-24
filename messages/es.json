@@ -83,7 +83,8 @@
       "academic": "Asignatura, competencias y resultados de aprendizaje.",
       "sponsors": "Logos de patrocinadores en la portada.",
       "audit": "Registro de todo lo que se ha cambiado y quién."
-    }
+    },
+    "skip": "Saltar al contenido"
   },
   "userMenu": {
     "open": "Menú de usuario",
@@ -1052,7 +1053,8 @@
     "active": "Activo",
     "reactivate": "Reactivar",
     "deactivate": "Desactivar",
-    "deactivateNote": "Desactivar no borra nada: la persona deja de poder entrar y sus notas y evaluaciones se conservan."
+    "deactivateNote": "Desactivar no borra nada: la persona deja de poder entrar y sus notas y evaluaciones se conservan.",
+    "roleFor": "Perfil de {name}"
   },
   "invite": {
     "email": "Correo",

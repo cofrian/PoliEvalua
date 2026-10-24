@@ -41,7 +41,7 @@ export function AgendaGenerator({ hasAgenda, defaultStart }: { hasAgenda: boolea
         </div>
       </div>
       {hasAgenda ? (
-        <p className="text-sm text-orange-600 dark:text-orange-400">
+        <p className="text-sm text-amber-700 dark:text-orange-400">
           {t("replaceWarning")}
         </p>
       ) : null}

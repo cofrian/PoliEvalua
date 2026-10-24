@@ -50,7 +50,7 @@ export function PublicVoteForm({
                 <span className="block text-sm text-muted-foreground">{team.project_title}</span>
               ) : null}
             </span>
-            {voted === team.id ? <CheckCircle2 aria-label={t("yourVote")} className="size-5 text-leaf-500" /> : null}
+            {voted === team.id ? <CheckCircle2 aria-label={t("yourVote")} className="size-5 text-leaf-500 dark:text-green-400" /> : null}
           </label>
         ))}
       </fieldset>

@@ -46,7 +46,7 @@ export function SpaceCover({
           <img alt="" className="size-14 shrink-0 rounded-xl bg-white object-contain p-1.5 shadow-sm" src={logoUrl} />
         ) : null}
         <div className="min-w-0">
-          {eyebrow ? <p className="text-xs font-semibold tracking-[0.14em] uppercase opacity-80">{eyebrow}</p> : null}
+          {eyebrow ? <p className="text-xs font-semibold tracking-[0.14em] uppercase">{eyebrow}</p> : null}
           <h1 className="font-display text-2xl leading-tight tracking-tight text-balance sm:text-3xl">{name}</h1>
           {subtitle ? <p className="mt-1 text-sm opacity-85">{subtitle}</p> : null}
         </div>

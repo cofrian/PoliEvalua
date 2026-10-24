@@ -163,7 +163,7 @@ function NavGroups({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: ()
       {groups.map((group, index) => (
         <div className="space-y-1" key={group.label ?? index}>
           {group.label ? (
-            <p className="px-3 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground/80 uppercase">
+            <p className="px-3 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
               {group.label}
             </p>
           ) : null}
@@ -198,10 +198,9 @@ export function UserMenu({ profile }: { profile: Profile }) {
   const tTour = useTranslations("tour");
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={t("open")}
-        className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-muted sm:pr-3"
-      >
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-muted sm:pr-3">
+        {/* El nombre accesible incluye el texto visible (WCAG 2.5.3). */}
+        <span className="sr-only">{t("open")}</span>
         <Avatar profile={profile} />
         <span className="hidden max-w-40 text-left leading-tight sm:block">
           <span className="block truncate text-sm font-medium">{profile.name}</span>
@@ -318,6 +317,12 @@ export function AppShell({
 
   return (
     <div className="min-h-svh bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
+      <a
+        className="sr-only z-50 rounded-md bg-card px-4 py-2 font-semibold shadow focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        href="#contenido"
+      >
+        {t("skip")}
+      </a>
       <div className="hidden border-r border-border/70 bg-card/60 print:hidden lg:block">
       <aside className="sticky top-0 flex h-svh flex-col">
         <div className="flex h-16 items-center px-4">
@@ -349,7 +354,11 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pb-12">
+        <main
+          className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 outline-none sm:px-6 lg:px-8 lg:pb-12"
+          id="contenido"
+          tabIndex={-1}
+        >
           <SectionTabs groups={groups} />
           {children}
         </main>

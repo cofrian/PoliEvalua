@@ -50,7 +50,7 @@ export default async function TeamPresentationsPage({
           ) : null}
         </div>
         <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
-          <ShieldCheck className="size-4 text-leaf-500" /> {t("isolated", { space: event.name })}
+          <ShieldCheck className="size-4 text-leaf-500 dark:text-green-400" /> {t("isolated", { space: event.name })}
         </div>
       </header>
 

@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { writeFileSync } from "node:fs";
 import { loadTestEnv } from "../scripts/load-test-env.mjs";
 
 // Recorrido de una asignatura completa con las funciones de las fases 1–6:
@@ -411,4 +413,48 @@ test("16. La campana abre los avisos y lleva a lo pendiente", async () => {
   const menu = page.getByRole("menu");
   await expect(menu.getByText("Avisos", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
+});
+
+test("17. Accesibilidad WCAG 2.1 AA en las pantallas principales", async ({ browser }) => {
+  const { data: team } = await db.from("teams").select("id").eq("event_id", eventId).limit(1).single();
+  const teacherRoutes = [
+    "/equipos", `/equipos/${team!.id}`, `/equipos/${team!.id}/evaluar`, "/agenda", "/sala", "/rubrica",
+    "/resultados", "/perfil", "/espacios", "/admin", "/admin/ajustes", "/admin/equipos", "/admin/personas",
+    "/admin/evaluacion", "/admin/agenda", "/admin/grabaciones", "/admin/coevaluacion", "/admin/publico",
+    "/admin/asistente", "/admin/paneles", "/admin/academico", "/proyector",
+  ];
+  const studentRoutes = ["/equipos", "/mi-grupo", "/coevaluacion", "/agenda"];
+  const anonymous = await browser.newContext();
+  const visitor = await anonymous.newPage();
+  const runs: [Page, string, string][] = [
+    ...teacherRoutes.map((route) => [pages.teacher!, "profesora", route] as [Page, string, string]),
+    ...studentRoutes.map((route) => [pages.ana!, "estudiante", route] as [Page, string, string]),
+    ...["/login", "/registro", `/votar/${slug}`].map((route) => [visitor, "sin cuenta", route] as [Page, string, string]),
+  ];
+  const report: { who: string; route: string; id: string; impact: string | null | undefined; help: string; targets: string[] }[] = [];
+  for (const [page, who, route] of runs) {
+    await page.goto(route);
+    await page.waitForLoadState("networkidle");
+    for (const theme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      for (const v of violations) {
+        report.push({ who: `${who} (${theme})`, route, id: v.id, impact: v.impact, help: v.help, targets: v.nodes.slice(0, 5).map((n) => n.target.join(" ")) });
+      }
+    }
+    await page.emulateMedia({ colorScheme: "light" });
+  }
+  await anonymous.close();
+  writeFileSync(process.env.A11Y_REPORT ?? "test-results/a11y.json", JSON.stringify(report, null, 2));
+  if (process.env.A11Y_STRICT) expect(report).toEqual([]);
+});
+
+test("18. Con el teclado, lo primero es saltar al contenido", async () => {
+  const page = pages.teacher!;
+  await page.goto("/equipos");
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "Saltar al contenido" });
+  await expect(skip).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#contenido")).toBeFocused();
 });

@@ -29,7 +29,7 @@ export function DiscrepanciesPanel({
   return (
     <section className="space-y-4 rounded-xl border border-orange-500/50 bg-orange-500/5 p-4">
       <h2 className="flex items-center gap-2 font-display text-xl">
-        <AlertTriangle aria-hidden="true" className="size-5 text-orange-600" /> {t("title")}
+        <AlertTriangle aria-hidden="true" className="size-5 text-amber-700" /> {t("title")}
       </h2>
       {underEvaluated.length ? (
         <div>

@@ -83,7 +83,8 @@
       "academic": "Course, competences and learning outcomes.",
       "sponsors": "Sponsor logos on the cover.",
       "audit": "Log of everything that changed and who did it."
-    }
+    },
+    "skip": "Skip to content"
   },
   "userMenu": {
     "open": "User menu",
@@ -1052,7 +1053,8 @@
     "active": "Active",
     "reactivate": "Reactivate",
     "deactivate": "Deactivate",
-    "deactivateNote": "Deactivating deletes nothing: the person can no longer sign in and their notes and evaluations are kept."
+    "deactivateNote": "Deactivating deletes nothing: the person can no longer sign in and their notes and evaluations are kept.",
+    "roleFor": "Role for {name}"
   },
   "invite": {
     "email": "Email",
