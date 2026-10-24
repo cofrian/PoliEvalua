@@ -61,7 +61,7 @@ export default async function AdminPeoplePage({
   const presentRoles = [...new Set((memberships ?? []).map((membership) => membership.role as SpaceRole))];
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
-  const loginUrl = `${siteUrl || "https://valencia-hack-jurado.vercel.app"}/login`;
+  const loginUrl = `${siteUrl || "https://polievalua.tech"}/login`;
 
   return (
     <div className="space-y-6">

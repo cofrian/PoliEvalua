@@ -2,13 +2,15 @@ import { CalendarDays } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm } from "@/components/app/action-form";
-import { clearAgendaAction } from "@/app/(app)/admin/actions";
+import { clearAgendaAction, updateTurnReminderAction } from "@/app/(app)/admin/actions";
 import { EmptyState } from "@/components/app/empty-state";
 import { PageHeader } from "@/components/app/page-header";
 import { AgendaBoard } from "@/components/app/agenda-board";
 import { AgendaGenerator } from "@/components/app/agenda-generator";
 import { ConfirmSubmit } from "@/components/app/confirm-submit";
+import { Button } from "@/components/ui/button";
 import { loadAgenda } from "@/lib/app/agenda-data";
+import { TURN_REMINDER_OPTIONS, turnReminderMinutes } from "@/lib/app/email-notifications";
 import { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
 
@@ -35,6 +37,28 @@ export default async function AdminAgendaPage() {
           {t("text", { units: words.unitsLower })}
         </p>
         <AgendaGenerator defaultStart={suggestedStart()} hasAgenda={slots.length > 0} />
+      </section>
+
+      <section className={cardClass}>
+        <h2 className="mb-2 font-display text-lg">{t("reminderTitle")}</h2>
+        <p className="mb-4 text-sm text-muted-foreground">{t("reminderText", { units: words.unitsLower })}</p>
+        <ActionForm action={updateTurnReminderAction} className="flex flex-wrap items-end gap-3">
+          <label className="space-y-1 text-sm font-semibold">
+            <span className="block">{t("reminderLabel")}</span>
+            <select
+              className="block h-9 rounded-md border border-input bg-transparent px-3 text-sm font-normal"
+              defaultValue={turnReminderMinutes(event.settings)}
+              name="turnMinutes"
+            >
+              {TURN_REMINDER_OPTIONS.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {t("reminderMinutes", { minutes })}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="submit" variant="outline">{t("reminderSave")}</Button>
+        </ActionForm>
       </section>
 
       {slots.length ? (
