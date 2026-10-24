@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  Bell,
   CalendarDays,
   ClipboardCheck,
   Flag,
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { NavGroup, NavIcon, NavItem } from "@/lib/app/navigation";
+import type { Notice } from "@/lib/app/notifications";
 import { cn } from "@/lib/utils";
 
 const icons: Record<NavIcon, LucideIcon> = {
@@ -247,6 +249,48 @@ export function UserMenu({ profile }: { profile: Profile }) {
   );
 }
 
+/** Campana con lo pendiente; cada aviso lleva a donde se resuelve. */
+export function NotificationBell({ notices }: { notices: Notice[] }) {
+  const t = useTranslations("notifications");
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={notices.length ? t("openCount", { count: notices.length }) : t("open")}
+        className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <Bell aria-hidden="true" className="size-5" />
+        {notices.length ? (
+          <span
+            aria-hidden="true"
+            className="absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-4 font-bold text-white"
+          >
+            {notices.length}
+          </span>
+        ) : null}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuLabel>{t("title")}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {notices.length ? (
+          notices.map((notice, index) => (
+            <DropdownMenuItem asChild key={`${notice.kind}-${index}`}>
+              <Link className="whitespace-normal" href={notice.href}>
+                {notice.kind === "turn"
+                  ? t("turn", { team: notice.team, minutes: notice.minutes })
+                  : notice.kind === "live"
+                    ? t("live", { team: notice.team })
+                    : t(notice.kind, { count: notice.count })}
+              </Link>
+            </DropdownMenuItem>
+          ))
+        ) : (
+          <p className="px-2 py-3 text-sm text-muted-foreground">{t("empty")}</p>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /**
  * Marco de la aplicación: barra lateral con el menú del rol en escritorio y,
  * en el móvil, barra inferior con lo principal más un panel con el resto.
@@ -256,9 +300,11 @@ export function AppShell({
   current,
   spaces,
   profile,
+  notices,
   children,
 }: {
   groups: NavGroup[];
+  notices: Notice[];
   current: SpaceOption;
   spaces: SpaceOption[];
   profile: Profile;
@@ -296,7 +342,10 @@ export function AppShell({
               <SpaceSwitcher className="min-w-0 max-w-none flex-1 sm:max-w-64 sm:flex-none" current={current} spaces={spaces} />
             </div>
             <div className="hidden lg:block" />
-            <UserMenu profile={profile} />
+            <div className="flex items-center gap-1">
+              <NotificationBell notices={notices} />
+              <UserMenu profile={profile} />
+            </div>
           </div>
         </header>
 

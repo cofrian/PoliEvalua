@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app/app-shell";
 import { ProductTour, type TourKind } from "@/components/app/product-tour";
 import { RecordingNoticeDialog } from "@/components/app/recording-notice-dialog";
 import { buildNavigation } from "@/lib/app/navigation";
+import { loadNotifications } from "@/lib/app/notifications";
 import { needsRecordingNotice } from "@/lib/app/recording-notice";
 import { getSession } from "@/lib/app/session";
 
@@ -40,7 +41,8 @@ export default async function AppLayout({
 
   // Presencia global y actividad del espacio, usadas para administración y
   // archivado seguro. Ninguna de las dos llamadas bloquea la navegación si falla.
-  await Promise.all([
+  const [notices] = await Promise.all([
+    loadNotifications(session),
     supabase.rpc("touch_last_seen"),
     supabase.rpc("touch_event_activity", { target_event: event.id }),
   ]);
@@ -50,6 +52,7 @@ export default async function AppLayout({
       <AppShell
         current={{ id: event.id, name: event.name }}
         groups={buildNavigation(session, tNav)}
+        notices={notices}
         profile={{
           name: profile.full_name,
           avatarUrl: profile.avatar_url,

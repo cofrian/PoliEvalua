@@ -1661,5 +1661,16 @@
     "reset": "Reiniciar",
     "duration": "Durada",
     "title": "Cronòmetre"
+  },
+  "notifications": {
+    "title": "Avisos",
+    "open": "Avisos",
+    "openCount": "Avisos: {count} pendents",
+    "empty": "No tens res pendent.",
+    "evaluations": "Et {count, plural, one {queda # avaluació} other {queden # avaluacions}} per enviar",
+    "peer": "Et {count, plural, one {queda # coavaluació} other {queden # coavaluacions}} per enviar",
+    "turn": "{minutes, plural, =0 {«{team}» exposa ara} one {«{team}» exposa d'ací a # minut} other {«{team}» exposa d'ací a # minuts}}",
+    "live": "Exposa ara: «{team}»",
+    "recordingNotice": "{count, plural, one {# persona no ha} other {# persones no han}} acceptat l'avís de gravació"
   }
 }

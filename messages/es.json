@@ -1661,5 +1661,16 @@
     "reset": "Reiniciar",
     "duration": "Duración",
     "title": "Cronómetro"
+  },
+  "notifications": {
+    "title": "Avisos",
+    "open": "Avisos",
+    "openCount": "Avisos: {count} pendientes",
+    "empty": "No tienes nada pendiente.",
+    "evaluations": "Te {count, plural, one {queda # evaluación} other {quedan # evaluaciones}} por enviar",
+    "peer": "Te {count, plural, one {queda # coevaluación} other {quedan # coevaluaciones}} por enviar",
+    "turn": "{minutes, plural, =0 {«{team}» expone ya} one {«{team}» expone en # minuto} other {«{team}» expone en # minutos}}",
+    "live": "Expone ahora: «{team}»",
+    "recordingNotice": "{count, plural, one {# persona no ha} other {# personas no han}} aceptado el aviso de grabación"
   }
 }

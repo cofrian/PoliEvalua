@@ -403,3 +403,12 @@ test("15. El cronómetro sale al evaluar, aunque no haya agenda", async () => {
   await expect(box.getByRole("button", { name: "Pausa" })).toBeVisible();
   await expect(timer).not.toHaveText("10:00");
 });
+
+test("16. La campana abre los avisos y lleva a lo pendiente", async () => {
+  const page = pages.teacher!;
+  await page.goto("/equipos");
+  await page.getByRole("button", { name: /^Avisos/ }).click();
+  const menu = page.getByRole("menu");
+  await expect(menu.getByText("Avisos", { exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+});
