@@ -21,6 +21,12 @@ en `e2e/` cuando cambia un flujo de usuario.
 | 0.5 | **Coherencia con la promesa de privacidad** | Revertir la retención de 24 h del audio fallido: el audio se borra siempre al transcribirse o al fallar definitivamente. «Reintentar» solo reintenta los trozos que aún estén en cola; si no, se ofrece pegar el texto. |
 | 0.6 | Prueba de humo en producción | Grabación de 3 min: subida → transcripción → análisis → informe de jurado. |
 
+> Estado (24/10/2026): 0.1 (#12 fusionado), 0.2 (secretos en GitHub), 0.5 (el audio
+> se borra al transcribir, al fallar del todo y a las 3 h si la subida se abandona)
+> y 0.6 (23/10) hechas. 0.3: modelos elegidos a mano en #24; falta pasar
+> `bench:models` con datos. 0.4: la cola no tiene trabajos atascados, pero los
+> secretos del vault solo se pueden ver desde el panel de Supabase.
+
 ---
 
 ## Fase 1 — Base y mejoras rápidas

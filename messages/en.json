@@ -1661,5 +1661,16 @@
     "reset": "Reset",
     "duration": "Length",
     "title": "Timer"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Notifications",
+    "openCount": "Notifications: {count} pending",
+    "empty": "You're all caught up.",
+    "evaluations": "{count, plural, one {# evaluation} other {# evaluations}} left to submit",
+    "peer": "{count, plural, one {# peer review} other {# peer reviews}} left to submit",
+    "turn": "{minutes, plural, =0 {“{team}” presents now} one {“{team}” presents in # minute} other {“{team}” presents in # minutes}}",
+    "live": "Presenting now: “{team}”",
+    "recordingNotice": "{count, plural, one {# person hasn't} other {# people haven't}} accepted the recording notice"
   }
 }

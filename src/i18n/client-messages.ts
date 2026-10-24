@@ -25,6 +25,7 @@ export const CLIENT_NAMESPACES = [
   "locale",
   "nav",
   "notes",
+  "notifications",
   "peer",
   "peerAdmin",
   "profile",
