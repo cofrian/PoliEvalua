@@ -416,6 +416,8 @@ test("16. La campana abre los avisos y lleva a lo pendiente", async () => {
 });
 
 test("17. Accesibilidad WCAG 2.1 AA en las pantallas principales", async ({ browser }) => {
+  // 29 pantallas × 2 temas: bastante más que el límite general.
+  test.setTimeout(600_000);
   const { data: team } = await db.from("teams").select("id").eq("event_id", eventId).limit(1).single();
   const teacherRoutes = [
     "/equipos", `/equipos/${team!.id}`, `/equipos/${team!.id}/evaluar`, "/agenda", "/sala", "/rubrica",

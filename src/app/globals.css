@@ -88,7 +88,8 @@
   --muted-foreground: var(--slate-500);
   --accent: #dff5fb;
   --accent-foreground: var(--upv-ink);
-  --destructive: var(--coral-400);
+  /* Más oscuro que el rojo UPV para llegar a 4,5:1 sobre el fondo (WCAG 1.4.3). */
+  --destructive: #b3261e;
   --destructive-foreground: var(--ink-950);
   --border: var(--line);
   --input: var(--line);
