@@ -1,11 +1,59 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpenCheck, GraduationCap, Trophy, Users } from "lucide-react";
+import {
+  Accessibility,
+  ArrowRight,
+  Bell,
+  BookOpenCheck,
+  CalendarClock,
+  ClipboardCheck,
+  GraduationCap,
+  Languages,
+  Mic,
+  MonitorPlay,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { LocaleSwitcher } from "@/components/app/locale-switcher";
-import { UpvBrand } from "@/components/brand/upv-brand";
+import { PoliBrand, PoliWordmark } from "@/components/brand/poli-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+
+/** Logo de GitHub (lucide ya no incluye marcas). */
+function Github({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden="true" className={className ?? "size-4"} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.82 1.19 3.08 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" />
+    </svg>
+  );
+}
+
+const REPO_URL = "https://github.com/cofrian/valencia-hack-jurado";
+
+const FEATURES = [
+  ["rubric", ClipboardCheck],
+  ["live", MonitorPlay],
+  ["peer", UsersRound],
+  ["recording", Mic],
+  ["agenda", CalendarClock],
+  ["assistant", Sparkles],
+  ["notices", Bell],
+  ["languages", Languages],
+  ["access", Accessibility],
+  ["privacy", ShieldCheck],
+] as const;
+
+const SHOWCASE = [
+  ["evaluate", "evaluar"],
+  ["results", "resultados"],
+  ["room", "sala"],
+  ["projector", "proyector"],
+] as const;
 
 export default async function Home() {
   const t = await getTranslations("home");
@@ -16,17 +64,18 @@ export default async function Home() {
       ["awards", Trophy],
       ["project", BookOpenCheck],
     ] as const
-  ).map(([key, icon]) => ({
-    icon,
-    title: t(`modes.${key}.title`),
-    description: t(`modes.${key}.description`),
-  }));
+  ).map(([key, icon]) => ({ icon, title: t(`modes.${key}.title`), description: t(`modes.${key}.description`) }));
 
   return (
-    <main className="min-h-svh bg-muted text-upv-ink dark:bg-ink-950 dark:text-upv-100">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <UpvBrand />
+    <main className="min-h-svh bg-background text-upv-ink dark:bg-ink-950 dark:text-upv-100">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <PoliBrand />
+          <nav aria-label={t("navLabel")} className="hidden items-center gap-6 text-sm font-semibold md:flex">
+            <a className="hover:underline" href="#funciones">{t("navFeatures")}</a>
+            <a className="hover:underline" href="#demo">{t("navDemo")}</a>
+            <a className="hover:underline" href="#codigo-abierto">{t("navOpenSource")}</a>
+          </nav>
           <div className="flex items-center gap-2">
             <LocaleSwitcher />
             <ThemeToggle />
@@ -37,69 +86,181 @@ export default async function Home() {
         </div>
       </header>
 
+      {/* Portada */}
       <section className="relative overflow-hidden border-b border-border bg-upv-900 text-white">
-        <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-2/5 bg-upv-yellow [clip-path:polygon(34%_0,100%_0,100%_100%,0_100%)] lg:block" />
-        <div aria-hidden="true" className="absolute bottom-0 right-[24%] hidden h-2/3 w-1/4 bg-upv-blue [clip-path:polygon(45%_0,100%_0,55%_100%,0_100%)] lg:block" />
-        <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)] lg:px-8 lg:py-28">
+        <div aria-hidden="true" className="absolute -right-24 -top-24 size-96 rounded-full bg-upv-yellow/20 blur-3xl" />
+        <div aria-hidden="true" className="absolute -bottom-32 left-1/3 size-96 rounded-full bg-upv-blue/20 blur-3xl" />
+        <div className="relative mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:px-8 lg:py-24">
           <div>
-            <p className="mb-4 font-heading text-sm font-semibold uppercase tracking-[0.12em] text-upv-blue">
-              {t("kicker")}
-            </p>
-            <h1 className="max-w-4xl font-heading text-4xl font-bold leading-[1.08] text-balance sm:text-5xl lg:text-6xl">
+            <a
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold hover:bg-white/15"
+              href={REPO_URL}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <Github aria-hidden="true" className="size-3.5" />
+              {t("badge")}
+            </a>
+            <h1 className="mt-6 font-heading text-4xl font-bold leading-[1.08] text-balance sm:text-5xl xl:text-[3.5rem]">
               {t("title")}
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">
-              {t("lead")}
-            </p>
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">{t("lead")}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild className="h-12 bg-upv-yellow px-6 font-semibold text-upv-ink hover:bg-upv-yellow/90">
-                <Link href="/login">
-                  {t("access")}
+                <Link href="/registro">
+                  {t("createSpace")}
                   <ArrowRight aria-hidden="true" />
                 </Link>
               </Button>
               <Button asChild className="h-12 border-white/55 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white" variant="outline">
-                <Link href="/registro">{t("createSpace")}</Link>
+                <a href="#demo">{t("watchDemo")}</a>
               </Button>
             </div>
+            <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-white/15 pt-6">
+              {(["stat1", "stat2", "stat3"] as const).map((key) => (
+                <div key={key}>
+                  <dt className="text-xs text-white/75">{t(`${key}.label`)}</dt>
+                  <dd className="font-heading text-2xl font-bold">{t(`${key}.value`)}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <div className="hidden self-end lg:block">
-            <p className="max-w-xs font-heading text-xl font-semibold leading-8 text-upv-ink">
-              {t("aside")}
-            </p>
+          <div className="overflow-hidden rounded-xl border border-white/15 bg-card shadow-2xl shadow-black/40">
+            <div aria-hidden="true" className="flex gap-1.5 border-b border-border bg-muted px-3 py-2">
+              <span className="size-2.5 rounded-full bg-upv-red/70" />
+              <span className="size-2.5 rounded-full bg-upv-yellow" />
+              <span className="size-2.5 rounded-full bg-leaf-500/70" />
+            </div>
+            <Image alt={t("heroAlt")} height={1000} priority sizes="(min-width: 1024px) 50vw, 100vw" src="/showcase/evaluar.webp" width={1600} />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      {/* Funciones */}
+      <section className="mx-auto w-full max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6 sm:py-24 lg:px-8" id="funciones">
         <div className="max-w-3xl">
-          <p className="font-heading text-sm font-semibold uppercase tracking-[0.12em] text-upv-500 dark:text-upv-300">
-            {t("kicker2")}
-          </p>
-          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-            {t("title2")}
-          </h2>
-          <p className="mt-4 text-base leading-7 text-muted-foreground">
-            {t("lead2")}
-          </p>
+          <p className="font-heading text-sm font-semibold uppercase tracking-[0.12em] text-upv-500 dark:text-upv-300">{t("featuresKicker")}</p>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t("featuresTitle")}</h2>
+          <p className="mt-4 text-base leading-7 text-muted-foreground">{t("featuresLead")}</p>
         </div>
-        <div className="mt-9 grid gap-px overflow-hidden rounded-xl border border-border bg-line sm:grid-cols-2 lg:grid-cols-4 dark:bg-[#383C3D]">
-          {modes.map(({ icon: Icon, title, description }) => (
-            <article className="bg-white p-6 dark:bg-card" key={title}>
-              <span className="mb-5 flex size-11 items-center justify-center rounded-md bg-upv-blue/25 text-upv-900 dark:bg-upv-blue/20 dark:text-upv-blue">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {FEATURES.map(([key, Icon]) => (
+            <article className="rounded-xl border border-border bg-card p-5" key={key}>
+              <span className="mb-4 flex size-10 items-center justify-center rounded-lg bg-upv-yellow/30 text-upv-900 dark:bg-upv-yellow/15 dark:text-upv-yellow">
                 <Icon aria-hidden="true" className="size-5" />
               </span>
-              <h3 className="font-heading text-lg font-semibold">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+              <h3 className="font-heading font-semibold">{t(`features.${key}.title`)}</h3>
+              <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t(`features.${key}.text`)}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <footer className="border-t border-border bg-upv-900 text-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-7 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p className="font-heading font-semibold">{t("footer")}</p>
-          <p className="text-white/70">{t("footerTags")}</p>
+      {/* Capturas */}
+      <section className="border-y border-border bg-muted dark:bg-card/40">
+        <div className="mx-auto w-full max-w-7xl space-y-20 px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          {SHOWCASE.map(([key, image], index) => (
+            <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14" key={key}>
+              <div className={index % 2 ? "lg:order-2" : undefined}>
+                <p className="font-heading text-sm font-semibold uppercase tracking-[0.12em] text-upv-500 dark:text-upv-300">{t(`showcase.${key}.kicker`)}</p>
+                <h3 className="mt-3 font-heading text-2xl font-bold sm:text-3xl">{t(`showcase.${key}.title`)}</h3>
+                <p className="mt-4 leading-7 text-muted-foreground">{t(`showcase.${key}.text`)}</p>
+              </div>
+              <Image
+                alt={t(`showcase.${key}.title`)}
+                className="rounded-xl border border-border shadow-xl"
+                height={1000}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                src={`/showcase/${image}.webp`}
+                width={1600}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Vídeo */}
+      <section className="mx-auto w-full max-w-5xl scroll-mt-20 px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8" id="demo">
+        <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t("demoTitle")}</h2>
+        <p className="mx-auto mt-4 max-w-2xl leading-7 text-muted-foreground">{t("demoLead")}</p>
+        <video
+          aria-label={t("demoTitle")}
+          className="mt-10 w-full rounded-xl border border-border shadow-2xl"
+          controls
+          muted
+          playsInline
+          poster="/showcase/admin.webp"
+          preload="none"
+        >
+          <source src="/showcase/demo.webm" type="video/webm" />
+        </video>
+      </section>
+
+      {/* Cómo funciona */}
+      <section className="border-t border-border bg-card">
+        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t("stepsTitle")}</h2>
+          <ol className="mt-10 grid gap-6 md:grid-cols-3">
+            {(["one", "two", "three"] as const).map((key, index) => (
+              <li className="rounded-xl border border-border p-6" key={key}>
+                <span className="font-heading text-4xl font-bold text-upv-300 dark:text-upv-500">0{index + 1}</span>
+                <h3 className="mt-3 font-heading text-lg font-semibold">{t(`steps.${key}.title`)}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{t(`steps.${key}.text`)}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            {modes.map(({ icon: Icon, title, description }) => (
+              <article className="bg-card p-6" key={title}>
+                <Icon aria-hidden="true" className="mb-4 size-5 text-upv-700 dark:text-upv-blue" />
+                <h3 className="font-heading font-semibold">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Código abierto */}
+      <section className="scroll-mt-20 bg-upv-900 text-white" id="codigo-abierto">
+        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:px-8">
+          <div>
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t("openTitle")}</h2>
+            <p className="mt-4 leading-7 text-white/85">{t("openLead")}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="h-12 bg-white px-6 font-semibold text-upv-ink hover:bg-white/90">
+                <a href={REPO_URL} rel="noreferrer" target="_blank">
+                  <Github aria-hidden="true" />
+                  {t("openRepo")}
+                </a>
+              </Button>
+              <Button asChild className="h-12 border-white/55 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white" variant="outline">
+                <a href={`${REPO_URL}/blob/main/CONTRIBUTING.md`} rel="noreferrer" target="_blank">{t("openContribute")}</a>
+              </Button>
+            </div>
+          </div>
+          <ul className="grid gap-3 self-center sm:grid-cols-2">
+            {(["license", "stack", "selfHost", "free"] as const).map((key) => (
+              <li className="rounded-xl border border-white/15 bg-white/5 p-5" key={key}>
+                <p className="font-heading font-semibold">{t(`open.${key}.title`)}</p>
+                <p className="mt-1 text-sm leading-6 text-white/80">{t(`open.${key}.text`)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <footer className="border-t border-border bg-card">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <div>
+            <PoliWordmark className="text-lg" />
+            <p className="mt-1 max-w-xl text-muted-foreground">{t("disclaimer")}</p>
+          </div>
+          <div className="flex gap-5 font-semibold">
+            <a className="hover:underline" href={REPO_URL} rel="noreferrer" target="_blank">GitHub</a>
+            <a className="hover:underline" href={`${REPO_URL}/blob/main/LICENSE`} rel="noreferrer" target="_blank">{t("footerLicense")}</a>
+            <Link className="hover:underline" href="/login">{t("login")}</Link>
+          </div>
         </div>
       </footer>
     </main>

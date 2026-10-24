@@ -38,7 +38,7 @@ import { useState, type ReactNode } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { OPEN_TOUR_EVENT } from "@/components/app/product-tour";
 import { SpaceSwitcher, type SpaceOption } from "@/components/app/space-switcher";
-import { UpvBrand } from "@/components/brand/upv-brand";
+import { PoliBrand } from "@/components/brand/poli-brand";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -326,7 +326,7 @@ export function AppShell({
       <div className="hidden border-r border-border/70 bg-card/60 print:hidden lg:block">
       <aside className="sticky top-0 flex h-svh flex-col">
         <div className="flex h-16 items-center px-4">
-          <UpvBrand compact href="/equipos" />
+          <PoliBrand compact href="/equipos" />
         </div>
         <div className="px-3 pb-4">
           <SpaceSwitcher className="w-full max-w-none sm:max-w-none" current={current} spaces={spaces} />
@@ -409,7 +409,7 @@ export function AppShell({
               <SheetContent className="w-[85vw] max-w-sm overflow-y-auto p-4" side="left">
                 <SheetTitle className="sr-only">{t("menu")}</SheetTitle>
                 <div className="mb-4 pt-2">
-                  <UpvBrand compact href="/equipos" />
+                  <PoliBrand compact href="/equipos" />
                 </div>
                 <NavGroups groups={groups} onNavigate={() => setOpen(false)} />
               </SheetContent>

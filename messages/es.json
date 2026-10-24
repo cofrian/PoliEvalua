@@ -146,7 +146,7 @@
     "registerMeta": "Crear cuenta",
     "registerTitle": "Crear cuenta",
     "registerDescription": "Crea una única cuenta para participar en varios proyectos, asignaturas, premios o hackathones.",
-    "footer": "Evalúa UPV · Acceso seguro a tus espacios de evaluación",
+    "footer": "PoliEvalúa · Acceso seguro a tus espacios de evaluación",
     "invitation": "Esta invitación añadirá el espacio y el rol correspondiente a tu cuenta.",
     "email": "Correo electrónico",
     "emailPlaceholder": "tu@correo.com",
@@ -684,17 +684,136 @@
       }
     },
     "login": "Entrar",
-    "kicker": "Evaluación abierta y reutilizable",
-    "title": "Crea el proceso de evaluación que necesita tu actividad",
-    "lead": "Gestiona espacios, formularios, rúbricas, participantes e invitaciones para proyectos, asignaturas, premios y hackathones.",
-    "access": "Acceder a la plataforma",
-    "createSpace": "Crear un espacio",
-    "aside": "Una base común. Cada espacio conserva su identidad, reglas y personas.",
-    "kicker2": "Un sistema, distintos contextos",
-    "title2": "Todo se configura desde el propio espacio",
-    "lead2": "El gestor decide quién participa, qué se pregunta, cómo se calcula el resultado y qué información puede ver cada rol.",
-    "footer": "Evalúa · Universitat Politècnica de València",
-    "footerTags": "Accesible · Responsive · Datos protegidos por RLS"
+    "navLabel": "Secciones",
+    "navFeatures": "Funciones",
+    "navDemo": "Demo",
+    "navOpenSource": "Código abierto",
+    "badge": "Código abierto · Licencia MIT",
+    "title": "Evalúa hackathons y clases sin papeles ni hojas de cálculo",
+    "lead": "Rúbricas, jurado en directo, coevaluación, agenda de exposiciones y transcripción con IA en una sola plataforma. Gratis, accesible y de código abierto.",
+    "createSpace": "Crear un espacio gratis",
+    "watchDemo": "Ver la demo",
+    "heroAlt": "Pantalla de evaluación con la rúbrica, el cronómetro y las notas del jurado",
+    "stat1": {
+      "label": "Coste",
+      "value": "0 €"
+    },
+    "stat2": {
+      "label": "Idiomas",
+      "value": "3"
+    },
+    "stat3": {
+      "label": "Accesibilidad",
+      "value": "AA"
+    },
+    "featuresKicker": "Todo en un sitio",
+    "featuresTitle": "Lo que necesita un jurado, un profesor y sus equipos",
+    "featuresLead": "Cada espacio activa solo lo que usa: un hackathon de 48 horas o una asignatura de todo el cuatrimestre.",
+    "features": {
+      "rubric": {
+        "title": "Rúbricas ponderadas",
+        "text": "Criterios con peso, niveles descritos y nota sobre 100 calculada al momento."
+      },
+      "live": {
+        "title": "Resultados en directo",
+        "text": "Ranking que se actualiza solo, discrepancias entre jueces y exportación a CSV y PDF."
+      },
+      "peer": {
+        "title": "Coevaluación anónima",
+        "text": "El alumnado evalúa a otros grupos y a sí mismo, siempre sin nombres."
+      },
+      "recording": {
+        "title": "Grabación y transcripción",
+        "text": "La exposición se transcribe con IA y el audio se borra en cuanto hay texto."
+      },
+      "agenda": {
+        "title": "Agenda y cronómetro",
+        "text": "Turnos por sala, modo proyector y cronómetro compartido."
+      },
+      "assistant": {
+        "title": "Asistente con IA",
+        "text": "Describe tu actividad y te prepara el espacio, la rúbrica y la agenda."
+      },
+      "notices": {
+        "title": "Avisos",
+        "text": "Campana en la app y correo antes de tu turno o al publicar resultados."
+      },
+      "languages": {
+        "title": "Castellano, valencià, English",
+        "text": "Toda la interfaz y la transcripción en los tres idiomas."
+      },
+      "access": {
+        "title": "Accesible",
+        "text": "Auditada con WCAG 2.1 AA, en modo claro y oscuro."
+      },
+      "privacy": {
+        "title": "Datos protegidos",
+        "text": "Cada espacio aislado con seguridad a nivel de fila y registro de auditoría."
+      }
+    },
+    "showcase": {
+      "evaluate": {
+        "kicker": "Para el jurado",
+        "title": "Puntuar es tocar un botón",
+        "text": "Cada criterio muestra sus niveles. La nota sobre 100 se calcula al instante, se guarda sola y el cronómetro marca el tiempo de la exposición."
+      },
+      "results": {
+        "kicker": "Para la organización",
+        "title": "Resultados mientras se vota",
+        "text": "Ves cada evaluación según llega, qué equipos tienen pocas notas y dónde discrepan los jueces. Al cerrar, descargas el ranking."
+      },
+      "room": {
+        "kicker": "El día de las exposiciones",
+        "title": "La sala, bajo control",
+        "text": "Quién expone ahora, quién va después y el tiempo que queda. La grabación se convierte en resumen y material de apoyo para evaluar."
+      },
+      "projector": {
+        "kicker": "En la pantalla grande",
+        "title": "Modo proyector",
+        "text": "Una vista limpia para proyectar la agenda en la sala y que todos sepan cuándo les toca."
+      }
+    },
+    "demoTitle": "Mírala en acción",
+    "demoLead": "Un recorrido real: el jurado evalúa a un equipo, consulta la sala y la organización sigue los resultados en directo.",
+    "stepsTitle": "Listo en tres pasos",
+    "steps": {
+      "one": {
+        "title": "Crea tu espacio",
+        "text": "Elige plantilla (hackathon, asignatura, premios o proyecto) o deja que el asistente lo prepare."
+      },
+      "two": {
+        "title": "Invita a la gente",
+        "text": "Importa la lista de PoliformaT, comparte el código o envía invitaciones por correo."
+      },
+      "three": {
+        "title": "Evalúa y publica",
+        "text": "El jurado puntúa desde el móvil y tú publicas los resultados con un clic."
+      }
+    },
+    "openTitle": "Código abierto, de la comunidad para la comunidad",
+    "openLead": "PoliEvalúa es un proyecto independiente y abierto nacido en la UPV. Puedes leer todo el código, proponer mejoras o instalarlo en tu propio servidor.",
+    "openRepo": "Ver en GitHub",
+    "openContribute": "Cómo contribuir",
+    "open": {
+      "license": {
+        "title": "Licencia MIT",
+        "text": "Úsalo, modifícalo y compártelo libremente."
+      },
+      "stack": {
+        "title": "Tecnología moderna",
+        "text": "Next.js, Supabase, Tailwind y modelos de IA abiertos."
+      },
+      "selfHost": {
+        "title": "Instálalo tú",
+        "text": "Guía paso a paso para tu propio despliegue."
+      },
+      "free": {
+        "title": "Gratis",
+        "text": "Funciona con los planes gratuitos de cada servicio."
+      }
+    },
+    "disclaimer": "Proyecto independiente de código abierto. No es un servicio oficial de la Universitat Politècnica de València.",
+    "footerLicense": "Licencia"
   },
   "platform": {
     "account": "Tu cuenta",

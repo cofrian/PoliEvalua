@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { AutoRefresh } from "@/components/app/auto-refresh";
-import { UpvBrand } from "@/components/brand/upv-brand";
+import { PoliBrand } from "@/components/brand/poli-brand";
 import { byRoom, scheduleRoom, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
 import { publicVoteSettings } from "@/lib/app/public-vote";
@@ -50,7 +50,7 @@ export default async function ProjectorPage() {
     <main className="min-h-svh bg-ink-950 p-8 text-white" lang={event.locale}>
       <AutoRefresh seconds={5} />
       <header className="mb-10 flex items-center justify-between gap-6">
-        <UpvBrand className="[&_*]:text-white" href="/admin" />
+        <PoliBrand className="text-white" href="/admin" />
         <p className="font-display text-3xl">{event.name}</p>
       </header>
 

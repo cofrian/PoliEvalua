@@ -177,17 +177,15 @@ test.afterAll(async () => {
 test("1. Portada y acceso con contraseña", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Crea el proceso de evaluación/ }),
+    page.getByRole("heading", { name: /Evalúa hackathons y clases/ }),
   ).toBeVisible();
-  await expect(page.getByText("Next.js")).toHaveCount(0);
-  await page.getByRole("link", { name: "Entrar" }).click();
+  await expect(page.getByRole("link", { name: "Ver en GitHub" })).toBeVisible();
+  await page.getByRole("link", { name: "Entrar" }).first().click();
   await expect(page.getByLabel("Código de acceso")).toHaveCount(0);
   await expect(page.getByLabel("Nombre completo")).toHaveCount(0);
   await expect(page.getByLabel("Contraseña")).toBeVisible();
   await expect(page.getByRole("link", { name: "Crear cuenta" })).toBeVisible();
-  await expect(
-    page.getByAltText(/Universitat Politècnica de València/).first(),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "PoliEvalúa" }).first()).toBeVisible();
 });
 
 test("2. Un usuario inexistente no puede entrar", async ({ page }) => {

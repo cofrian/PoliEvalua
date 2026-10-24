@@ -146,7 +146,7 @@
     "registerMeta": "Create account",
     "registerTitle": "Create account",
     "registerDescription": "Create a single account to take part in projects, courses, awards or hackathons.",
-    "footer": "Evalúa UPV · Secure access to your evaluation spaces",
+    "footer": "PoliEvalúa · Secure access to your evaluation spaces",
     "invitation": "This invitation will add the space and its role to your account.",
     "email": "Email",
     "emailPlaceholder": "you@email.com",
@@ -684,17 +684,136 @@
       }
     },
     "login": "Sign in",
-    "kicker": "Open, reusable evaluation",
-    "title": "Build the evaluation process your activity needs",
-    "lead": "Manage spaces, forms, rubrics, participants and invitations for projects, courses, awards and hackathons.",
-    "access": "Go to the platform",
-    "createSpace": "Create a space",
-    "aside": "One shared base. Each space keeps its own identity, rules and people.",
-    "kicker2": "One system, different contexts",
-    "title2": "Everything is set up from the space itself",
-    "lead2": "The manager decides who takes part, what is asked, how the result is calculated and what each role can see.",
-    "footer": "Evalúa · Universitat Politècnica de València",
-    "footerTags": "Accessible · Responsive · Data protected by RLS"
+    "navLabel": "Sections",
+    "navFeatures": "Features",
+    "navDemo": "Demo",
+    "navOpenSource": "Open source",
+    "badge": "Open source · MIT licence",
+    "title": "Judge hackathons and grade classes without paper or spreadsheets",
+    "lead": "Rubrics, live judging, peer review, presentation schedules and AI transcription in one platform. Free, accessible and open source.",
+    "createSpace": "Create a free space",
+    "watchDemo": "Watch the demo",
+    "heroAlt": "Evaluation screen with the rubric, the timer and the judges' notes",
+    "stat1": {
+      "label": "Cost",
+      "value": "€0"
+    },
+    "stat2": {
+      "label": "Languages",
+      "value": "3"
+    },
+    "stat3": {
+      "label": "Accessibility",
+      "value": "AA"
+    },
+    "featuresKicker": "All in one place",
+    "featuresTitle": "What judges, teachers and their teams need",
+    "featuresLead": "Each space turns on only what it uses: a 48-hour hackathon or a semester-long course.",
+    "features": {
+      "rubric": {
+        "title": "Weighted rubrics",
+        "text": "Weighted criteria, described levels and a score out of 100 computed instantly."
+      },
+      "live": {
+        "title": "Live results",
+        "text": "A self-updating ranking, judge disagreements and CSV and PDF export."
+      },
+      "peer": {
+        "title": "Anonymous peer review",
+        "text": "Students review other groups and themselves, always without names."
+      },
+      "recording": {
+        "title": "Recording and transcription",
+        "text": "Talks are transcribed with AI and the audio is deleted as soon as there's text."
+      },
+      "agenda": {
+        "title": "Schedule and timer",
+        "text": "Slots per room, projector mode and a shared timer."
+      },
+      "assistant": {
+        "title": "AI assistant",
+        "text": "Describe your activity and it sets up the space, rubric and schedule."
+      },
+      "notices": {
+        "title": "Notifications",
+        "text": "In-app bell and email before your slot or when results are out."
+      },
+      "languages": {
+        "title": "Castellano, valencià, English",
+        "text": "The whole interface and transcription in three languages."
+      },
+      "access": {
+        "title": "Accessible",
+        "text": "Audited against WCAG 2.1 AA in light and dark mode."
+      },
+      "privacy": {
+        "title": "Protected data",
+        "text": "Every space isolated with row-level security and an audit log."
+      }
+    },
+    "showcase": {
+      "evaluate": {
+        "kicker": "For judges",
+        "title": "Scoring is one tap",
+        "text": "Every criterion shows its levels. The score out of 100 updates instantly, saves itself and the timer tracks the talk."
+      },
+      "results": {
+        "kicker": "For organisers",
+        "title": "Results while voting happens",
+        "text": "See each evaluation as it arrives, which teams lack scores and where judges disagree. Download the ranking when you close."
+      },
+      "room": {
+        "kicker": "On presentation day",
+        "title": "The room, under control",
+        "text": "Who's presenting, who's next and how much time is left. The recording becomes a summary and support material for judging."
+      },
+      "projector": {
+        "kicker": "On the big screen",
+        "title": "Projector mode",
+        "text": "A clean view to show the schedule in the room so everyone knows when they're up."
+      }
+    },
+    "demoTitle": "See it in action",
+    "demoLead": "A real walkthrough: a judge scores a team, checks the room, and the organiser follows results live.",
+    "stepsTitle": "Ready in three steps",
+    "steps": {
+      "one": {
+        "title": "Create your space",
+        "text": "Pick a template (hackathon, course, awards or project) or let the assistant set it up."
+      },
+      "two": {
+        "title": "Invite people",
+        "text": "Import the PoliformaT list, share the code or send email invitations."
+      },
+      "three": {
+        "title": "Judge and publish",
+        "text": "Judges score from their phones and you publish results in one click."
+      }
+    },
+    "openTitle": "Open source, by the community for the community",
+    "openLead": "PoliEvalúa is an independent open project born at UPV. Read all the code, suggest improvements or run it on your own server.",
+    "openRepo": "View on GitHub",
+    "openContribute": "How to contribute",
+    "open": {
+      "license": {
+        "title": "MIT licence",
+        "text": "Use it, change it and share it freely."
+      },
+      "stack": {
+        "title": "Modern stack",
+        "text": "Next.js, Supabase, Tailwind and open AI models."
+      },
+      "selfHost": {
+        "title": "Host it yourself",
+        "text": "Step-by-step guide for your own deployment."
+      },
+      "free": {
+        "title": "Free",
+        "text": "Runs on each service's free tier."
+      }
+    },
+    "disclaimer": "Independent open-source project. Not an official service of the Universitat Politècnica de València.",
+    "footerLicense": "Licence"
   },
   "platform": {
     "account": "Your account",
