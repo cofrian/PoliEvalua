@@ -32,7 +32,7 @@ export function InvitationForm() {
         <div className="space-y-1.5">
           <Label htmlFor="invite-role">{t("role")}</Label>
           <select className={`${selectClass} w-full`} defaultValue="judge" id="invite-role" name="role">
-            {(["manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"] as const).map((role) => (
+            {(["judge", "mentor", "student", "manager", "viewer"] as const).map((role) => (
               <option key={role} value={role}>
                 {tRoles(role)}
               </option>

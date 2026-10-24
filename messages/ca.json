@@ -7,13 +7,13 @@
     "spaceHint": "Idioma dels textos de la IA, de la votació del públic i el que es parla per defecte en les gravacions."
   },
   "roles": {
-    "owner": "Propietari",
-    "manager": "Gestor",
-    "judge": "Jutge",
+    "owner": "Gestió (propietari)",
+    "manager": "Gestió",
+    "judge": "Jurat",
     "mentor": "Mentor",
-    "teacher": "Docent",
-    "student": "Estudiant",
-    "reviewer": "Avaluador",
+    "teacher": "Jurat",
+    "student": "Participant",
+    "reviewer": "Jurat",
     "viewer": "Consulta"
   },
   "nav": {
@@ -773,19 +773,19 @@
     "roles": {
       "judge": {
         "label": "Jurat",
-        "description": "Puntua amb la rúbrica."
+        "description": "Avalua i puntua amb la rúbrica."
       },
       "mentor": {
-        "label": "Mentoria",
-        "description": "Comenta i pren notes sense votar."
+        "label": "Mentor",
+        "description": "Acompanya i pren notes, sense puntuar."
       },
       "teacher": {
         "label": "Professorat",
         "description": "Configura i avalua activitats docents."
       },
       "student": {
-        "label": "Alumnat",
-        "description": "Participa sense permisos de gestió ni vot docent."
+        "label": "Participant",
+        "description": "Qui és avaluat: veu la seua fitxa, puja lliuraments i la seua nota."
       },
       "reviewer": {
         "label": "Avaluadors",
@@ -793,7 +793,7 @@
       },
       "viewer": {
         "label": "Consulta",
-        "description": "Accés de només lectura."
+        "description": "Només pot mirar."
       }
     },
     "modules": {
@@ -1652,5 +1652,14 @@
         "text": "Pots tornar a veure este tutorial quan vulgues des del teu menú."
       }
     }
+  },
+  "timer": {
+    "left": "Temps restant",
+    "start": "Començar",
+    "resume": "Continuar",
+    "pause": "Pausa",
+    "reset": "Reiniciar",
+    "duration": "Durada",
+    "title": "Cronòmetre"
   }
 }

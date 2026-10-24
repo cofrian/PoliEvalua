@@ -7,13 +7,13 @@
     "spaceHint": "Idioma de los textos de la IA, de la votación del público y el que se habla por defecto en las grabaciones."
   },
   "roles": {
-    "owner": "Propietario",
-    "manager": "Gestor",
-    "judge": "Juez",
+    "owner": "Gestión (propietario)",
+    "manager": "Gestión",
+    "judge": "Jurado",
     "mentor": "Mentor",
-    "teacher": "Docente",
-    "student": "Estudiante",
-    "reviewer": "Evaluador",
+    "teacher": "Jurado",
+    "student": "Participante",
+    "reviewer": "Jurado",
     "viewer": "Consulta"
   },
   "nav": {
@@ -773,19 +773,19 @@
     "roles": {
       "judge": {
         "label": "Jurado",
-        "description": "Puntúa mediante la rúbrica."
+        "description": "Evalúa y puntúa con la rúbrica."
       },
       "mentor": {
-        "label": "Mentoría",
-        "description": "Comenta y toma notas sin votar."
+        "label": "Mentor",
+        "description": "Acompaña y toma notas, sin puntuar."
       },
       "teacher": {
         "label": "Profesorado",
         "description": "Configura y evalúa actividades docentes."
       },
       "student": {
-        "label": "Alumnado",
-        "description": "Participa sin permisos de gestión ni voto docente."
+        "label": "Participante",
+        "description": "Quien es evaluado: ve su ficha, sube entregas y su nota."
       },
       "reviewer": {
         "label": "Evaluadores",
@@ -793,7 +793,7 @@
       },
       "viewer": {
         "label": "Consulta",
-        "description": "Acceso de solo lectura."
+        "description": "Solo puede mirar."
       }
     },
     "modules": {
@@ -1652,5 +1652,14 @@
         "text": "Puedes volver a ver este tutorial cuando quieras desde tu menú."
       }
     }
+  },
+  "timer": {
+    "left": "Tiempo restante",
+    "start": "Empezar",
+    "resume": "Seguir",
+    "pause": "Pausa",
+    "reset": "Reiniciar",
+    "duration": "Duración",
+    "title": "Cronómetro"
   }
 }

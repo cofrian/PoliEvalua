@@ -40,6 +40,7 @@ export const CLIENT_NAMESPACES = [
   "studio",
   "teamEditor",
   "teams",
+  "timer",
   "tour",
   "userMenu",
   "weaknesses",

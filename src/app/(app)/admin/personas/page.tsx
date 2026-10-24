@@ -15,6 +15,8 @@ import { getSession, type SpaceRole } from "@/lib/app/session";
 import { cardClass, selectClass } from "@/lib/app/ui";
 
 const ROLES: SpaceRole[] = ["owner", "manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"];
+/** Perfiles que se eligen: Jurado, Mentor, Participante, Gestión y Consulta. */
+const CHOOSABLE: SpaceRole[] = ["judge", "mentor", "student", "manager", "viewer"];
 const DATE = { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" } as const;
 
 export default async function AdminPeoplePage({
@@ -185,7 +187,8 @@ export default async function AdminPeoplePage({
                         <ActionForm action={setUserRoleAction} className="flex gap-2">
                           <input name="id" type="hidden" value={profile.id} />
                           <select className={selectClass} defaultValue={membership.role} name="role">
-                            {ROLES.filter((value) => value !== "owner").map((value) => (
+                            {/* Los cinco perfiles claros; si alguien tiene uno antiguo, también sale. */}
+                            {[...new Set<SpaceRole>([...CHOOSABLE, membership.role as SpaceRole])].map((value) => (
                               <option key={value} value={value}>
                                 {tRoles(value)}
                               </option>

@@ -8,6 +8,7 @@ import { EvaluationForm } from "@/components/app/evaluation-form";
 import { NotesDrawer } from "@/components/app/notes-drawer";
 import { NotesPanel } from "@/components/app/notes-panel";
 import { PresentationStudio } from "@/components/app/presentation-studio";
+import { PresentationTimer } from "@/components/app/presentation-timer";
 import { loadPresentationData, recordingDisabledReason } from "@/lib/app/presentation-data";
 import { RubricLiveUpdates } from "@/components/app/rubric-live-updates";
 import { loadEvaluationContext } from "@/lib/app/evaluation-data";
@@ -70,6 +71,7 @@ export default async function EvaluatePage({
     <div className="space-y-6">
       {back}
       <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title", { team: team.name })}</h1>
+      <PresentationTimer />
 
       {presentations ? (
         <details className="group rounded-xl border border-border bg-white p-4 dark:bg-card" open={presentations.records.length === 0}>
