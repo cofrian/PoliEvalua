@@ -42,7 +42,7 @@ export function LiveRefresh({ eventId }: { eventId: string }) {
   }, [supabase, router, eventId]);
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-leaf-500">
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-leaf-500 dark:text-green-400">
       <span className="size-2 animate-pulse rounded-full bg-leaf-500" aria-hidden="true" />
       {t("live")}
       {lastUpdate ? (

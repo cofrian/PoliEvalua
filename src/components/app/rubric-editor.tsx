@@ -257,7 +257,7 @@ function WeightBar({ total }: { total: number }) {
     <div className="space-y-1.5">
       <div className="flex justify-between text-sm font-semibold">
         <span>{t("weightSum")}</span>
-        <span className={ok ? "text-leaf-500" : "text-coral-400"}>
+        <span className={ok ? "text-leaf-500 dark:text-green-400" : "text-coral-400"}>
           {total} % {ok ? "✔" : t("mustSum")}
         </span>
       </div>

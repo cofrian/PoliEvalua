@@ -270,7 +270,7 @@ function JuryReport({ report }: { report: JuryReportRecord }) {
                 <span
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-xs font-bold",
-                    item.coverage === "clear" && "bg-leaf-500/15 text-leaf-500",
+                    item.coverage === "clear" && "bg-leaf-500/15 text-leaf-500 dark:text-green-400",
                     item.coverage === "partial" && "bg-upv-yellow/25",
                     item.coverage === "absent" && "bg-muted text-muted-foreground",
                   )}
@@ -680,10 +680,10 @@ export function PresentationStudio({
             <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
               {t("heroText")}
             </p>
-            <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/70">
-              <span className="rounded-full bg-white/10 px-3 py-1">{t("chipParts")}</span>
-              <span className="rounded-full bg-white/10 px-3 py-1">{t("chipMax")}</span>
-              <span className="rounded-full bg-white/10 px-3 py-1">{t("chipNoVoice")}</span>
+            <div className="mt-5 flex flex-wrap gap-2 text-xs text-white">
+              <span className="rounded-full bg-white/10 px-3 py-1 text-white">{t("chipParts")}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-white">{t("chipMax")}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-white">{t("chipNoVoice")}</span>
             </div>
           </div>
 
@@ -739,7 +739,7 @@ export function PresentationStudio({
                       {failedUploads ? t("failedInfo", { count: failedUploads }) : ""}
                     </span>
                   ) : (
-                    <span className="text-xs text-white/60">{formatDuration(MAX_SECONDS)}</span>
+                    <span className="text-xs text-white/80">{formatDuration(MAX_SECONDS)}</span>
                   )}
                 </div>
                 {recorder.isRecording ? (
@@ -919,7 +919,7 @@ export function PresentationStudio({
                           <ul className="space-y-2 text-sm">
                             {record.key_points.map((point, pointIndex) => (
                               <li className="flex gap-2" key={`${point}-${pointIndex}`}>
-                                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-leaf-500" /> {point}
+                                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-leaf-500 dark:text-green-400" /> {point}
                               </li>
                             ))}
                           </ul>

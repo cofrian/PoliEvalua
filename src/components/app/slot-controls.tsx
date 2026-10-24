@@ -52,7 +52,7 @@ export function SlotControls({
       : remaining < 0
         ? "text-destructive"
         : remaining <= 120
-          ? "text-orange-600 dark:text-orange-400"
+          ? "text-amber-700 dark:text-orange-400"
           : "text-foreground";
 
   function setStatus(next: SlotStatus) {
@@ -94,7 +94,7 @@ export function SlotControls({
         ) : null}
       </div>
       {status === "live" && remaining <= 120 && remaining >= 0 ? (
-        <p className="w-full text-sm font-semibold text-orange-600 dark:text-orange-400" role="status">
+        <p className="w-full text-sm font-semibold text-amber-700 dark:text-orange-400" role="status">
           {t("twoMinutes")}
         </p>
       ) : null}

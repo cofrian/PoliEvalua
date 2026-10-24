@@ -35,7 +35,7 @@ export function JuryWeaknesses({
           >
             <summary className="flex cursor-pointer items-center justify-between gap-2 font-semibold">
               <span>{criterion}</span>
-              <span className="shrink-0 rounded-full bg-orange-500/15 px-2 py-0.5 text-xs text-orange-600 dark:text-orange-400">
+              <span className="shrink-0 rounded-full bg-orange-500/15 px-2 py-0.5 text-xs text-amber-700 dark:text-orange-400">
                 {t("count", { count: items.length })}
               </span>
             </summary>

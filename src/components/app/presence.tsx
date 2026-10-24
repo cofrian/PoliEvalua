@@ -71,7 +71,7 @@ export function Presence({
             />
           ) : (
             <span
-              className="flex size-7 items-center justify-center rounded-full border-2 border-paper-50 bg-sky-400 text-[10px] font-bold text-white dark:border-ink-950"
+              className="flex size-7 items-center justify-center rounded-full border-2 border-paper-50 bg-sky-400 text-[10px] font-bold text-upv-ink dark:border-ink-950"
               key={viewer.id}
               title={viewer.name}
             >

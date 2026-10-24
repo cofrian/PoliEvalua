@@ -204,7 +204,7 @@ export async function AdminOverview({ session }: { session: Session }) {
             <li key={step.label}>
               <Link className="flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted" href={step.href}>
                 {step.done ? (
-                  <CheckCircle2 aria-label={t("done")} className="mt-0.5 size-5 shrink-0 text-leaf-500" />
+                  <CheckCircle2 aria-label={t("done")} className="mt-0.5 size-5 shrink-0 text-leaf-500 dark:text-green-400" />
                 ) : (
                   <span
                     aria-label={t("pending")}

@@ -14,8 +14,8 @@ export type AiEvidence = {
 } | null;
 
 const coverageStyles: Record<CriterionEvidence["coverage"], string> = {
-  clear: "bg-leaf-500/15 text-leaf-500",
-  partial: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  clear: "bg-leaf-500/15 text-leaf-500 dark:text-green-400",
+  partial: "bg-orange-500/15 text-amber-700 dark:text-orange-400",
   absent: "bg-muted text-muted-foreground",
 };
 

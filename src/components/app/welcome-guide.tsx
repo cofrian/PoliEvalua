@@ -81,7 +81,7 @@ export async function WelcomeGuide({ session }: { session: Session }) {
           <li className="flex flex-col rounded-xl border border-border bg-card p-4" key={step.href}>
             <div className="flex items-center gap-2">
               {step.done ? (
-                <CheckCircle2 aria-label={t("done")} className="size-5 text-leaf-500" />
+                <CheckCircle2 aria-label={t("done")} className="size-5 text-leaf-500 dark:text-green-400" />
               ) : (
                 <span className="flex size-6 items-center justify-center rounded-full bg-foreground text-xs font-bold text-background">
                   {index + 1}
@@ -92,7 +92,7 @@ export async function WelcomeGuide({ session }: { session: Session }) {
             </div>
             <p className="mt-2 flex-1 text-sm text-muted-foreground">{step.text}</p>
             {step.done ? (
-              <p className="mt-3 text-sm font-semibold text-leaf-500">{t("done")}</p>
+              <p className="mt-3 text-sm font-semibold text-leaf-500 dark:text-green-400">{t("done")}</p>
             ) : (
               <Link className="mt-3 text-sm font-semibold underline underline-offset-4" href={step.href}>
                 {step.action} →

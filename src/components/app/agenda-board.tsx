@@ -16,8 +16,8 @@ export type BoardSlot = AgendaSlot & { team: { name: string; number: number | nu
 const statusStyles = {
   pending: "border-border",
   live: "border-destructive bg-destructive/5",
-  done: "border-border opacity-60",
-  skipped: "border-border opacity-50 line-through",
+  done: "border-border text-muted-foreground",
+  skipped: "border-border text-muted-foreground line-through",
 } as const;
 
 /**
@@ -51,7 +51,7 @@ export function AgendaBoard({
               <h3 className="font-display text-xl">{room}</h3>
               <div className="flex items-center gap-3 text-sm">
                 {delay ? (
-                  <span className="font-semibold text-orange-600 dark:text-orange-400">
+                  <span className="font-semibold text-amber-700 dark:text-orange-400">
                     {t("roomDelay", { minutes: delay })}
                   </span>
                 ) : null}

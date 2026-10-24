@@ -59,7 +59,7 @@ export default async function ProjectorPage() {
           {rooms.length ? (
             rooms.map(({ room, live, next }) => (
               <div className="space-y-3" key={room}>
-                <p className="text-xl font-semibold uppercase tracking-[0.15em] text-white/60">{room}</p>
+                <p className="text-xl font-semibold uppercase tracking-[0.15em] text-white/80">{room}</p>
                 {live ? (
                   <div className="rounded-2xl border-2 border-red-500 bg-red-500/10 p-6">
                     <p className="flex items-center gap-2 text-lg font-bold text-red-400">
@@ -70,13 +70,13 @@ export default async function ProjectorPage() {
                     </p>
                   </div>
                 ) : (
-                  <p className="text-2xl text-white/60">{t("nobody")}</p>
+                  <p className="text-2xl text-white/80">{t("nobody")}</p>
                 )}
                 {next.length ? (
                   <ul className="space-y-1 text-2xl text-white/80">
                     {next.map((slot) => (
                       <li key={slot.id}>
-                        <span className="font-mono text-white/60">
+                        <span className="font-mono text-white/80">
                           {slot.expectedStart ? timeFormat.format(slot.expectedStart) : "—"}
                         </span>{" "}
                         {slot.team.name}
@@ -87,7 +87,7 @@ export default async function ProjectorPage() {
               </div>
             ))
           ) : (
-            <p className="text-3xl text-white/60">{t("noAgenda")}</p>
+            <p className="text-3xl text-white/80">{t("noAgenda")}</p>
           )}
         </section>
 

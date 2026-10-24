@@ -186,7 +186,12 @@ export default async function AdminPeoplePage({
                       ) : (
                         <ActionForm action={setUserRoleAction} className="flex gap-2">
                           <input name="id" type="hidden" value={profile.id} />
-                          <select className={selectClass} defaultValue={membership.role} name="role">
+                          <select
+                            aria-label={t("roleFor", { name: profile.full_name })}
+                            className={selectClass}
+                            defaultValue={membership.role}
+                            name="role"
+                          >
                             {/* Los cinco perfiles claros; si alguien tiene uno antiguo, también sale. */}
                             {[...new Set<SpaceRole>([...CHOOSABLE, membership.role as SpaceRole])].map((value) => (
                               <option key={value} value={value}>
