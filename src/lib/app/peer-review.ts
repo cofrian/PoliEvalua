@@ -7,7 +7,6 @@ export type PeerReviewSettings = {
   self: boolean;
   contribution: boolean;
   reviewsPerStudent: number;
-  anonymous: boolean;
   weights: { teacher: number; peer: number; self: number };
 };
 
@@ -23,7 +22,6 @@ export function peerReviewSettings(settings: unknown): PeerReviewSettings {
     self: raw.self === true,
     contribution: raw.contribution === true,
     reviewsPerStudent: Math.min(10, Math.max(1, Number(raw.reviews_per_student) || 2)),
-    anonymous: raw.anonymous !== false,
     weights: {
       teacher: Number(weights.teacher ?? 80),
       peer: Number(weights.peer ?? 20),

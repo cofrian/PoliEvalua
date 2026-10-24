@@ -877,7 +877,7 @@
     "describeFirst": "Describe the space first: what is evaluated and who takes part."
   },
   "recordingNotice": {
-    "default": "Presentations in this space will be recorded to transcribe them automatically and prepare a summary and support materials for the evaluation. The audio isn't kept: it's deleted as soon as it becomes text. Only the transcript and the generated materials are kept, and only authorized people in the space can see them.",
+    "default": "Presentations in this space will be recorded to transcribe them automatically and prepare a summary and support materials for the evaluation. The audio isn't kept: it's deleted as soon as it becomes text. Only the transcript and the generated materials are kept, and only authorized people in the space can see them. The transcript and materials are deleted automatically {months, plural, one {# month} other {# months}} after the space is closed.",
     "guarantee": "The audio isn't kept: it's deleted as soon as it's transcribed.",
     "title": "Presentations will be recorded",
     "saving": "Saving…",
@@ -1018,7 +1018,10 @@
     "role": "Role",
     "notice": "Notice",
     "confirmedAt": "Confirmed · {date}",
-    "pending": "Pending"
+    "pending": "Pending",
+    "retention": "Transcript retention",
+    "retentionHint": "Transcripts, summaries and reports are deleted automatically this long after the space is closed. Changing it asks everyone to confirm the notice again.",
+    "retentionMonths": "{count, plural, one {# month} other {# months}} after closing"
   },
   "people": {
     "description": "How people join, invitations and who takes part.",
@@ -1264,8 +1267,6 @@
     "selfHint": "They score their work with the same rubric.",
     "contribution": "Rate each teammate's contribution",
     "contributionHint": "From 1 to 5, within their own group.",
-    "anonymous": "Anonymous comments",
-    "anonymousHint": "Recipients don't know who wrote them.",
     "perStudent": "{units} each student evaluates",
     "weightsOff": "They currently add up to {sum} %: they're applied proportionally. If a part is missing, its weight goes to the others.",
     "weightsHint": "How much each part counts in the final grade. They must add up to 100.",

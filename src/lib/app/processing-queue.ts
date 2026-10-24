@@ -656,6 +656,18 @@ export async function sweepQueue(admin: SupabaseClient) {
       .update({ status: "inactive", deleted_at: now.toISOString() })
       .eq("id", recording.id);
   }
+
+  // Plazo de conservación vencido (meses tras cerrar el espacio): se borra la
+  // grabación entera; trozos, cola e informe del jurado van en cascada.
+  const { data: overdue, error: overdueError } = await admin.rpc("expired_recordings", { max_rows: 50 });
+  if (overdueError) {
+    console.error("No se pudieron buscar transcripciones caducadas:", overdueError.message);
+    return;
+  }
+  for (const id of (overdue ?? []) as string[]) {
+    await deleteRecordingAudio(admin, id);
+    await admin.from("presentation_recordings").delete().eq("id", id);
+  }
 }
 
 async function executeJob(admin: SupabaseClient, job: Job) {

@@ -59,7 +59,6 @@ export default async function PeerReviewAdminPage() {
             ["peer", t("peer", { units: words.unitsLower }), t("peerHint"), settings.peer],
             ["self", t("self", { mode: words.mode }), t("selfHint"), settings.self],
             ["contribution", t("contribution"), t("contributionHint"), settings.contribution],
-            ["anonymous", t("anonymous"), t("anonymousHint"), settings.anonymous],
           ] as const
         ).map(([name, label, description, checked]) => (
           <SettingRow description={description} htmlFor={name} key={name} label={label}>

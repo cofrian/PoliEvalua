@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { SettingRow, SettingSwitch, SettingsForm } from "@/components/app/settings-form";
 import { Textarea } from "@/components/ui/textarea";
 import { INSTRUCTIONS_MAX } from "@/lib/ai/prompts/presentation";
+import { RETENTION_OPTIONS } from "@/lib/app/recording-notice";
 import { getSession, type SpaceRole } from "@/lib/app/session";
 import { selectClass } from "@/lib/app/ui";
 
@@ -72,6 +73,22 @@ export default async function RecordingSettingsPage() {
             ))}
           </select>
         </SettingRow>
+        <SettingRow description={t("retentionHint")} htmlFor="retentionMonths" label={t("retention")}>
+          <select
+            className={`${selectClass} w-full`}
+            defaultValue={recording.retentionMonths}
+            id="retentionMonths"
+            name="retentionMonths"
+          >
+            {[...new Set([...RETENTION_OPTIONS, recording.retentionMonths])]
+              .sort((a, b) => a - b)
+              .map((value) => (
+                <option key={value} value={value}>
+                  {t("retentionMonths", { count: value })}
+                </option>
+              ))}
+          </select>
+        </SettingRow>
         <SettingRow
           description={t("noticeHint", { guarantee: tNotice("guarantee") })}
           htmlFor="noticeText"
@@ -83,7 +100,7 @@ export default async function RecordingSettingsPage() {
             id="noticeText"
             maxLength={2000}
             name="noticeText"
-            placeholder={tNotice("default")}
+            placeholder={tNotice("default", { months: recording.retentionMonths })}
             rows={5}
           />
         </SettingRow>

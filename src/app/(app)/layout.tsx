@@ -73,7 +73,7 @@ export default async function AppLayout({
         <RecordingNoticeDialog
           guarantee={recording.customText ? tNotice("guarantee") : null}
           spaceName={event.name}
-          text={recording.customText ?? tNotice("default")}
+          text={recording.customText ?? tNotice("default", { months: recording.retentionMonths })}
         />
       ) : null}
     </>

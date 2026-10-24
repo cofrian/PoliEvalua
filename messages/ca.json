@@ -877,7 +877,7 @@
     "describeFirst": "Descriu primer l'espai: què s'avalua i qui participa."
   },
   "recordingNotice": {
-    "default": "Les exposicions d'este espai es gravaran per a transcriure-les automàticament i preparar un resum i materials de suport per a l'avaluació. L'àudio no es guarda: s'esborra tan prompte com es convertix en text. Només es conserven la transcripció i els materials generats, que veuen únicament les persones autoritzades de l'espai.",
+    "default": "Les exposicions d'este espai es gravaran per a transcriure-les automàticament i preparar un resum i materials de suport per a l'avaluació. L'àudio no es guarda: s'esborra tan prompte com es convertix en text. Només es conserven la transcripció i els materials generats, que veuen únicament les persones autoritzades de l'espai. La transcripció i els materials s'esborren automàticament {months, plural, one {# mes} other {# mesos}} després de tancar l'espai.",
     "guarantee": "L'àudio no es conserva: s'esborra tan prompte com es transcriu.",
     "title": "Les exposicions es gravaran",
     "saving": "Guardant…",
@@ -1018,7 +1018,10 @@
     "role": "Rol",
     "notice": "Avís",
     "confirmedAt": "Confirmat · {date}",
-    "pending": "Pendent"
+    "pending": "Pendent",
+    "retention": "Conservació de les transcripcions",
+    "retentionHint": "Transcripcions, resums i informes s'esborren sols este temps després de tancar l'espai. Canviar-ho demana confirmar de nou l'avís.",
+    "retentionMonths": "{count, plural, one {# mes} other {# mesos}} després de tancar"
   },
   "people": {
     "description": "Com entra la gent, invitacions i qui participa.",
@@ -1264,8 +1267,6 @@
     "selfHint": "Puntua el seu treball amb la mateixa rúbrica.",
     "contribution": "Valorar l'aportació de cada company",
     "contributionHint": "De l'1 al 5, dins del seu propi grup.",
-    "anonymous": "Comentaris anònims",
-    "anonymousHint": "Qui els rep no sap qui els va escriure.",
     "perStudent": "{units} que avalua cada estudiant",
     "weightsOff": "Ara sumen {sum} %: es repartixen en proporció. Si falta una part, el seu pes passa a les altres.",
     "weightsHint": "Quant compta cada part en la nota final. Han de sumar 100.",
