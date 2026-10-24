@@ -76,7 +76,7 @@ export default async function PeerReviewPage() {
         <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("intro", { evaluator: words.evaluator })}{" "}
-          {settings.anonymous ? `${t("anonymous")} ` : ""}{t("canCorrect")}
+          {t("anonymous")} {t("canCorrect")}
         </p>
       </div>
 

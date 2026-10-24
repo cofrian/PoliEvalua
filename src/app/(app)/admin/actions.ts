@@ -3,7 +3,7 @@
 import { adminMessage } from "@/lib/app/admin-messages";
 import { buildAgenda } from "@/lib/app/agenda-builder";
 import { isLocale } from "@/i18n/config";
-import { isSpokenLanguage } from "@/lib/app/recording-notice";
+import { isSpokenLanguage, retentionMonths } from "@/lib/app/recording-notice";
 import { createHash, randomBytes } from "node:crypto";
 import Papa from "papaparse";
 import { revalidatePath } from "next/cache";
@@ -173,15 +173,19 @@ async function updateRecordingSettingsActionRun(formData: FormData) {
   const enabled = formData.get("enabled") === "on";
   const customText = text(formData, "noticeText").slice(0, 2000) || null;
 
-  // Activar o cambiar el texto obliga a que todos vuelvan a confirmar el aviso.
+  const months = retentionMonths(text(formData, "retentionMonths"));
+
+  // Activar, cambiar el texto o el plazo obliga a que todos vuelvan a confirmar el aviso.
   const mustReconfirm =
-    enabled && (!recording.enabled || customText !== recording.customText);
+    enabled &&
+    (!recording.enabled || customText !== recording.customText || months !== recording.retentionMonths);
   const spokenLanguage = formData.get("spokenLanguage");
   const next = {
     enabled,
     spoken_language: isSpokenLanguage(spokenLanguage) ? spokenLanguage : "auto",
     notice_version: mustReconfirm ? recording.noticeVersion + 1 : recording.noticeVersion,
     notice_text: customText,
+    retention_months: months,
   };
 
   const { data: current } = await supabase
@@ -355,7 +359,6 @@ async function updatePeerReviewSettingsActionRun(formData: FormData) {
     self: formData.get("self") === "on",
     contribution: formData.get("contribution") === "on",
     reviews_per_student: number("reviewsPerStudent", 1, 10, 2),
-    anonymous: formData.get("anonymous") === "on",
     weights: {
       teacher: number("weightTeacher", 0, 100, 80),
       peer: number("weightPeer", 0, 100, 20),

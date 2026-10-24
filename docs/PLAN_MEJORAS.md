@@ -328,13 +328,13 @@ F6 y F7 en paralelo cuando F3 esté estable.
 
 ## Decisiones abiertas
 - Proveedor de correo (Resend propuesto) — fase 7.1.
-- Anonimato por defecto en coevaluación — fase 5. Ojo (24/10): el interruptor
-  «Comentarios anónimos» no cambia nada; `team_peer_summary` nunca devuelve el
-  autor, así que los comentarios siempre llegan sin nombre. Decidir: quitar el
-  interruptor (siempre anónimo) o hacer que muestre nombres al desactivarlo.
+- ~~Anonimato por defecto en coevaluación~~ — decidido (24/10): siempre
+  anónimo para los grupos; la gestión ve quién escribió cada comentario. Se
+  quita el interruptor, que no tenía efecto.
 - Revisión legal del texto del aviso de grabación — fase 1.2. Material para la
   UPV en `docs/REVISION_AVISO_GRABACION.md` (faltan responsable, DPD, base
-  jurídica, transferencias, plazo de conservación y derechos).
+  jurídica, transferencias y derechos). Plazo de conservación: 12 meses tras
+  cerrar el espacio por defecto, configurable (`0031_recording_retention.sql`).
 - Revisión del valenciano por el SPNL — fase 7.2. Tabla castellano/valenciano
   para enviar en `docs/revision-valenciano.csv` (1388 textos). Una pasada
   automática no encontró formas no valencianas ni castellanismos claros.

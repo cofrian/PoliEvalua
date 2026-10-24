@@ -28,6 +28,8 @@ export type RecordingSettings = {
   noticeVersion: number;
   noticeText: string;
   customText: string | null;
+  /** Meses tras cerrar el espacio en que se borran transcripciones y materiales. */
+  retentionMonths: number;
 };
 
 export function recordingSettings(settings: unknown): RecordingSettings {
@@ -46,7 +48,16 @@ export function recordingSettings(settings: unknown): RecordingSettings {
     noticeVersion: Number(recording?.notice_version) || 0,
     noticeText: customText ?? DEFAULT_RECORDING_NOTICE,
     customText,
+    retentionMonths: retentionMonths(recording?.retention_months),
   };
+}
+
+export const RETENTION_OPTIONS = [3, 6, 12, 24, 36] as const;
+
+/** Igual que recording_retention_months() en la base de datos: de 1 a 60, 12 por defecto. */
+export function retentionMonths(value: unknown) {
+  const months = Math.round(Number(value));
+  return Number.isFinite(months) && months > 0 ? Math.min(60, months) : 12;
 }
 
 /** ¿Debe esta persona ver (y confirmar) el aviso antes de usar el espacio? */

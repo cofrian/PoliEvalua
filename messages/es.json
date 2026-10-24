@@ -877,7 +877,7 @@
     "describeFirst": "Describe primero el espacio: qué se evalúa y quién participa."
   },
   "recordingNotice": {
-    "default": "Las exposiciones de este espacio se grabarán para transcribirlas automáticamente y preparar un resumen y materiales de apoyo para la evaluación. El audio no se guarda: se borra en cuanto se convierte en texto. Se conservan solo la transcripción y los materiales generados, que ven únicamente las personas autorizadas del espacio.",
+    "default": "Las exposiciones de este espacio se grabarán para transcribirlas automáticamente y preparar un resumen y materiales de apoyo para la evaluación. El audio no se guarda: se borra en cuanto se convierte en texto. Se conservan solo la transcripción y los materiales generados, que ven únicamente las personas autorizadas del espacio. La transcripción y los materiales se borran automáticamente {months, plural, one {# mes} other {# meses}} después de cerrar el espacio.",
     "guarantee": "El audio no se conserva: se borra en cuanto se transcribe.",
     "title": "Las exposiciones se grabarán",
     "saving": "Guardando…",
@@ -1018,7 +1018,10 @@
     "role": "Rol",
     "notice": "Aviso",
     "confirmedAt": "Confirmado · {date}",
-    "pending": "Pendiente"
+    "pending": "Pendiente",
+    "retention": "Conservación de las transcripciones",
+    "retentionHint": "Transcripciones, resúmenes e informes se borran solos este tiempo después de cerrar el espacio. Cambiarlo pide confirmar de nuevo el aviso.",
+    "retentionMonths": "{count, plural, one {# mes} other {# meses}} tras cerrar"
   },
   "people": {
     "description": "Cómo entra la gente, invitaciones y quién participa.",
@@ -1264,8 +1267,6 @@
     "selfHint": "Puntúa su trabajo con la misma rúbrica.",
     "contribution": "Valorar la aportación de cada compañero",
     "contributionHint": "De 1 a 5, dentro de su propio grupo.",
-    "anonymous": "Comentarios anónimos",
-    "anonymousHint": "Quien los recibe no sabe quién los escribió.",
     "perStudent": "{units} que evalúa cada estudiante",
     "weightsOff": "Ahora suman {sum} %: se reparten en proporción. Si falta una parte, su peso pasa a las demás.",
     "weightsHint": "Cuánto cuenta cada parte en la nota final. Deben sumar 100.",

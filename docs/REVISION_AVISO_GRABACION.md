@@ -13,7 +13,7 @@ art. 13 del RGPD. Los puntos marcados «[UPV]» los tiene que completar la UPV.
 | Aviso | Cada miembro lo confirma antes de usar el espacio; si el texto cambia, se vuelve a pedir (versión del aviso). |
 | Audio | Se sube en trozos, se transcribe (Groq; si falla, un transcriptor propio en Kaggle) y **se borra** al transcribirse, al fallar del todo o a las 3 h si la subida se abandona. |
 | Encargados | Groq (Whisper) recibe el audio; si falla, Kaggle (Google) lo transcribe. NVIDIA recibe el texto para resumen e informe del jurado. Los tres, fuera de la UE. |
-| Texto | Transcripción, resumen y materiales se guardan en Supabase. **No hay plazo de conservación**: duran lo que dure el espacio. |
+| Texto | Transcripción, resumen y materiales se guardan en Supabase y **se borran solos N meses después de cerrar el espacio** (12 por defecto; 3, 6, 12, 24 o 36 en Admin → Grabaciones). El aviso por defecto dice el plazo. |
 | Quién lo ve | Solo las personas autorizadas del espacio (gestión y quien evalúa; la grabación puede ser privada de quien la hizo). |
 
 ## Texto actual
@@ -33,8 +33,8 @@ art. 13 del RGPD. Los puntos marcados «[UPV]» los tiene que completar la UPV.
    sin perjuicio y una alternativa (exponer sin grabar). [UPV]
 4. **Destinatarios y transferencias internacionales**: Groq, Kaggle/Google y NVIDIA (EE. UU.)
    y la garantía que se aplique (cláusulas tipo, Marco UE-EE. UU.). [UPV]
-5. **Plazo de conservación** de transcripciones y materiales. Hoy no existe:
-   propuesta técnica, borrarlos automáticamente N meses tras cerrar el espacio.
+5. **Plazo de conservación**: ya existe (migración 0031). Falta que la UPV
+   confirme cuál es el adecuado; hoy son 12 meses tras cerrar el espacio.
 6. **Derechos** (acceso, rectificación, supresión, oposición, limitación) y cómo
    ejercerlos, más el derecho a reclamar ante la AEPD.
 7. **Decisiones automatizadas**: aclarar que la IA no pone notas; solo prepara
@@ -48,7 +48,7 @@ art. 13 del RGPD. Los puntos marcados «[UPV]» los tiene que completar la UPV.
 >
 > El audio no se guarda: se borra en cuanto se convierte en texto. La
 > transcripción y los materiales los ven solo las personas autorizadas del
-> espacio y se borran [plazo] después de cerrarlo.
+> espacio y se borran {N} meses después de cerrarlo.
 >
 > Para transcribir y resumir se usan servicios de Groq, Google (Kaggle) y NVIDIA, que pueden
 > tratar los datos fuera de la UE con [garantía].
