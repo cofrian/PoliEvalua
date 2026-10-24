@@ -17,12 +17,13 @@ export const DEFAULT_MODELS: Record<ModelTask, string[]> = {
   // Configuración de espacios y rúbricas: JSON estructurado con el usuario esperando.
   // Solo modelos con «Free Endpoint» en build.nvidia.com que responden con la
   // cuenta del proyecto (scripts/benchmark-nvidia-models.mjs --all). Los
-  // populares (DeepSeek, GLM) quedan al final: suelen estar en cola.
+  // populares (DeepSeek, GLM) no entran: suelen estar en cola.
+  // Medido el 24/10/2026 (rúbrica completa): super-vl 8 s, lightning 12 s,
+  // step-5 31 s; DeepSeek v4.1 flash no respondió en 20 s.
   builder: [
-    "nvidia/nemotron-3.5-lightning-30b-a3b",
     "nvidia/nemotron-3.5-super-vl-120b-a12b",
+    "nvidia/nemotron-3.5-lightning-30b-a3b",
     "stepfun-ai/step-5-preview",
-    "deepseek-ai/deepseek-v4.1-flash",
   ],
   // Análisis de transcripciones largas en segundo plano: prima la calidad.
   analysis: [
