@@ -153,6 +153,14 @@ async function updateEventActionRun(formData: FormData) {
   };
 
   if (id !== event.id) throw new Error(await adminMessage("spaceMismatch"));
+  // Quién participa (equipos, grupos, personas…) se puede cambiar después de crear el espacio.
+  const mode = text(formData, "participantMode");
+  if (["teams", "groups", "individuals", "candidates"].includes(mode)) {
+    const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
+    Object.assign(changes, {
+      settings: { ...((current?.settings as Record<string, unknown> | null) ?? {}), participant_mode: mode },
+    });
+  }
   await supabase.from("events").update(changes).eq("id", event.id);
   await logAudit(supabase, event.id, user.id, "actualizar_evento", "events", id, changes);
   refreshAll();
@@ -482,13 +490,29 @@ async function saveTeamActionRun(formData: FormData) {
     table_location: optional(formData, "tableLocation"),
   };
   if (!values.name) return;
+  // Por personas: cada ficha es una persona, y ella misma es su único integrante.
+  const individual = formData.get("individual") === "1";
+  const email = text(formData, "email").toLowerCase() || null;
+  if (individual && email && !z.string().email().safeParse(email).success) {
+    throw new Error(await adminMessage("emailInvalid"));
+  }
 
+  let teamId = id;
   if (id) {
     await supabase.from("teams").update(values).eq("id", id).eq("event_id", event.id);
     await logAudit(supabase, event.id, user.id, "editar_equipo", "teams", id, values);
   } else {
     const { data } = await supabase.from("teams").insert({ ...values, event_id: event.id }).select("id").single();
+    teamId = data?.id ?? "";
     await logAudit(supabase, event.id, user.id, "crear_equipo", "teams", data?.id ?? null, values);
+  }
+  if (individual && teamId) {
+    const { data: members } = await supabase.from("team_members").select("id").eq("team_id", teamId).limit(1);
+    const member = { full_name: values.name, email };
+    const { error } = members?.[0]
+      ? await supabase.from("team_members").update(member).eq("id", members[0].id).eq("event_id", event.id)
+      : await supabase.from("team_members").insert({ ...member, event_id: event.id, team_id: teamId });
+    if (error?.code === "23505") throw new Error(await adminMessage("emailInOtherGroup"));
   }
   refreshAll();
 }

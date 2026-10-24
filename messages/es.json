@@ -991,7 +991,9 @@
     "logoHint": "PNG o SVG con fondo transparente, cuadrado mejor.",
     "removeLogo": "Quitar el logo",
     "color": "Color",
-    "colorHint": "Para la portada. Si es claro, el texto se pone oscuro solo."
+    "colorHint": "Para la portada. Si es claro, el texto se pone oscuro solo.",
+    "participantMode": "Quién participa",
+    "participantModeHint": "¿Se evalúa a personas una a una o a grupos? Puedes cambiarlo cuando quieras."
   },
   "recordingsAdmin": {
     "noName": "(sin nombre)",
@@ -1131,7 +1133,10 @@
     "deleteText": "Solo se puede si nadie lo ha evaluado todavía. No se puede deshacer.",
     "deleteTitle": "¿Borrar «{name}»?",
     "noChallenge": "Sin reto",
-    "noChallenges": "Aún no hay retos. <link>Créalos aquí</link> si quieres agrupar por categorías."
+    "noChallenges": "Aún no hay retos. <link>Créalos aquí</link> si quieres agrupar por categorías.",
+    "personName": "Nombre y apellidos",
+    "personEmail": "Correo (para que entre y vea su nota)",
+    "personEmailHint": "nombre@upv.es"
   },
   "importTeams": {
     "help": "Mismo formato que <code>equipos.txt</code>: Reto, Nº, Equipo, Miembro 1, Miembro 2… (separado por tabuladores o comas). Crea o actualiza por nombre y añade los integrantes que falten; no borra nada.",

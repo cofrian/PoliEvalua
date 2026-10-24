@@ -17,6 +17,7 @@ import { selectClass } from "@/lib/app/ui";
 
 export default async function AdminSettingsPage() {
   const { supabase, event, words, branding } = await getSession();
+  const tModes = await getTranslations("createSpace.participantModes");
   const statusLabels = words.stageLabels;
   const [tLocale, t, tNav] = await Promise.all([
     getTranslations("locale"),
@@ -52,6 +53,15 @@ export default async function AdminSettingsPage() {
               {LOCALES.map((value) => (
                 <option key={value} lang={value} value={value}>
                   {localeNames[value]}
+                </option>
+              ))}
+            </select>
+          </SettingRow>
+          <SettingRow description={t("participantModeHint")} htmlFor="participantMode" label={t("participantMode")}>
+            <select className={`${selectClass} w-full`} defaultValue={words.mode} id="participantMode" name="participantMode">
+              {(["individuals", "groups", "teams", "candidates"] as const).map((value) => (
+                <option key={value} value={value}>
+                  {tModes(value)}
                 </option>
               ))}
             </select>

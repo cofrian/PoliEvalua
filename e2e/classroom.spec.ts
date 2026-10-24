@@ -365,6 +365,33 @@ test("13. Quien entra por primera vez ve el tutorial, y puede volver a verlo", a
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+test("14. El espacio pasa a evaluar por personas y se da de alta a una con su correo", async () => {
+  const page = pages.teacher!;
+  await page.goto("/admin/ajustes");
+  const form = page.locator("form", { has: page.getByLabel("Quién participa") });
+  await form.getByLabel("Quién participa").selectOption("individuals");
+  await form.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page.getByText("Cambios guardados")).toBeVisible();
+
+  const email = `e2e-persona-${stamp}@test.local`;
+  await page.goto("/admin/equipos");
+  await page.getByRole("button", { name: "Nuevo proyecto" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Nombre y apellidos").fill(`Marta E2E ${stamp}`);
+  await dialog.getByLabel(/Correo/).fill(email);
+  await dialog.getByRole("button", { name: "Crear" }).click();
+  // La persona es su propio único integrante, con su correo.
+  await expect
+    .poll(async () => (await db.from("team_members").select("full_name").eq("email", email)).data?.length)
+    .toBe(1);
+
+  // Se deja como estaba para no afectar a otras pruebas.
+  await page.goto("/admin/ajustes");
+  await form.getByLabel("Quién participa").selectOption("groups");
+  await form.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page.getByText("Cambios guardados")).toBeVisible();
+});
+
 test("15. El cronómetro sale al evaluar, aunque no haya agenda", async () => {
   const page = pages.teacher!;
   const { data: team } = await db.from("teams").select("id").eq("event_id", eventId).limit(1).single();

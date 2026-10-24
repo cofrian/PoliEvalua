@@ -991,7 +991,9 @@
     "logoHint": "PNG o SVG amb fons transparent, millor quadrat.",
     "removeLogo": "Llevar el logotip",
     "color": "Color",
-    "colorHint": "Per a la portada. Si és clar, el text es posa fosc sol."
+    "colorHint": "Per a la portada. Si és clar, el text es posa fosc sol.",
+    "participantMode": "Qui participa",
+    "participantModeHint": "S'avalua persones una a una o grups? Pots canviar-ho quan vulgues."
   },
   "recordingsAdmin": {
     "noName": "(sense nom)",
@@ -1131,7 +1133,10 @@
     "deleteText": "Només es pot si ningú no l'ha avaluat encara. No es pot desfer.",
     "deleteTitle": "Vols esborrar «{name}»?",
     "noChallenge": "Sense repte",
-    "noChallenges": "Encara no hi ha reptes. <link>Crea'ls ací</link> si vols agrupar per categories."
+    "noChallenges": "Encara no hi ha reptes. <link>Crea'ls ací</link> si vols agrupar per categories.",
+    "personName": "Nom i cognoms",
+    "personEmail": "Correu (perquè entre i veja la seua nota)",
+    "personEmailHint": "nom@upv.es"
   },
   "importTeams": {
     "help": "El mateix format que <code>equipos.txt</code>: Repte, Núm., Equip, Membre 1, Membre 2… (separat per tabuladors o comes). Crea o actualitza per nom i afig els integrants que falten; no esborra res.",
