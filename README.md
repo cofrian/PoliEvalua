@@ -223,8 +223,8 @@ Consulta [SECURITY.md](SECURITY.md) para comunicar una vulnerabilidad.
 Requisitos: Node.js 22+, npm 10 y un proyecto de Supabase.
 
 ```bash
-git clone https://github.com/cofrian/valencia-hack-jurado.git
-cd valencia-hack-jurado
+git clone https://github.com/cofrian/PoliEvalua.git
+cd PoliEvalua
 npm ci
 cp .env.example .env.local          # rellénalo con tus claves
 npx supabase link --project-ref TU_PROJECT_REF

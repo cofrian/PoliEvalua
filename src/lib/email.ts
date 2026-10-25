@@ -28,7 +28,7 @@ function signatureBlock({ tagline, independent }: Email["signature"]) {
 <td style="padding:0 0 0 14px;vertical-align:top">
 <div style="font-size:16px;font-weight:bold;color:#111111">Poli<span style="color:#d4a017">[</span>Evalúa<span style="color:#d4a017">]</span></div>
 <div style="font-size:12px;color:#5b6b7b;margin-top:2px">${escape(tagline)}</div>
-<div style="font-size:12px;margin-top:8px;line-height:1.7"><a href="${site}" style="${link};font-weight:bold">polievalua.tech</a> &nbsp;·&nbsp; <a href="mailto:contacto@polievalua.tech" style="${link}">contacto@polievalua.tech</a> &nbsp;·&nbsp; <a href="https://github.com/cofrian/valencia-hack-jurado" style="${link}">GitHub</a></div>
+<div style="font-size:12px;margin-top:8px;line-height:1.7"><a href="${site}" style="${link};font-weight:bold">polievalua.tech</a> &nbsp;·&nbsp; <a href="mailto:contacto@polievalua.tech" style="${link}">contacto@polievalua.tech</a> &nbsp;·&nbsp; <a href="https://github.com/cofrian/PoliEvalua" style="${link}">GitHub</a></div>
 <div style="margin-top:8px"><span style="display:inline-block;font-size:10px;font-weight:bold;color:#111111;background:#ffd100;border-radius:999px;padding:2px 9px">OPEN SOURCE · MIT</span></div>
 <div style="font-size:11px;color:#8a97a5;margin-top:8px;line-height:1.5">${escape(independent)}</div>
 </td></tr></table>`;
