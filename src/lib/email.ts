@@ -9,12 +9,15 @@ export function siteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://polievalua.tech").replace(/\/$/, "");
 }
 
-export type Email = { to: string; subject: string; heading: string; body: string; cta?: { label: string; href: string }; footer: string };
+export type Email = { to: string; subject: string; heading: string; body: string; cta?: { label: string; href: string }; footer: string;
+  /** «No respondas a este correo»: avisos@ no recibe respuestas. */
+  noReply: string;
+};
 
 const escape = (value: string) =>
   value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 
-function render({ heading, body, cta, footer }: Email) {
+function render({ heading, body, cta, footer, noReply }: Email) {
   const button = cta
     ? `<p style="margin:28px 0"><a href="${escape(cta.href)}" style="background:#0f2a4a;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">${escape(cta.label)}</a></p>`
     : "";
@@ -26,6 +29,7 @@ function render({ heading, body, cta, footer }: Email) {
 <p style="font-size:15px;line-height:1.6;margin:0">${escape(body)}</p>${button}
 </div>
 <p style="font-size:12px;color:#5b6b7b;line-height:1.5;margin:20px 4px 0">${escape(footer)}</p>
+<p style="font-size:12px;color:#5b6b7b;line-height:1.5;margin:8px 4px 0"><strong>${escape(noReply)}</strong></p>
 </div></body></html>`;
 }
 
@@ -40,7 +44,7 @@ export async function sendEmails(emails: Email[]): Promise<number> {
       to: [email.to],
       subject: email.subject,
       html: render(email),
-      text: [email.heading, email.body, email.cta ? `${email.cta.label}: ${email.cta.href}` : "", email.footer]
+      text: [email.heading, email.body, email.cta ? `${email.cta.label}: ${email.cta.href}` : "", email.footer, email.noReply]
         .filter(Boolean)
         .join("\n\n"),
     }));
