@@ -124,7 +124,7 @@ test.beforeAll(async () => {
     await db
       .from("auth_attempts")
       .delete()
-      .in("key", ["ip:::1", "ip:127.0.0.1", "ip:desconocida"]);
+      .in("key", ["ip:::1", "ip:127.0.0.1", "ip:::ffff:127.0.0.1", "ip:desconocida"]);
   }
 
   const { data: event } = await db
@@ -467,7 +467,7 @@ test("14. El propietario crea otro espacio sin mezclar sus equipos", async () =>
   await adminPage.getByLabel("Nombre del espacio").fill(name);
   await adminPage.getByText("Proyectos", { exact: true }).click();
   await adminPage.getByLabel("Identificador web").fill(slug);
-  await adminPage.getByLabel("Código inicial").fill(`ESP-${stamp}`);
+  await adminPage.getByLabel("Base de los códigos").fill(`ESP-${stamp}`);
   await adminPage.getByRole("button", { name: "Crear espacio" }).click();
   await adminPage.waitForURL("**/admin");
 
@@ -571,7 +571,7 @@ test("19. La plantilla de asignatura permite alumnado y bloquea roles no autoriz
   await ownerPage.getByText("Asignatura", { exact: true }).click();
   await ownerPage.getByLabel("Nombre del espacio").fill(name);
   await ownerPage.getByLabel("Identificador web").fill(slug);
-  await ownerPage.getByLabel("Código inicial").fill(code);
+  await ownerPage.getByLabel("Base de los códigos").fill(code);
   await ownerPage.locator('input[name="degree"]').fill("Grado en Ingeniería Informática");
   await ownerPage.locator('input[name="subjectName"]').fill("Proyectos de Inteligencia Artificial");
   await expect(ownerPage.locator('input[name="enabledRoles"][value="student"]')).toBeChecked();
@@ -624,14 +624,24 @@ test("19. La plantilla de asignatura permite alumnado y bloquea roles no autoriz
     .single();
   if (teamError) throw teamError;
 
-  const studentPage = await register(browser, people.student);
-  await studentPage.getByLabel("Código del espacio").fill(code);
-  await studentPage.getByLabel("Participaré como").selectOption("judge");
-  await studentPage.getByRole("button", { name: "Entrar al espacio" }).click();
-  await expect(studentPage.getByText(/perfil no está habilitado/)).toBeVisible();
+  // Un código por rol: solo el alumnado puede entrar con código en esta plantilla.
+  const { data: joinCodes } = await db.from("event_join_codes").select("role, code").eq("event_id", created.id);
+  expect((joinCodes ?? []).map((row) => row.role)).toEqual(["student"]);
+  const studentCode = joinCodes![0].code;
+  expect(studentCode).toMatch(new RegExp(`^${code}-PARTICIPANTE-[A-Z0-9]{4}$`));
 
-  await studentPage.getByLabel("Código del espacio").fill(code);
-  await studentPage.getByLabel("Participaré como").selectOption("student");
+  const studentPage = await register(browser, people.student);
+  // Ni el código base ni un código de jurado deducido del de participante sirven.
+  for (const guess of [code, studentCode.replace("PARTICIPANTE", "JURADO")]) {
+    await studentPage.goto("/espacios");
+    await studentPage.getByLabel("Código del espacio").fill(guess);
+    await studentPage.getByRole("button", { name: "Entrar al espacio" }).click();
+    await expect(studentPage.getByText(/código no es válido|no es válido/i)).toBeVisible();
+  }
+  await expect(studentPage.getByLabel("Participaré como")).toHaveCount(0);
+
+  await studentPage.goto("/espacios");
+  await studentPage.getByLabel("Código del espacio").fill(studentCode.toLowerCase());
   await studentPage.getByRole("button", { name: "Entrar al espacio" }).click();
   await studentPage.waitForURL("**/equipos");
   await expect(studentPage.getByText("Participante", { exact: true }).first()).toBeVisible();

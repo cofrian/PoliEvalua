@@ -11,11 +11,18 @@ export async function GET(request: NextRequest) {
   const next = url.searchParams.get("next");
   const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/espacios";
 
+  // Se redirige al mismo host por el que se entró (cabecera Host), para que la
+  // cookie de la sesión recién abierta viaje con la persona.
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+  const origin = host ? `${protocol}://${host}` : url.origin;
+  const to = (path: string) => NextResponse.redirect(new URL(path, origin));
+
   if (tokenHash && type === "recovery") {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (!error) return NextResponse.redirect(new URL(safeNext, url.origin));
+    if (!error) return to(safeNext);
   }
 
-  return NextResponse.redirect(new URL("/recuperar?error=enlace", url.origin));
+  return to("/recuperar?error=enlace");
 }
