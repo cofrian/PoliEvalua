@@ -62,6 +62,7 @@ export async function sendInvitationEmail(input: {
       body: t("invitation.body", { event: input.eventName, role: tRoles(input.role as never) }),
       cta: { label: t("invitation.cta"), href: input.link },
       footer: t("footerInvite"),
+      noReply: t("noReply"),
     },
   ]);
 }
@@ -76,6 +77,7 @@ export async function sendPasswordResetEmail(input: { email: string; link: strin
       body: t("reset.body"),
       cta: { label: t("reset.cta"), href: input.link },
       footer: t("reset.footer"),
+      noReply: t("noReply"),
     },
   ]);
 }
@@ -107,6 +109,7 @@ export async function sendTurnReminders(admin: SupabaseClient) {
       body: t("turn.body", { team: team.name, event: event.name, minutes }),
       cta: { label: t("turn.cta"), href: `${siteUrl()}/agenda` },
       footer: t("footer"),
+      noReply: t("noReply"),
     }));
     sent += await sendEmails(emails);
   }
@@ -130,6 +133,7 @@ export async function sendResultsPublished(admin: SupabaseClient, eventId: strin
     body: t("results.body", { event: event.name }),
     cta: { label: t("results.cta"), href: `${siteUrl()}/mi-grupo` },
     footer: t("footer"),
+    noReply: t("noReply"),
   }));
   return sendEmails(emails);
 }
