@@ -84,7 +84,9 @@
       "sponsors": "Sponsor logos on the cover.",
       "audit": "Log of everything that changed and who did it."
     },
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "sourceCode": "Code on GitHub",
+    "feedback": "Send feedback"
   },
   "userMenu": {
     "open": "User menu",
@@ -813,7 +815,8 @@
       }
     },
     "disclaimer": "Independent open-source project. Not an official service of the Universitat Politècnica de València.",
-    "footerLicense": "Licence"
+    "footerLicense": "Licence",
+    "footerFeedback": "Feedback"
   },
   "platform": {
     "account": "Your account",

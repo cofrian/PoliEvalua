@@ -13,6 +13,7 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  MessageSquare,
   Mic,
   Monitor,
   Moon,
@@ -38,7 +39,7 @@ import { useState, type ReactNode } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { OPEN_TOUR_EVENT } from "@/components/app/product-tour";
 import { SpaceSwitcher, type SpaceOption } from "@/components/app/space-switcher";
-import { PoliBrand } from "@/components/brand/poli-brand";
+import { FEEDBACK_URL, Github, PoliBrand, REPO_URL } from "@/components/brand/poli-brand";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -294,6 +295,24 @@ export function NotificationBell({ notices }: { notices: Notice[] }) {
  * Marco de la aplicación: barra lateral con el menú del rol en escritorio y,
  * en el móvil, barra inferior con lo principal más un panel con el resto.
  */
+/** Enlaces del proyecto abierto: código y buzón de comentarios. */
+function ProjectLinks() {
+  const t = useTranslations("nav");
+  const link = "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground";
+  return (
+    <div className="border-t border-border/70 px-3 py-3">
+      <a className={link} href={REPO_URL} rel="noreferrer" target="_blank">
+        <Github className="size-4" />
+        {t("sourceCode")}
+      </a>
+      <a className={link} href={FEEDBACK_URL} rel="noreferrer" target="_blank">
+        <MessageSquare aria-hidden="true" className="size-4" />
+        {t("feedback")}
+      </a>
+    </div>
+  );
+}
+
 export function AppShell({
   groups,
   current,
@@ -334,6 +353,7 @@ export function AppShell({
         <div className="flex-1 overflow-y-auto px-3 pb-6">
           <NavGroups groups={groups} />
         </div>
+        <ProjectLinks />
       </aside>
       </div>
 
@@ -412,6 +432,9 @@ export function AppShell({
                   <PoliBrand compact href="/equipos" />
                 </div>
                 <NavGroups groups={groups} onNavigate={() => setOpen(false)} />
+                <div className="mt-4 -mx-3">
+                  <ProjectLinks />
+                </div>
               </SheetContent>
             </Sheet>
           </li>

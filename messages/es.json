@@ -84,7 +84,9 @@
       "sponsors": "Logos de patrocinadores en la portada.",
       "audit": "Registro de todo lo que se ha cambiado y quién."
     },
-    "skip": "Saltar al contenido"
+    "skip": "Saltar al contenido",
+    "sourceCode": "Código en GitHub",
+    "feedback": "Enviar comentarios"
   },
   "userMenu": {
     "open": "Menú de usuario",
@@ -813,7 +815,8 @@
       }
     },
     "disclaimer": "Proyecto independiente de código abierto. No es un servicio oficial de la Universitat Politècnica de València.",
-    "footerLicense": "Licencia"
+    "footerLicense": "Licencia",
+    "footerFeedback": "Comentarios"
   },
   "platform": {
     "account": "Tu cuenta",
