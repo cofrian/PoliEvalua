@@ -54,7 +54,7 @@ def build(platform: str) -> list[dict]:
     return [
     markdown(KAGGLE_INTRO if kaggle else COLAB_INTRO),
     code(f"""
-APP_URL = "https://valencia-hack-jurado.vercel.app"
+APP_URL = "https://polievalua.tech"
 WORKER_PREFIX = "{platform}"
 WHISPER_MODEL = "large-v3"  # en GPU: máxima calidad (turbo confundía términos como «kit»)
 """),

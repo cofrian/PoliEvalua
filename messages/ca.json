@@ -116,7 +116,9 @@
       "upload": "No s'ha pogut pujar la foto.",
       "save": "No s'ha pogut guardar el perfil."
     },
-    "saved": "Perfil guardat."
+    "saved": "Perfil guardat.",
+    "emailNotifications": "Rebre avisos per correu",
+    "emailNotificationsHint": "Torn d'exposició i resultats publicats. Els correus d'accés arriben sempre."
   },
   "publicVote": {
     "metaTitle": "Votació del públic",
@@ -1068,7 +1070,8 @@
     "creating": "Creant…",
     "create": "Crear l'enllaç",
     "linkTitle": "Enllaç privat (només es mostra ara)",
-    "linkLabel": "Enllaç d'invitació"
+    "linkLabel": "Enllaç d'invitació",
+    "emailed": "Li hem enviat la invitació per correu. També pots copiar l'enllaç."
   },
   "panels": {
     "description": "Repartix quines persones avaluen quins grups.",
@@ -1252,7 +1255,12 @@
     "replaceWarning": "Tornar a generar substituïx l'agenda actual (també els torns ja acabats).",
     "regenerateButton": "Regenerar l'agenda",
     "generateButton": "Generar l'agenda",
-    "generating": "Generant…"
+    "generating": "Generant…",
+    "reminderTitle": "Avís per correu abans d'exposar",
+    "reminderText": "Cada integrant rep un correu quan falta poc per al torn dels seus {units}.",
+    "reminderLabel": "Avisar",
+    "reminderMinutes": "{minutes} minuts abans",
+    "reminderSave": "Guardar"
   },
   "peerAdmin": {
     "description": "Que l'alumnat s'avalue entre si i a si mateix, amb repartiment automàtic.",
@@ -1675,5 +1683,27 @@
     "turn": "{minutes, plural, =0 {«{team}» exposa ara} one {«{team}» exposa d'ací a # minut} other {«{team}» exposa d'ací a # minuts}}",
     "live": "Exposa ara: «{team}»",
     "recordingNotice": "{count, plural, one {# persona no ha} other {# persones no han}} acceptat l'avís de gravació"
+  },
+  "email": {
+    "footer": "Reps aquest correu perquè participes en un espai de PoliEvalúa. Pots desactivar els avisos al teu perfil.",
+    "footerInvite": "Si no esperaves aquesta invitació, ignora aquest correu.",
+    "invitation": {
+      "subject": "T'han convidat a {event}",
+      "heading": "T'han convidat a {event}",
+      "body": "T'han donat accés a {event} en PoliEvalúa amb el rol «{role}». Entra amb el botó per a acceptar la invitació.",
+      "cta": "Acceptar la invitació"
+    },
+    "turn": {
+      "subject": "{team}: exposes en {minutes} min",
+      "heading": "El teu torn comença en {minutes} minuts",
+      "body": "{team} exposa en {event} d'ací a uns {minutes} minuts. Prepara el material i acosta't a la sala.",
+      "cta": "Veure l'agenda"
+    },
+    "results": {
+      "subject": "Resultats publicats en {event}",
+      "heading": "Ja estan els resultats",
+      "body": "S'han publicat els resultats de {event}. Entra per a veure la nota i els comentaris del teu grup.",
+      "cta": "Veure els resultats"
+    }
   }
 }

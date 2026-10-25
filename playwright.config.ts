@@ -9,7 +9,7 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"]],
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "https://valencia-hack-jurado.vercel.app",
+    baseURL: process.env.E2E_BASE_URL ?? "https://polievalua.tech",
     channel: "chrome",
     headless: true,
     locale: "es-ES",

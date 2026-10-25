@@ -18,6 +18,7 @@ export default async function ProfilePage() {
       <ProfileForm
         avatarUrl={profile.avatar_url}
         email={user.email ?? ""}
+        emailNotifications={profile.email_notifications ?? true}
         fullName={profile.full_name}
         locale={profile.locale}
         organization={profile.organization}

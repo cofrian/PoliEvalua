@@ -16,6 +16,7 @@ import {
   INSTRUCTIONS_MAX,
 } from "@/lib/ai/prompts/presentation";
 import { logAudit } from "@/lib/app/audit";
+import { TURN_REMINDER_OPTIONS, sendInvitationEmail, sendResultsPublished } from "@/lib/app/email-notifications";
 import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
 import { getSession } from "@/lib/app/session";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -42,7 +43,7 @@ function refreshAll() {
 const roleSchema = z.enum(["manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"]);
 const statusSchema = z.enum(["setup", "building", "judging", "closed"]);
 
-export type InvitationState = { error?: string; link?: string };
+export type InvitationState = { error?: string; link?: string; emailed?: boolean };
 
 export async function createInvitationAction(
   _previousState: InvitationState,
@@ -84,12 +85,21 @@ export async function createInvitationAction(
   const protocol = forwardedProtocol ?? (host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https");
   const siteUrl = host
     ? `${protocol}://${host}`
-    : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://valencia-hack-jurado.vercel.app").replace(/\/$/, "");
+    : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://polievalua.tech").replace(/\/$/, "");
   await logAudit(supabase, event.id, user.id, "crear_invitacion", "event_invitations", null, {
     email: parsed.data.email,
     role: parsed.data.role,
   });
-  return { link: `${siteUrl}/login?invite=${token}` };
+  const link = `${siteUrl}/login?invite=${token}`;
+  const emailed =
+    (await sendInvitationEmail({
+      email: parsed.data.email,
+      eventName: event.name,
+      role: parsed.data.role,
+      link,
+      locale: event.locale,
+    })) > 0;
+  return { link, emailed };
 }
 
 async function revokeInvitationActionRun(formData: FormData) {
@@ -218,6 +228,9 @@ async function updateStudentVisibilityActionRun(formData: FormData) {
   };
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
   if (error) throw new Error(await adminMessage("studentsSaveFailed"));
+  // Primera vez que se publican: aviso por correo al alumnado (una sola vez por espacio).
+  const wasPublished = (current?.settings as { students?: { publish_results?: boolean } } | null)?.students?.publish_results;
+  if (publishResults && !wasPublished) await sendResultsPublished(createAdminClient(), event.id);
   await logAudit(supabase, event.id, user.id, "visibilidad_alumnado", "events", event.id, {
     show_rubric: showRubric,
     publish_results: publishResults,
@@ -342,6 +355,22 @@ async function clearAgendaActionRun() {
   const { supabase, user, event } = await requireAdmin();
   await supabase.from("presentation_slots").delete().eq("event_id", event.id);
   await logAudit(supabase, event.id, user.id, "borrar_agenda", "presentation_slots", null);
+  refreshAll();
+}
+
+async function updateTurnReminderActionRun(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const minutes = Number(text(formData, "turnMinutes"));
+  if (!(TURN_REMINDER_OPTIONS as readonly number[]).includes(minutes)) return;
+  const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
+  const previous = (current?.settings as Record<string, unknown> | null) ?? {};
+  const settings = {
+    ...previous,
+    notifications: { ...((previous.notifications as Record<string, unknown> | undefined) ?? {}), turn_minutes: minutes },
+  };
+  const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
+  if (error) throw new Error(await adminMessage("agendaSaveFailed"));
+  await logAudit(supabase, event.id, user.id, "aviso_turno", "events", event.id, { turn_minutes: minutes });
   refreshAll();
 }
 
@@ -904,6 +933,10 @@ export async function moveSlotAction(formData: FormData): Promise<ActionResult> 
 
 export async function clearAgendaAction(): Promise<ActionResult> {
   return guard(() => clearAgendaActionRun());
+}
+
+export async function updateTurnReminderAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => updateTurnReminderActionRun(formData));
 }
 
 export async function updatePeerReviewSettingsAction(formData: FormData): Promise<ActionResult> {

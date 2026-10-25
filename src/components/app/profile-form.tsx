@@ -16,12 +16,14 @@ export function ProfileForm({
   organization,
   avatarUrl,
   email,
+  emailNotifications,
   locale,
 }: {
   fullName: string;
   organization: string | null;
   avatarUrl: string | null;
   email: string;
+  emailNotifications: boolean;
   locale: string | null;
 }) {
   const t = useTranslations("profile");
@@ -104,6 +106,14 @@ export function ProfileForm({
           ))}
         </select>
         <span className="block text-xs font-normal text-muted-foreground">{tLocale("hint")}</span>
+      </label>
+
+      <label className="flex items-start gap-2 text-sm">
+        <input className="mt-1" defaultChecked={emailNotifications} name="emailNotifications" type="checkbox" />
+        <span>
+          <span className="block font-semibold">{t("emailNotifications")}</span>
+          <span className="block text-xs text-muted-foreground">{t("emailNotificationsHint")}</span>
+        </span>
       </label>
 
       <fieldset className="space-y-2">
