@@ -1622,7 +1622,7 @@
   },
   "assistant": {
     "title": "Assistent de l'espai",
-    "intro": "Demana-li que prepare l'avaluació i la rúbrica, cree els grups o munte l'agenda. Si li falta alguna cosa, t'ho preguntarà.",
+    "intro": "Demana-li que prepare l’avaluació i la rúbrica, cree els grups, munte l’agenda o canvie ajustos del menú: activar les gravacions, obrir la votació del públic, publicar resultats, convidar algú… Si li falta alguna cosa, t’ho preguntarà. No s’aplica res sense que ho confirmes.",
     "notConfigured": "Falta configurar <code>NVIDIA_API_KEY</code> en el servidor. La interfície ja està preparada.",
     "examplesTitle": "Per exemple:",
     "example1": "Crea una rúbrica per a Projectes d'IA de 2n: cinc criteris, escala de l'1 al 5 i requisits de demostració, memòria i repositori.",
@@ -1659,7 +1659,8 @@
       "askDuration": "Quants minuts dura cada torn (i si hi ha descans entre ells)?",
       "askGroupsCount": "Quants {units} vols crear (o qui va en cadascun)?",
       "askEvaluation": "Què vols avaluar, amb quins criteris (o te'ls propose jo) i amb quina escala?",
-      "tooShort": "Escriu què vols preparar (almenys unes paraules)."
+      "tooShort": "Escriu què vols preparar (almenys unes paraules).",
+      "askSettings": "Quin ajust vols canviar exactament i a quin valor?"
     },
     "preview": {
       "page": "Pàgina proposada",
@@ -1683,7 +1684,46 @@
       "order": "Orde:",
       "random": "a l'atzar",
       "byNumber": "per número",
-      "agendaNote": "Substituïx l'agenda actual si ja n'hi ha una. Després pots reordenar els torns en Organitzar l'agenda."
+      "agendaNote": "Substituïx l'agenda actual si ja n'hi ha una. Després pots reordenar els torns en Organitzar l'agenda.",
+      "settings": {
+        "title": "Canvis en la configuració",
+        "note": "S’apliquen igual que si els canviares tu al menú de gestió. Pots desfer-los allí quan vulgues.",
+        "recordingOn": "Activar la gravació de les exposicions (tothom veurà l’avís i l’haurà d’acceptar)",
+        "recordingOff": "Desactivar la gravació de les exposicions",
+        "signupOn": "Obrir l’entrada amb codi",
+        "signupOff": "Tancar l’entrada amb codi (només amb invitació)",
+        "status": "Passar l’espai a la fase «{phase}»",
+        "phase": {
+          "setup": "Preparació",
+          "building": "En marxa",
+          "judging": "Avaluació",
+          "closed": "Tancat"
+        },
+        "name": "Canviar el nom a «{name}»",
+        "locale": "Canviar l’idioma de l’espai a {locale}",
+        "language": {
+          "es": "castellà",
+          "ca": "valencià",
+          "en": "anglés"
+        },
+        "participantMode": "Qui participa: {mode}",
+        "rubricOn": "Mostrar la rúbrica als participants",
+        "rubricOff": "Amagar la rúbrica als participants",
+        "resultsOn": "Publicar els resultats als participants (rebran un correu)",
+        "resultsOff": "Amagar els resultats als participants",
+        "voteOn": "Obrir la votació del públic",
+        "voteOff": "Tancar la votació del públic",
+        "voteResultsOn": "Mostrar el recompte del públic",
+        "voteResultsOff": "Amagar el recompte del públic",
+        "voteTitle": "Títol de la votació: «{title}»",
+        "turnReminder": "Avisar per correu {minutes} minuts abans de cada exposició",
+        "materials": "Canviar la carpeta o les instruccions de les entregues",
+        "aiInstructions": "Canviar les instruccions per a la IA",
+        "challenge": "Crear el repte «{name}»",
+        "invite": "Convidar {email} com a {role} (li arribarà un correu)",
+        "joinCodeOn": "Crear un codi nou per a {role} (l’anterior deixa de valdre)",
+        "joinCodeOff": "Desactivar el codi de {role}"
+      }
     }
   },
   "welcome": {

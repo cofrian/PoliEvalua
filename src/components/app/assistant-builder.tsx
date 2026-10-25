@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, CalendarDays, Check, HelpCircle, MessageSquarePlus, Send, Users, X } from "lucide-react";
+import { Bot, CalendarDays, Check, HelpCircle, MessageSquarePlus, Send, Settings2, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -12,7 +12,7 @@ import {
 import { ActionForm } from "@/components/app/action-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { AssistantAction, EvaluationProposal } from "@/lib/ai/evaluation-proposal";
+import type { AssistantAction, EvaluationProposal, SettingsChange } from "@/lib/ai/evaluation-proposal";
 import { cardClass } from "@/lib/app/ui";
 import { cn } from "@/lib/utils";
 
@@ -119,6 +119,65 @@ function AgendaPreview({ action }: { action: Extract<AssistantAction, { type: "a
   );
 }
 
+/** Una frase por cambio, para revisar exactamente qué se va a tocar. */
+function SettingsPreview({ changes }: { changes: SettingsChange[] }) {
+  const t = useTranslations("assistant.preview.settings");
+  const tRoles = useTranslations("roles");
+  const tModes = useTranslations("participantModes");
+  const describe = (change: SettingsChange) => {
+    switch (change.setting) {
+      case "recording":
+        return t(change.enabled ? "recordingOn" : "recordingOff");
+      case "signup":
+        return t(change.open ? "signupOn" : "signupOff");
+      case "status":
+        return t("status", { phase: t(`phase.${change.status}`) });
+      case "name":
+        return t("name", { name: change.name });
+      case "locale":
+        return t("locale", { locale: t(`language.${change.locale}`) });
+      case "participantMode":
+        return t("participantMode", { mode: tModes(change.mode) });
+      case "students":
+        return [
+          change.showRubric == null ? null : t(change.showRubric ? "rubricOn" : "rubricOff"),
+          change.publishResults == null ? null : t(change.publishResults ? "resultsOn" : "resultsOff"),
+        ].filter(Boolean).join(" · ");
+      case "publicVote":
+        return [
+          change.open == null ? null : t(change.open ? "voteOn" : "voteOff"),
+          change.showResults == null ? null : t(change.showResults ? "voteResultsOn" : "voteResultsOff"),
+          change.title ? t("voteTitle", { title: change.title }) : null,
+        ].filter(Boolean).join(" · ");
+      case "turnReminder":
+        return t("turnReminder", { minutes: change.minutes });
+      case "materials":
+        return t("materials");
+      case "aiInstructions":
+        return t("aiInstructions");
+      case "challenge":
+        return t("challenge", { name: change.name });
+      case "invite":
+        return t("invite", { email: change.email, role: tRoles(change.role) });
+      case "joinCode":
+        return t(change.enabled ? "joinCodeOn" : "joinCodeOff", { role: tRoles(change.role) });
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <p className="flex items-center gap-2 font-bold">
+        <Settings2 aria-hidden="true" className="size-4" /> {t("title")}
+      </p>
+      <ul className="list-disc space-y-1 pl-5">
+        {changes.map((change, index) => (
+          <li key={index}>{describe(change)}</li>
+        ))}
+      </ul>
+      <p className="text-xs text-muted-foreground">{t("note")}</p>
+    </div>
+  );
+}
+
 function ActionPreview({ action }: { action: AssistantAction }) {
   return (
     <div className="mt-4 rounded-xl border border-border bg-muted p-4 text-sm dark:bg-ink-950">
@@ -126,6 +185,8 @@ function ActionPreview({ action }: { action: AssistantAction }) {
         <EvaluationPreview proposal={action.proposal} />
       ) : action.type === "groups" ? (
         <GroupsPreview action={action} />
+      ) : action.type === "settings" ? (
+        <SettingsPreview changes={action.changes} />
       ) : (
         <AgendaPreview action={action} />
       )}

@@ -12,6 +12,7 @@ import {
   evaluationProposalSchema,
   type AssistantAction,
 } from "@/lib/ai/evaluation-proposal";
+import { applyAssistantSettingsAction } from "@/app/(app)/admin/actions";
 import { buildAgenda } from "@/lib/app/agenda-builder";
 import { evaluationReadiness } from "@/lib/app/evaluation-readiness";
 
@@ -242,6 +243,10 @@ async function applyAssistantProposalActionRun(formData: FormData) {
       if (members.length) await supabase.from("team_members").insert(members);
     }
     target = "/admin/equipos";
+  } else if (action.type === "settings") {
+    const result = await applyAssistantSettingsAction(action.changes);
+    if (result?.error) throw new Error(result.error);
+    target = "/admin";
   } else {
     const result = await buildAgenda(session, {
       rooms: action.rooms,
