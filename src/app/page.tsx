@@ -20,7 +20,7 @@ import {
 import { getTranslations } from "next-intl/server";
 
 import { LocaleSwitcher } from "@/components/app/locale-switcher";
-import { FEEDBACK_URL, Github, PoliBrand, PoliWordmark, REPO_URL } from "@/components/brand/poli-brand";
+import { CONTACT_EMAIL, FEEDBACK_URL, Github, PoliBrand, PoliWordmark, REPO_URL } from "@/components/brand/poli-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
@@ -244,10 +244,11 @@ export default async function Home() {
             <PoliWordmark className="text-lg" />
             <p className="mt-1 max-w-xl text-muted-foreground">{t("disclaimer")}</p>
           </div>
-          <div className="flex gap-5 font-semibold">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 font-semibold">
             <a className="hover:underline" href={REPO_URL} rel="noreferrer" target="_blank">GitHub</a>
             <a className="hover:underline" href={`${REPO_URL}/blob/main/LICENSE`} rel="noreferrer" target="_blank">{t("footerLicense")}</a>
             <a className="hover:underline" href={FEEDBACK_URL} rel="noreferrer" target="_blank">{t("footerFeedback")}</a>
+            <a className="hover:underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
             <Link className="hover:underline" href="/login">{t("login")}</Link>
           </div>
         </div>
