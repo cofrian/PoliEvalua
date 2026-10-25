@@ -2,7 +2,7 @@
 
 import { CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { castPublicScoreAction, type PublicVoteState } from "@/app/votar/[slug]/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
@@ -27,10 +27,16 @@ function TeamScore({
   const t = useTranslations("publicVote");
   const [state, formAction] = useActionState<PublicVoteState, FormData>(castPublicScoreAction, null);
   const done = Boolean(saved) || Boolean(state?.ok);
+  // Abierta si falta puntuarlo; tras guardar sigue abierta para ver la confirmación.
+  const [open, setOpen] = useState(!saved);
   const values = Array.from({ length: rubric.scaleMax - rubric.scaleMin + 1 }, (_, index) => rubric.scaleMin + index);
 
   return (
-    <details className="group rounded-xl border border-input bg-white dark:bg-card" open={!done}>
+    <details
+      className="group rounded-xl border border-input bg-white dark:bg-card"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+      open={open}
+    >
       <summary className="flex cursor-pointer items-center gap-3 p-4">
         <span className="min-w-0 flex-1">
           <span className="block font-semibold">
