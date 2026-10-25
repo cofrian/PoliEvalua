@@ -1850,6 +1850,10 @@
       "cta": "Choose password",
       "footer": "If you did not request this, ignore this email: your password does not change."
     },
-    "noReply": "This email is sent automatically from an address that does not receive replies. To contact us: contacto@polievalua.tech"
+    "noReply": "This email is sent automatically from an address that does not receive replies. To contact us: contacto@polievalua.tech",
+    "signature": {
+      "tagline": "Live evaluation for hackathons and classes",
+      "independent": "Independent open-source project. Not an official service of the Universitat Politècnica de València."
+    }
   }
 }
