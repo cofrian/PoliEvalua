@@ -24,7 +24,7 @@ transcripción con IA en una sola plataforma. Gratis, accesible y de código abi
 ![Next.js 15](https://img.shields.io/badge/Next.js-15-111111)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-3ecf8e)
 ![WCAG 2.1 AA](https://img.shields.io/badge/WCAG-2.1%20AA-59cbe8)
-![Idiomas](https://img.shields.io/badge/idiomas-es%20%C2%B7%20ca%20%C2%B7%20en-3f4444)
+![Idiomas](https://img.shields.io/badge/idiomas-es%20%C2%B7%20va%20%C2%B7%20en-3f4444)
 
 ![Pantalla de evaluación](public/showcase/evaluar.webp)
 
