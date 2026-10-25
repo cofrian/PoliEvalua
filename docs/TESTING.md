@@ -1,4 +1,4 @@
-# Plan de pruebas de Evalúa UPV
+# Plan de pruebas de PoliEvalúa
 
 Las pruebas usan usuarios `@test.local`, espacios y datos temporales. Todos se eliminan al finalizar, incluso cuando una comprobación falla.
 
@@ -44,7 +44,13 @@ Sin `E2E_BASE_URL`, Playwright comprueba la web de producción.
 | Resultados y CSV | E2E 11–12 | Solo los perfiles autorizados acceden |
 | Aislamiento entre espacios | `test:tenants` | Bloquea lecturas, cambios y enlaces cruzados en ambos sentidos |
 | PWA | E2E 17 | Manifest, service worker y página offline disponibles |
+| Recuperar contraseña | Novedades 1–2 | Enlace en el login, misma respuesta exista o no la cuenta, nueva contraseña y enlace falso rechazado |
+| Códigos por rol | Novedades 3–5 y E2E 19 | Un código por rol; el código decide el rol; sube de rol a quien ya estaba; el propietario no baja; códigos deducidos, renovados o desactivados no sirven |
+| Tablas nuevas protegidas | Novedades 6 | Nadie sin gestión lee códigos ni puntuaciones del público ni escribe en ellas |
+| Voto del público | Novedades 7 | QR, favorito con cambio de voto y modo rúbrica con nota media ponderada |
+| Asistente de ajustes | Novedades 8 | Propone «activar grabaciones» y lo aplica solo al confirmar (usa NVIDIA) |
+| Portada | Novedades 9 | Contacto, enlace al repositorio y vídeo disponibles |
 
 ## Criterio de entrega
 
-Una versión solo está lista cuando pasan `lint`, `build`, toda la matriz RLS, las ocho pruebas de aislamiento y el recorrido E2E completo. Un fallo de seguridad o aislamiento bloquea siempre el despliegue.
+Una versión solo está lista cuando pasan `lint`, `build`, toda la matriz RLS, las ocho pruebas de aislamiento y los recorridos E2E completos (`app`, `classroom` y `novedades`). Un fallo de seguridad o aislamiento bloquea siempre el despliegue.
