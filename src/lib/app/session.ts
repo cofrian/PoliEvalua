@@ -53,7 +53,7 @@ export const getAccount = cache(async () => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, disabled, avatar_url, organization, locale")
+    .select("id, full_name, disabled, avatar_url, organization, locale, email_notifications")
     .eq("id", user.id)
     .single();
 

@@ -118,7 +118,9 @@
       "upload": "The photo couldn't be uploaded.",
       "save": "The profile couldn't be saved."
     },
-    "saved": "Profile saved."
+    "saved": "Profile saved.",
+    "emailNotifications": "Receive email notifications",
+    "emailNotificationsHint": "Presentation slot and published results. Sign-in emails are always sent."
   },
   "publicVote": {
     "metaTitle": "Audience vote",
@@ -1190,7 +1192,8 @@
     "creating": "Creating…",
     "create": "Create link",
     "linkTitle": "Private link (shown only now)",
-    "linkLabel": "Invitation link"
+    "linkLabel": "Invitation link",
+    "emailed": "We've emailed the invitation. You can also copy the link."
   },
   "panels": {
     "description": "Assign which people evaluate which groups.",
@@ -1374,7 +1377,12 @@
     "replaceWarning": "Generating again replaces the current schedule (including finished slots).",
     "regenerateButton": "Regenerate schedule",
     "generateButton": "Generate schedule",
-    "generating": "Generating…"
+    "generating": "Generating…",
+    "reminderTitle": "Email reminder before presenting",
+    "reminderText": "Each member gets an email shortly before their {units}' slot.",
+    "reminderLabel": "Remind",
+    "reminderMinutes": "{minutes} minutes before",
+    "reminderSave": "Save"
   },
   "peerAdmin": {
     "description": "Let students assess each other and themselves, with automatic assignment.",
@@ -1797,5 +1805,27 @@
     "turn": "{minutes, plural, =0 {“{team}” presents now} one {“{team}” presents in # minute} other {“{team}” presents in # minutes}}",
     "live": "Presenting now: “{team}”",
     "recordingNotice": "{count, plural, one {# person hasn't} other {# people haven't}} accepted the recording notice"
+  },
+  "email": {
+    "footer": "You're receiving this because you take part in a PoliEvalúa space. You can turn notifications off in your profile.",
+    "footerInvite": "If you weren't expecting this invitation, ignore this email.",
+    "invitation": {
+      "subject": "You've been invited to {event}",
+      "heading": "You've been invited to {event}",
+      "body": "You now have access to {event} on PoliEvalúa as «{role}». Use the button to accept the invitation.",
+      "cta": "Accept invitation"
+    },
+    "turn": {
+      "subject": "{team}: you present in {minutes} min",
+      "heading": "Your slot starts in {minutes} minutes",
+      "body": "{team} presents at {event} in about {minutes} minutes. Get your material ready and head to the room.",
+      "cta": "View agenda"
+    },
+    "results": {
+      "subject": "Results published for {event}",
+      "heading": "Results are out",
+      "body": "The results for {event} have been published. Sign in to see your group's grade and feedback.",
+      "cta": "View results"
+    }
   }
 }

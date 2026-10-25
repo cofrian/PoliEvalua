@@ -50,6 +50,7 @@ export async function updateProfileAction(
       full_name: fullName,
       organization: organization || null,
       locale,
+      email_notifications: formData.get("emailNotifications") === "on",
       ...(avatarUrl ? { avatar_url: avatarUrl } : removeAvatar ? { avatar_url: null } : {}),
     })
     .eq("id", user.id);

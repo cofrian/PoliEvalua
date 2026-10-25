@@ -118,7 +118,9 @@
       "upload": "No se ha podido subir la foto.",
       "save": "No se ha podido guardar el perfil."
     },
-    "saved": "Perfil guardado."
+    "saved": "Perfil guardado.",
+    "emailNotifications": "Recibir avisos por correo",
+    "emailNotificationsHint": "Turno de exposición y resultados publicados. Los correos de acceso llegan siempre."
   },
   "publicVote": {
     "metaTitle": "Votación del público",
@@ -1190,7 +1192,8 @@
     "creating": "Creando…",
     "create": "Crear enlace",
     "linkTitle": "Enlace privado (solo se muestra ahora)",
-    "linkLabel": "Enlace de invitación"
+    "linkLabel": "Enlace de invitación",
+    "emailed": "Le hemos enviado la invitación por correo. También puedes copiar el enlace."
   },
   "panels": {
     "description": "Reparte qué personas evalúan a qué grupos.",
@@ -1374,7 +1377,12 @@
     "replaceWarning": "Generar de nuevo sustituye la agenda actual (también los turnos ya terminados).",
     "regenerateButton": "Regenerar agenda",
     "generateButton": "Generar agenda",
-    "generating": "Generando…"
+    "generating": "Generando…",
+    "reminderTitle": "Aviso por correo antes de exponer",
+    "reminderText": "Cada integrante recibe un correo cuando falta poco para el turno de sus {units}.",
+    "reminderLabel": "Avisar",
+    "reminderMinutes": "{minutes} minutos antes",
+    "reminderSave": "Guardar"
   },
   "peerAdmin": {
     "description": "Que el alumnado se evalúe entre sí y a sí mismo, con reparto automático.",
@@ -1797,5 +1805,27 @@
     "turn": "{minutes, plural, =0 {«{team}» expone ya} one {«{team}» expone en # minuto} other {«{team}» expone en # minutos}}",
     "live": "Expone ahora: «{team}»",
     "recordingNotice": "{count, plural, one {# persona no ha} other {# personas no han}} aceptado el aviso de grabación"
+  },
+  "email": {
+    "footer": "Recibes este correo porque participas en un espacio de PoliEvalúa. Puedes desactivar los avisos en tu perfil.",
+    "footerInvite": "Si no esperabas esta invitación, ignora este correo.",
+    "invitation": {
+      "subject": "Te han invitado a {event}",
+      "heading": "Te han invitado a {event}",
+      "body": "Te han dado acceso a {event} en PoliEvalúa con el rol «{role}». Entra con el botón para aceptar la invitación.",
+      "cta": "Aceptar invitación"
+    },
+    "turn": {
+      "subject": "{team}: expones en {minutes} min",
+      "heading": "Tu turno empieza en {minutes} minutos",
+      "body": "{team} expone en {event} dentro de unos {minutes} minutos. Prepara el material y acércate a la sala.",
+      "cta": "Ver la agenda"
+    },
+    "results": {
+      "subject": "Resultados publicados en {event}",
+      "heading": "Ya están los resultados",
+      "body": "Se han publicado los resultados de {event}. Entra para ver la nota y los comentarios de tu grupo.",
+      "cta": "Ver resultados"
+    }
   }
 }

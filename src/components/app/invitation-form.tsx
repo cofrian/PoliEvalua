@@ -55,6 +55,7 @@ export function InvitationForm() {
       {state.link ? (
         <div className="rounded-md bg-muted p-3 dark:bg-ink-950">
           <p className="mb-1 text-xs font-semibold">{t("linkTitle")}</p>
+          {state.emailed ? <p className="mb-2 text-xs text-muted-foreground" role="status">{t("emailed")}</p> : null}
           <input aria-label={t("linkLabel")} className="w-full bg-transparent font-mono text-xs" readOnly value={state.link} />
         </div>
       ) : null}
