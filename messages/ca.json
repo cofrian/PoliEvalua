@@ -182,8 +182,24 @@
       "exists": "Ja hi ha un compte amb eixe correu. Entra amb la teua contrasenya.",
       "createFailed": "No s'ha pogut crear el compte. Torna-ho a provar.",
       "activateFailed": "No s'ha pogut activar el compte. Torna-ho a provar.",
-      "signInFailed": "El compte s'ha creat, però no s'ha pogut iniciar la sessió."
-    }
+      "signInFailed": "El compte s'ha creat, però no s'ha pogut iniciar la sessió.",
+      "resetLimit": "Has demanat diversos enllaços seguits. Espera mitja hora i torna-ho a provar.",
+      "updateFailed": "No s’ha pogut guardar la contrasenya. Demana un enllaç nou."
+    },
+    "forgot": "Has oblidat la contrasenya?",
+    "resetMeta": "Recuperar contrasenya",
+    "resetTitle": "Recupera la teua contrasenya",
+    "resetDescription": "T’enviarem un enllaç per a triar-ne una de nova.",
+    "resetSend": "Enviar enllaç",
+    "resetSending": "S’està enviant…",
+    "resetSent": "Si hi ha un compte amb aquest correu, t’arribarà un enllaç en uns minuts. Revisa també la carpeta de correu brossa.",
+    "resetBack": "Tornar a entrar",
+    "newMeta": "Contrasenya nova",
+    "newTitle": "Tria una contrasenya nova",
+    "newDescription": "Utilitza-la a partir d’ara per a entrar.",
+    "newSave": "Guardar contrasenya",
+    "newSaving": "S’està guardant…",
+    "linkInvalid": "L’enllaç ha caducat o ja s’ha utilitzat. Demana’n un altre."
   },
   "teams": {
     "status": {
@@ -1826,6 +1842,13 @@
       "heading": "Ja estan els resultats",
       "body": "S'han publicat els resultats de {event}. Entra per a veure la nota i els comentaris del teu grup.",
       "cta": "Veure els resultats"
+    },
+    "reset": {
+      "subject": "Recupera la teua contrasenya de PoliEvalúa",
+      "heading": "Tria una contrasenya nova",
+      "body": "Algú ha demanat canviar la contrasenya del teu compte. Prem el botó per a triar-ne una de nova. L’enllaç caduca en una hora.",
+      "cta": "Triar contrasenya",
+      "footer": "Si no ho has demanat tu, ignora aquest correu: la teua contrasenya no canvia."
     }
   }
 }

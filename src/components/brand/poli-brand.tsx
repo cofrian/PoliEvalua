@@ -53,14 +53,11 @@ export function PoliWordmark({ className }: { className?: string }) {
 export function PoliBrand({ className, href = "/", compact = false }: PoliBrandProps) {
   return (
     <Link
-      aria-label="PoliEvalúa · open source"
+      aria-label="PoliEvalúa"
       className={cn("inline-flex min-w-0 items-center text-upv-ink dark:text-white", className)}
       href={href}
     >
       <PoliWordmark className={compact ? "text-xl" : "text-2xl sm:text-[1.7rem]"} />
-      <span className="ml-2 shrink-0 rounded-full border border-current/25 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase opacity-80">
-        Open source
-      </span>
     </Link>
   );
 }

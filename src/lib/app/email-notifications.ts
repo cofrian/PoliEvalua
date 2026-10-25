@@ -66,6 +66,20 @@ export async function sendInvitationEmail(input: {
   ]);
 }
 
+export async function sendPasswordResetEmail(input: { email: string; link: string; locale: Locale }) {
+  const t = await getTranslations({ locale: input.locale, namespace: "email" });
+  return sendEmails([
+    {
+      to: input.email,
+      subject: t("reset.subject"),
+      heading: t("reset.heading"),
+      body: t("reset.body"),
+      cta: { label: t("reset.cta"), href: input.link },
+      footer: t("reset.footer"),
+    },
+  ]);
+}
+
 /** Turnos que empiezan pronto: avisa a todo el equipo una sola vez. */
 export async function sendTurnReminders(admin: SupabaseClient) {
   const { data: due } = await admin.rpc("due_turn_reminders", { max_rows: 50 });

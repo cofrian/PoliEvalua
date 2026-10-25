@@ -182,8 +182,24 @@
       "exists": "Ya existe una cuenta con ese correo. Entra con tu contraseña.",
       "createFailed": "No se ha podido crear la cuenta. Inténtalo de nuevo.",
       "activateFailed": "No se ha podido activar la cuenta. Inténtalo de nuevo.",
-      "signInFailed": "La cuenta se ha creado, pero no se ha podido iniciar sesión."
-    }
+      "signInFailed": "La cuenta se ha creado, pero no se ha podido iniciar sesión.",
+      "resetLimit": "Has pedido varios enlaces seguidos. Espera media hora e inténtalo de nuevo.",
+      "updateFailed": "No se pudo guardar la contraseña. Pide un enlace nuevo."
+    },
+    "forgot": "¿Has olvidado la contraseña?",
+    "resetMeta": "Recuperar contraseña",
+    "resetTitle": "Recupera tu contraseña",
+    "resetDescription": "Te enviaremos un enlace para elegir una nueva.",
+    "resetSend": "Enviar enlace",
+    "resetSending": "Enviando…",
+    "resetSent": "Si hay una cuenta con ese correo, te llegará un enlace en unos minutos. Revisa también la carpeta de spam.",
+    "resetBack": "Volver a entrar",
+    "newMeta": "Nueva contraseña",
+    "newTitle": "Elige una contraseña nueva",
+    "newDescription": "Úsala a partir de ahora para entrar.",
+    "newSave": "Guardar contraseña",
+    "newSaving": "Guardando…",
+    "linkInvalid": "El enlace ha caducado o ya se usó. Pide otro."
   },
   "teams": {
     "status": {
@@ -1826,6 +1842,13 @@
       "heading": "Ya están los resultados",
       "body": "Se han publicado los resultados de {event}. Entra para ver la nota y los comentarios de tu grupo.",
       "cta": "Ver resultados"
+    },
+    "reset": {
+      "subject": "Recupera tu contraseña de PoliEvalúa",
+      "heading": "Elige una contraseña nueva",
+      "body": "Alguien ha pedido cambiar la contraseña de tu cuenta. Pulsa el botón para elegir una nueva. El enlace caduca en una hora.",
+      "cta": "Elegir contraseña",
+      "footer": "Si no lo has pedido tú, ignora este correo: tu contraseña no cambia."
     }
   }
 }

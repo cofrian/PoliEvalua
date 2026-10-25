@@ -17,6 +17,8 @@ import { cardClass, selectClass } from "@/lib/app/ui";
 const ROLES: SpaceRole[] = ["owner", "manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"];
 /** Perfiles que se eligen: Jurado, Mentor, Participante, Gestión y Consulta. */
 const CHOOSABLE: SpaceRole[] = ["judge", "mentor", "student", "manager", "viewer"];
+/** «teacher» y «reviewer» son nombres antiguos de jurado: se muestran como uno solo. */
+const asChoosable = (role: string) => (role === "teacher" || role === "reviewer" ? "judge" : role) as SpaceRole;
 const DATE = { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" } as const;
 
 export default async function AdminPeoplePage({
@@ -54,11 +56,11 @@ export default async function AdminPeoplePage({
   const members = (memberships ?? []).filter((membership) => {
     const relation = membership.profile as unknown as { full_name: string; organization: string | null } | { full_name: string; organization: string | null }[] | null;
     const profile = Array.isArray(relation) ? relation[0] : relation;
-    if (rol && membership.role !== rol) return false;
+    if (rol && asChoosable(membership.role) !== rol) return false;
     if (!query) return true;
     return [profile?.full_name, profile?.organization].some((value) => value?.toLowerCase().includes(query));
   });
-  const presentRoles = [...new Set((memberships ?? []).map((membership) => membership.role as SpaceRole))];
+  const presentRoles = [...new Set((memberships ?? []).map((membership) => asChoosable(membership.role)))];
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   const loginUrl = `${siteUrl || "https://polievalua.tech"}/login`;
@@ -189,11 +191,11 @@ export default async function AdminPeoplePage({
                           <select
                             aria-label={t("roleFor", { name: profile.full_name })}
                             className={selectClass}
-                            defaultValue={membership.role}
+                            defaultValue={asChoosable(membership.role)}
                             name="role"
                           >
                             {/* Los cinco perfiles claros; si alguien tiene uno antiguo, también sale. */}
-                            {[...new Set<SpaceRole>([...CHOOSABLE, membership.role as SpaceRole])].map((value) => (
+                            {[...new Set<SpaceRole>([...CHOOSABLE, asChoosable(membership.role)])].map((value) => (
                               <option key={value} value={value}>
                                 {tRoles(value)}
                               </option>
