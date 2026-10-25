@@ -208,7 +208,7 @@ test("capturas", async ({ browser }) => {
   await shot(student, "/agenda", "agenda");
   await student.context().close();
 
-  for (const [name, path] of [["portada", "/"], ["login", "/login"]] as const) {
+  for (const [name, path] of [["login", "/login"]] as const) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await shot(page, path, name);
