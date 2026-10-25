@@ -9,7 +9,9 @@ import {
   assistantChatPromptSchema,
   assistantChatSchema,
   normalizeEvaluationProposal,
+  settingsChangeSchema,
   type AssistantAction,
+  type SettingsChange,
 } from "@/lib/ai/evaluation-proposal";
 import { aiErrorResponse } from "@/lib/ai/error-response";
 import { generateJson } from "@/lib/ai/generate-json";
@@ -62,17 +64,70 @@ const groupsExtractSchema = z.object({
   members: z.array(z.array(z.string().trim().max(120)).max(20)).max(80).nullish(),
 });
 
+type EventSettings = {
+  recording?: { enabled?: boolean };
+  participant_mode?: string;
+  students?: { show_rubric?: boolean; publish_results?: boolean };
+  public_vote?: { open?: boolean; show_results?: boolean; title?: string | null };
+  notifications?: { turn_minutes?: number };
+  materials?: { drive_url?: string | null };
+};
+
+/** Cómo está ahora cada ajuste que el asistente puede cambiar (sin datos personales). */
+function currentSettings(
+  event: { name: string; status: string; signup_open: boolean; locale: string; settings: unknown },
+  joinCodeRoles: string[],
+) {
+  const settings = (event.settings ?? {}) as EventSettings;
+  return {
+    name: event.name,
+    status: event.status,
+    locale: event.locale,
+    signupOpen: event.signup_open,
+    recording: settings.recording?.enabled === true,
+    participantMode: settings.participant_mode ?? null,
+    students: { showRubric: settings.students?.show_rubric === true, publishResults: settings.students?.publish_results === true },
+    publicVote: {
+      open: settings.public_vote?.open === true,
+      showResults: settings.public_vote?.show_results === true,
+      title: settings.public_vote?.title ?? null,
+    },
+    turnReminderMinutes: settings.notifications?.turn_minutes ?? 10,
+    materialsFolder: Boolean(settings.materials?.drive_url),
+    joinCodeRoles,
+  };
+}
+
 /** Turnos anteriores que se le pasan al modelo (los más recientes). */
 const HISTORY_TURNS = 8;
 
+/** Ajustes que el asistente puede cambiar (la misma lista para la respuesta y para la extracción). */
+const SETTINGS_GUIDE = `  - {"setting":"recording","enabled":true|false} grabar las exposiciones.
+  - {"setting":"signup","open":true|false} permitir entrar con código.
+  - {"setting":"status","status":"setup"|"building"|"judging"|"closed"} fase del espacio (preparación, en marcha, evaluación, cerrado). Solo si piden cambiar de fase o cerrar el espacio de forma explícita.
+  - {"setting":"name","name":"…"} nombre del espacio.
+  - {"setting":"locale","locale":"es"|"ca"|"en"} idioma del espacio.
+  - {"setting":"participantMode","mode":"teams"|"groups"|"individuals"|"candidates"} quién participa.
+  - {"setting":"students","showRubric":true|false|null,"publishResults":true|false|null} qué ven los participantes (null = no cambiar). «Publicar los resultados» o «enseñar las notas» es publishResults: true; no tiene nada que ver con la fase.
+  - {"setting":"publicVote","open":true|false|null,"showResults":true|false|null,"title":"…"|null} votación del público.
+  - {"setting":"turnReminder","minutes":5|10|15|30} aviso por correo antes de cada exposición.
+  - {"setting":"materials","driveUrl":"https://…"|null,"instructions":"…"|null} carpeta e instrucciones de las entregas.
+  - {"setting":"aiInstructions","instructions":"…"} instrucciones para la IA que analiza las exposiciones.
+  - {"setting":"challenge","name":"…","description":"…"|null} crear un reto o categoría.
+  - {"setting":"invite","email":"…","role":"manager"|"judge"|"mentor"|"student"|"viewer"} invitar a una persona por correo (solo con un correo que te hayan dado).
+  - {"setting":"joinCode","role":"judge"|"mentor"|"student"|"viewer","enabled":true|false} crear un código nuevo de acceso para ese rol o desactivarlo.`;
+
 const systemPrompt = (locale: SpaceLocale) => `Eres el asistente de configuración de una plataforma de evaluación de la UPV.
 Hablas con la persona que gestiona un espacio (una asignatura, un hackathon, unos premios…).
-Tu ámbito exclusivo es preparar ese espacio: la evaluación y su rúbrica, los grupos o equipos y la agenda de exposiciones. Rechaza lo que quede fuera (scope "out_of_scope").
+Tu ámbito exclusivo es preparar y gestionar ese espacio: la evaluación y su rúbrica, los grupos o equipos, la agenda de exposiciones y los ajustes del menú de gestión. Rechaza lo que quede fuera (scope "out_of_scope").
 
 Acciones que puedes proponer (una por respuesta, en "action"):
 - "evaluation": página de evaluación y rúbrica completas.
 - "groups": crear grupos o equipos nuevos con los nombres de sus integrantes.
 - "agenda": repartir los grupos que ya existen en salas y turnos.
+- "settings": uno o varios cambios de ajustes, en "changes" (lista). Cada cambio lleva "setting" y sus campos:
+${SETTINGS_GUIDE}
+  Usa "currentSettings" del contexto para saber cómo está cada cosa y no propongas lo que ya está así. Si piden algo del menú que no está en esta lista (patrocinadores con logo, borrar cosas, cambiar el rol de una persona concreta…), explícales en qué sección del menú se hace.
 
 En "intent" indica siempre qué quiere hacer la persona (evaluation, groups, agenda u other), aunque todavía no puedas proponer la acción.
 
@@ -80,6 +135,7 @@ Antes de proponer una acción comprueba que tienes lo imprescindible:
 - evaluation: qué se evalúa y los criterios (o permiso explícito para que los propongas tú) y la escala.
 - groups: CUÁNTOS grupos (imprescindible: si la persona no da el número ni una lista de la que deducirlo, pregunta; nunca supongas una cantidad) y cómo se llaman o quién va en cada uno (si no lo dice, puedes numerarlos «Grupo 1», «Grupo 2»…).
 - agenda: salas, día y hora de inicio y minutos por turno. Debe haber grupos creados.
+- settings: que la petición diga claramente qué cambiar (activar o desactivar, a qué valor, qué correo…).
 Si falta algo imprescindible, NO lo inventes: deja "action" a null y pregunta en "questions" (máximo 5 preguntas cortas y concretas). Puedes usar lo que la persona ya dijo antes en la conversación.
 Si la petición es ambigua entre varias acciones, pregunta cuál quiere.
 
@@ -127,7 +183,7 @@ export async function POST(request: Request) {
       .maybeSingle(),
     supabase
       .from("events")
-      .select("id, name, kind, description, settings, locale")
+      .select("id, name, kind, description, settings, locale, status, signup_open")
       .eq("id", eventId)
       .maybeSingle(),
   ]);
@@ -199,6 +255,7 @@ export async function POST(request: Request) {
     },
   ]);
 
+  const { data: joinCodes } = await admin.from("event_join_codes").select("role").eq("event_id", event.id);
   const words = vocabulary(event, event.locale);
   const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid", dateStyle: "short", timeStyle: "short" }).format(new Date());
   const context = {
@@ -213,6 +270,7 @@ export async function POST(request: Request) {
       members: (team.team_members as unknown as { count: number }[])?.[0]?.count ?? 0,
     })),
     agendaSlots: slots ?? 0,
+    currentSettings: currentSettings(event, (joinCodes ?? []).map((row) => row.role)),
   };
 
   const provider = createOpenAICompatible({
@@ -324,6 +382,17 @@ Usa solo lo que la persona haya dicho de forma explícita en sus mensajes; pon n
           })),
         };
       }
+    } else if (output.action?.type === "settings") {
+      action = output.action;
+    } else if (intent === "settings") {
+      // El modelo ha entendido que se piden ajustes pero no los ha detallado.
+      const found = await extract(
+        z.object({ changes: z.array(z.unknown()).max(15).nullish() }),
+        `Cambios de ajustes que pide en su último mensaje, como lista "changes" con este formato:\n${SETTINGS_GUIDE}`,
+      );
+      const changes = (found.changes ?? []).filter((change) => settingsChangeSchema.safeParse(change).success) as SettingsChange[];
+      if (changes.length) action = { type: "settings", changes };
+      else missing.push(t("askSettings"));
     } else if (output.action?.type === "evaluation") {
       action = { ...output.action, proposal: normalizeEvaluationProposal(output.action.proposal) };
     }

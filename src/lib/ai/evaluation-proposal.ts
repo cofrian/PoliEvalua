@@ -107,6 +107,31 @@ export const agendaActionSchema = z.object({
   order: z.enum(["number", "random"]),
 });
 
+/** Un cambio del menú de gestión. Cada uno se aplica con la misma acción que su botón. */
+export const settingsChangeSchema = z.discriminatedUnion("setting", [
+  z.object({ setting: z.literal("recording"), enabled: z.boolean() }),
+  z.object({ setting: z.literal("signup"), open: z.boolean() }),
+  z.object({ setting: z.literal("status"), status: z.enum(["setup", "building", "judging", "closed"]) }),
+  z.object({ setting: z.literal("name"), name: z.string().trim().min(3).max(100) }),
+  z.object({ setting: z.literal("locale"), locale: z.enum(["es", "ca", "en"]) }),
+  z.object({ setting: z.literal("participantMode"), mode: z.enum(["teams", "groups", "individuals", "candidates"]) }),
+  z.object({ setting: z.literal("students"), showRubric: z.boolean().nullish(), publishResults: z.boolean().nullish() }),
+  z.object({ setting: z.literal("publicVote"), open: z.boolean().nullish(), showResults: z.boolean().nullish(), title: z.string().trim().max(120).nullish() }),
+  z.object({ setting: z.literal("turnReminder"), minutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(30)]) }),
+  z.object({ setting: z.literal("materials"), driveUrl: z.string().trim().max(2000).nullish(), instructions: z.string().trim().max(2000).nullish() }),
+  z.object({ setting: z.literal("aiInstructions"), instructions: z.string().trim().max(2000) }),
+  z.object({ setting: z.literal("challenge"), name: z.string().trim().min(1).max(120), description: z.string().trim().max(500).nullish() }),
+  z.object({ setting: z.literal("invite"), email: z.string().trim().toLowerCase().email(), role: z.enum(["manager", "judge", "mentor", "student", "viewer"]) }),
+  z.object({ setting: z.literal("joinCode"), role: z.enum(["judge", "mentor", "student", "viewer"]), enabled: z.boolean() }),
+]);
+
+export const settingsActionSchema = z.object({
+  type: z.literal("settings"),
+  changes: z.array(settingsChangeSchema).min(1).max(15),
+});
+
+export type SettingsChange = z.infer<typeof settingsChangeSchema>;
+
 export const evaluationActionSchema = z.object({
   type: z.literal("evaluation"),
   proposal: evaluationProposalSchema,
@@ -116,6 +141,7 @@ export const assistantActionSchema = z.discriminatedUnion("type", [
   evaluationActionSchema,
   groupsActionSchema,
   agendaActionSchema,
+  settingsActionSchema,
 ]);
 
 /**
@@ -135,13 +161,14 @@ const chatActionSchema = z.discriminatedUnion("type", [
   evaluationActionSchema,
   groupsActionSchema,
   agendaDraftSchema,
+  settingsActionSchema,
 ]);
 
 /** Lo que se le enseña al modelo como formato (sin las tolerancias de abajo). */
 export const assistantChatPromptSchema = z.object({
   scope: z.enum(["space", "out_of_scope"]),
   /** Qué quiere hacer la persona, aunque todavía falten datos para la acción. */
-  intent: z.enum(["evaluation", "groups", "agenda", "other"]),
+  intent: z.enum(["evaluation", "groups", "agenda", "settings", "other"]),
   reply: z.string().trim().min(2).max(2000),
   questions: z.array(z.string().trim().min(3).max(300)).max(5),
   action: chatActionSchema.nullable(),
@@ -154,7 +181,7 @@ export const assistantChatPromptSchema = z.object({
 export const assistantChatSchema = z.object({
   scope: z.enum(["space", "out_of_scope"]),
   intent: z
-    .enum(["evaluation", "groups", "agenda", "other"])
+    .enum(["evaluation", "groups", "agenda", "settings", "other"])
     .nullish()
     .catch(null)
     .transform((value) => value ?? "other"),
@@ -175,6 +202,11 @@ export const assistantChatSchema = z.object({
     const value =
       type !== "evaluation" && nested && typeof nested === "object" ? { ...nested, type } : raw;
     if (type === "evaluation") return value;
+    if (type === "settings") {
+      const changes = Array.isArray((value as { changes?: unknown }).changes) ? (value as { changes: unknown[] }).changes : [];
+      const valid = changes.filter((change) => settingsChangeSchema.safeParse(change).success);
+      return valid.length ? { type, changes: valid.slice(0, 15) } : null;
+    }
     return chatActionSchema.safeParse(value).success ? value : null;
   }, chatActionSchema.nullable()),
 });

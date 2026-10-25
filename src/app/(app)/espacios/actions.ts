@@ -10,11 +10,11 @@ import {
   normalizeEvaluationProposal,
 } from "@/lib/ai/evaluation-proposal";
 import { clearAttempts, clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
+import { setJoinCodes } from "@/lib/app/join-codes";
 import { getAccount } from "@/lib/app/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const participantRoleSchema = z.enum(["judge", "mentor", "teacher", "student", "reviewer", "viewer"]);
-const joinRoleSchema = z.enum(["judge", "mentor", "student", "reviewer", "viewer"]);
 const moduleSchema = z.enum(["participants", "rubric", "notes", "results", "sponsors"]);
 
 const spaceSchema = z
@@ -27,7 +27,7 @@ const spaceSchema = z
     participantMode: z.enum(["teams", "groups", "individuals", "candidates"]),
     evaluationMode: z.enum(["rubric", "feedback", "mixed"]),
     enabledRoles: z.array(participantRoleSchema).min(1),
-    joinRoles: z.array(joinRoleSchema),
+    joinRoles: z.array(z.enum(["judge", "mentor", "student", "reviewer", "viewer"])),
     modules: z.array(moduleSchema).min(1),
     academicEnabled: z.boolean(),
     institution: z.string().trim().max(160).optional(),
@@ -88,14 +88,8 @@ export async function joinSpaceAction(
 ): Promise<JoinSpaceState> {
   const t = await getTranslations("spaceErrors");
   const parsed = z
-    .object({
-      accessCode: z.string().trim().min(6).max(40),
-      role: joinRoleSchema,
-    })
-    .safeParse({
-      accessCode: formData.get("accessCode"),
-      role: formData.get("role"),
-    });
+    .object({ accessCode: z.string().trim().min(6).max(60) })
+    .safeParse({ accessCode: formData.get("accessCode") });
 
   if (!parsed.success) return { error: t("checkCode") };
 
@@ -106,35 +100,23 @@ export async function joinSpaceAction(
     return { error: t("tooMany") };
   }
 
-  const { data: event } = await admin
-    .from("events")
-    .select("id, settings")
-    .eq("signup_code", parsed.data.accessCode.toUpperCase())
-    .eq("signup_open", true)
+  // Cada rol tiene su código: quien lo tiene entra con ese rol y no puede elegir otro.
+  const { data: match } = await admin
+    .from("event_join_codes")
+    .select("event_id, role, events!inner(signup_open)")
+    .ilike("code", parsed.data.accessCode.replace(/[\\%_]/g, "\\$&"))
+    .eq("events.signup_open", true)
     .maybeSingle();
 
-  if (!event) {
+  if (!match) {
     await recordAttempt(admin, "bad_code", attemptKeys);
     return { error: t("badCode") };
   }
 
-  const settings = event.settings as { join_roles?: string[] } | null;
-  const allowedRoles = Array.isArray(settings?.join_roles)
-    ? settings.join_roles
-    : ["judge", "mentor"];
-  // «teacher» y «reviewer» son nombres antiguos de jurado.
-  const judgeAliases = ["judge", "teacher", "reviewer"];
-  const allowed =
-    allowedRoles.includes(parsed.data.role) ||
-    (judgeAliases.includes(parsed.data.role) && allowedRoles.some((role) => judgeAliases.includes(role)));
-  if (!allowed) {
-    return { error: t("roleNotAllowed") };
-  }
-
   const { data: current } = await admin
     .from("event_members")
-    .select("status")
-    .eq("event_id", event.id)
+    .select("role, status")
+    .eq("event_id", match.event_id)
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -144,16 +126,24 @@ export async function joinSpaceAction(
 
   if (!current) {
     const { error } = await admin.from("event_members").insert({
-      event_id: event.id,
+      event_id: match.event_id,
       user_id: user.id,
-      role: parsed.data.role,
+      role: match.role,
       status: "active",
     });
+    if (error) return { error: t("addFailed") };
+  } else if (current.role !== match.role && !["owner", "manager"].includes(current.role)) {
+    // Ya estaba con otro rol: el código nuevo le da los permisos de ese rol.
+    const { error } = await admin
+      .from("event_members")
+      .update({ role: match.role })
+      .eq("event_id", match.event_id)
+      .eq("user_id", user.id);
     if (error) return { error: t("addFailed") };
   }
 
   await clearAttempts(admin, "bad_code", attemptKeys);
-  await setActiveSpace(event.id);
+  await setActiveSpace(match.event_id);
   redirect("/equipos");
 }
 
@@ -226,6 +216,7 @@ export async function createSpaceAction(
     };
   }
 
+  await setJoinCodes(createAdminClient(), data, parsed.data.accessCode, parsed.data.joinRoles);
   await setActiveSpace(data);
   // El espacio nace en el idioma con el que se ha creado (IA, votación pública…),
   // y la base de datos pone en castellano la rúbrica y la página de evaluación.
@@ -301,6 +292,10 @@ export async function duplicateSpaceAction(
         : t("duplicateFailed"),
     };
   }
+
+  const admin = createAdminClient();
+  const { data: sourceCodes } = await admin.from("event_join_codes").select("role").eq("event_id", parsed.data.sourceId);
+  await setJoinCodes(admin, data, parsed.data.accessCode, (sourceCodes ?? []).map((row) => row.role));
 
   // El duplicado conserva el idioma del original.
   const { data: source } = await supabase.from("events").select("locale").eq("id", parsed.data.sourceId).maybeSingle();

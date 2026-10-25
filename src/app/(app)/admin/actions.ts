@@ -18,6 +18,8 @@ import {
 import { logAudit } from "@/lib/app/audit";
 import { TURN_REMINDER_OPTIONS, sendInvitationEmail, sendResultsPublished } from "@/lib/app/email-notifications";
 import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
+import { asJoinableRole, setJoinCodes } from "@/lib/app/join-codes";
+import { settingsChangeSchema, type SettingsChange } from "@/lib/ai/evaluation-proposal";
 import { getSession } from "@/lib/app/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -377,6 +379,139 @@ async function updateTurnReminderActionRun(formData: FormData) {
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
   if (error) throw new Error(await adminMessage("agendaSaveFailed"));
   await logAudit(supabase, event.id, user.id, "aviso_turno", "events", event.id, { turn_minutes: minutes });
+  refreshAll();
+}
+
+// ========== CAMBIOS PROPUESTOS POR EL ASISTENTE ==========
+
+/** Formulario con los valores de ahora: cada cambio solo toca su campo. */
+function form(values: Record<string, string | boolean | null | undefined>) {
+  const data = new FormData();
+  for (const [key, value] of Object.entries(values)) {
+    if (value === true) data.set(key, "on");
+    else if (typeof value === "string") data.set(key, value);
+  }
+  return data;
+}
+
+async function applySettingsChangesRun(changes: SettingsChange[]) {
+  const { supabase, event, recording } = await requireAdmin();
+  for (const change of changes) {
+    const { data: current } = await supabase
+      .from("events")
+      .select("name, status, signup_open, locale, settings")
+      .eq("id", event.id)
+      .single();
+    const settings = (current?.settings ?? {}) as {
+      participant_mode?: string;
+      students?: { show_rubric?: boolean; publish_results?: boolean };
+      public_vote?: { open?: boolean; show_results?: boolean; title?: string | null };
+      materials?: { drive_url?: string | null; instructions?: string | null };
+    };
+    const eventForm = (patch: Record<string, string | boolean>) =>
+      form({
+        id: event.id,
+        name: current?.name,
+        status: current?.status,
+        signupOpen: current?.signup_open === true,
+        locale: current?.locale,
+        participantMode: settings.participant_mode,
+        ...patch,
+      });
+
+    switch (change.setting) {
+      case "recording":
+        await updateRecordingSettingsActionRun(
+          form({
+            enabled: change.enabled,
+            noticeText: recording.customText,
+            retentionMonths: String(recording.retentionMonths),
+            spokenLanguage: recording.spokenLanguage,
+          }),
+        );
+        break;
+      case "signup":
+        await updateEventActionRun(eventForm({ signupOpen: change.open }));
+        break;
+      case "status":
+        await updateEventActionRun(eventForm({ status: change.status }));
+        break;
+      case "name":
+        await updateEventActionRun(eventForm({ name: change.name }));
+        break;
+      case "locale":
+        await updateEventActionRun(eventForm({ locale: change.locale }));
+        break;
+      case "participantMode":
+        await updateEventActionRun(eventForm({ participantMode: change.mode }));
+        break;
+      case "students":
+        await updateStudentVisibilityActionRun(
+          form({
+            showRubric: change.showRubric ?? settings.students?.show_rubric === true,
+            publishResults: change.publishResults ?? settings.students?.publish_results === true,
+          }),
+        );
+        break;
+      case "publicVote":
+        await updatePublicVoteActionRun(
+          form({
+            open: change.open ?? settings.public_vote?.open === true,
+            showResults: change.showResults ?? settings.public_vote?.show_results === true,
+            title: change.title ?? settings.public_vote?.title ?? "",
+          }),
+        );
+        break;
+      case "turnReminder":
+        await updateTurnReminderActionRun(form({ turnMinutes: String(change.minutes) }));
+        break;
+      case "materials":
+        await updateMaterialsSettingsActionRun(
+          form({
+            driveUrl: change.driveUrl ?? settings.materials?.drive_url ?? "",
+            instructions: change.instructions ?? settings.materials?.instructions ?? "",
+          }),
+        );
+        break;
+      case "aiInstructions":
+        await updateAiSettingsActionRun(form({ aiInstructions: change.instructions }));
+        break;
+      case "challenge":
+        await saveChallengeActionRun(form({ name: change.name, description: change.description ?? "" }));
+        break;
+      case "invite": {
+        const result = await createInvitationAction({}, form({ email: change.email, role: change.role, days: "14" }));
+        if (result.error) throw new Error(result.error);
+        break;
+      }
+      case "joinCode":
+        if (change.enabled) await renewJoinCodeActionRun(form({ role: change.role }));
+        else await disableJoinCodeActionRun(form({ role: change.role }));
+        break;
+    }
+  }
+}
+
+// ========== CÓDIGOS POR ROL ==========
+
+/** Genera un código nuevo para el rol (el anterior deja de valer) o lo activa si no tenía. */
+async function renewJoinCodeActionRun(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const role = asJoinableRole(text(formData, "role"));
+  if (!role) return;
+  const { data: current } = await supabase.from("events").select("signup_code").eq("id", event.id).single();
+  await setJoinCodes(createAdminClient(), event.id, current?.signup_code ?? event.name, [role]);
+  await logAudit(supabase, event.id, user.id, "codigo_rol_nuevo", "event_join_codes", event.id, { role });
+  refreshAll();
+}
+
+/** Nadie más podrá entrar con ese rol usando un código. */
+async function disableJoinCodeActionRun(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const role = asJoinableRole(text(formData, "role"));
+  if (!role) return;
+  await createAdminClient().from("event_join_codes").delete().eq("event_id", event.id).eq("role", role);
+  await logAudit(supabase, event.id, user.id, "codigo_rol_desactivado", "event_join_codes", event.id, { role });
   refreshAll();
 }
 
@@ -943,6 +1078,19 @@ export async function clearAgendaAction(): Promise<ActionResult> {
 
 export async function updateTurnReminderAction(formData: FormData): Promise<ActionResult> {
   return guard(() => updateTurnReminderActionRun(formData));
+}
+
+/** Lo llama el asistente al confirmar una propuesta de ajustes. */
+export async function applyAssistantSettingsAction(changes: SettingsChange[]): Promise<ActionResult> {
+  return guard(() => applySettingsChangesRun(z.array(settingsChangeSchema).max(15).parse(changes)));
+}
+
+export async function renewJoinCodeAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => renewJoinCodeActionRun(formData));
+}
+
+export async function disableJoinCodeAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => disableJoinCodeActionRun(formData));
 }
 
 export async function updatePeerReviewSettingsAction(formData: FormData): Promise<ActionResult> {

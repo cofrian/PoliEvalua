@@ -81,20 +81,6 @@ export default async function AdminSettingsPage() {
           </SettingRow>
           <AdvancedSettings hint={t("advancedHint")}>
             <SettingRow
-              description={t("codeHint")}
-              htmlFor="signupCode"
-              label={t("code")}
-            >
-              <Input
-                className="font-mono uppercase"
-                defaultValue={eventSettings.signup_code}
-                id="signupCode"
-                maxLength={40}
-                minLength={6}
-                name="signupCode"
-              />
-            </SettingRow>
-            <SettingRow
               description={t("codeOpenHint")}
               htmlFor="signupOpen"
               label={t("codeOpen")}

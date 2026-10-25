@@ -874,9 +874,9 @@
   "join": {
     "code": "Space code",
     "codePlaceholder": "Organization's code",
-    "as": "I'll take part as",
     "entering": "Joining…",
-    "enter": "Enter space"
+    "enter": "Enter space",
+    "codeDecidesRole": "Each role has its own code: you join with the role of the code you were given. If you are already in the space, the new code gives you that role's permissions."
   },
   "duplicate": {
     "summary": "Duplicate for another term",
@@ -1008,8 +1008,8 @@
     "who": "5. Who takes part",
     "whoHint": "You'll be the owner. Enable the other roles this space will use.",
     "access": "6. Access with a code",
-    "code": "Initial code",
-    "codeHint": "Choose which roles can sign up with the code. The rest will need a personal invitation.",
+    "code": "Code prefix",
+    "codeHint": "Tick which roles can join with a code. Each one gets its own (for example INNOVA-2027-JURADO-7K3F) and you will find them under People. Everyone else needs a personal invitation.",
     "creating": "Creating space…",
     "create": "Create space",
     "questionsTitle": "To prepare it better I need to know:",
@@ -1166,8 +1166,6 @@
   "people": {
     "description": "How people join, invitations and who takes part.",
     "title": "People",
-    "codeTitle": "Access with a code",
-    "codeText": "Share the link and the code. Each person joins with their name, email and role{roles}.",
     "copyLink": "Copy link",
     "copyCode": "Copy code",
     "invitationsTitle": "Individual invitations",
@@ -1197,7 +1195,15 @@
     "reactivate": "Reactivate",
     "deactivate": "Deactivate",
     "deactivateNote": "Deactivating deletes nothing: the person can no longer sign in and their notes and evaluations are kept.",
-    "roleFor": "Role for {name}"
+    "roleFor": "Role for {name}",
+    "codesTitle": "Access codes by role",
+    "codesText": "Each role has its own code. Whoever has the judge code joins as a judge; whoever has the participant code, as a participant. Nobody can choose another role.",
+    "codeOff": "No code: nobody can join with this role on their own.",
+    "renew": "New code",
+    "enableCode": "Enable code",
+    "disableCode": "Disable",
+    "renewTitle": "Change the {role} code?",
+    "renewText": "The current code will stop working. People who already joined keep their access."
   },
   "invite": {
     "email": "Email",
@@ -1616,7 +1622,7 @@
   },
   "assistant": {
     "title": "Space assistant",
-    "intro": "Ask it to prepare the evaluation and rubric, create the groups or build the schedule. If something is missing, it will ask you.",
+    "intro": "Ask it to set up the evaluation and rubric, create the groups, build the schedule or change settings from the menu: turn on recordings, open the public vote, publish results, invite someone… If something is missing, it will ask. Nothing is applied until you confirm.",
     "notConfigured": "<code>NVIDIA_API_KEY</code> isn't configured on the server yet. The interface is ready.",
     "examplesTitle": "For example:",
     "example1": "Create a rubric for 2nd-year AI Projects: five criteria, a 1–5 scale and demo, report and repository requirements.",
@@ -1653,7 +1659,8 @@
       "askDuration": "How many minutes is each slot (and is there a break between them)?",
       "askGroupsCount": "How many {units} do you want to create (or who goes in each one)?",
       "askEvaluation": "What do you want to evaluate, with which criteria (or shall I suggest them) and on what scale?",
-      "tooShort": "Write what you want to set up (at least a few words)."
+      "tooShort": "Write what you want to set up (at least a few words).",
+      "askSettings": "Which setting do you want to change exactly, and to what?"
     },
     "preview": {
       "page": "Proposed page",
@@ -1677,7 +1684,46 @@
       "order": "Order:",
       "random": "at random",
       "byNumber": "by number",
-      "agendaNote": "Replaces the current schedule if there is one. You can reorder slots afterwards in Organize schedule."
+      "agendaNote": "Replaces the current schedule if there is one. You can reorder slots afterwards in Organize schedule.",
+      "settings": {
+        "title": "Configuration changes",
+        "note": "They are applied exactly as if you changed them in the management menu. You can undo them there at any time.",
+        "recordingOn": "Turn on presentation recording (everyone will see the notice and must accept it)",
+        "recordingOff": "Turn off presentation recording",
+        "signupOn": "Open joining with a code",
+        "signupOff": "Close joining with a code (invitation only)",
+        "status": "Move the space to the “{phase}” phase",
+        "phase": {
+          "setup": "Setup",
+          "building": "Running",
+          "judging": "Evaluation",
+          "closed": "Closed"
+        },
+        "name": "Rename it to “{name}”",
+        "locale": "Change the space language to {locale}",
+        "language": {
+          "es": "Spanish",
+          "ca": "Valencian",
+          "en": "English"
+        },
+        "participantMode": "Who takes part: {mode}",
+        "rubricOn": "Show the rubric to participants",
+        "rubricOff": "Hide the rubric from participants",
+        "resultsOn": "Publish results to participants (they will get an email)",
+        "resultsOff": "Hide results from participants",
+        "voteOn": "Open the public vote",
+        "voteOff": "Close the public vote",
+        "voteResultsOn": "Show the public tally",
+        "voteResultsOff": "Hide the public tally",
+        "voteTitle": "Vote title: “{title}”",
+        "turnReminder": "Email a reminder {minutes} minutes before each presentation",
+        "materials": "Change the submissions folder or instructions",
+        "aiInstructions": "Change the instructions for the AI",
+        "challenge": "Create the challenge “{name}”",
+        "invite": "Invite {email} as {role} (they will get an email)",
+        "joinCodeOn": "Create a new code for {role} (the old one stops working)",
+        "joinCodeOff": "Disable the {role} code"
+      }
     }
   },
   "welcome": {

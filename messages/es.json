@@ -874,9 +874,9 @@
   "join": {
     "code": "Código del espacio",
     "codePlaceholder": "Código de la organización",
-    "as": "Participaré como",
     "entering": "Entrando…",
-    "enter": "Entrar al espacio"
+    "enter": "Entrar al espacio",
+    "codeDecidesRole": "Cada rol tiene su propio código: entrarás con el rol del código que te hayan dado. Si ya estás en el espacio, el código nuevo te da los permisos de ese rol."
   },
   "duplicate": {
     "summary": "Duplicar para otro curso",
@@ -1008,8 +1008,8 @@
     "who": "5. Quién participa",
     "whoHint": "Tú serás la persona propietaria. Activa los demás perfiles que utilizará este espacio.",
     "access": "6. Acceso mediante código",
-    "code": "Código inicial",
-    "codeHint": "Elige qué perfiles pueden darse de alta con el código. Los demás necesitarán una invitación personal.",
+    "code": "Base de los códigos",
+    "codeHint": "Marca qué perfiles pueden entrar con código. Cada uno tendrá el suyo (por ejemplo INNOVA-2027-JURADO-7K3F) y los verás en Personas. Los demás necesitarán una invitación personal.",
     "creating": "Creando espacio…",
     "create": "Crear espacio",
     "questionsTitle": "Para prepararlo mejor necesito saber:",
@@ -1166,8 +1166,6 @@
   "people": {
     "description": "Cómo entra la gente, invitaciones y quién participa.",
     "title": "Personas",
-    "codeTitle": "Acceso por código",
-    "codeText": "Comparte el enlace y el código. Cada persona entra con su nombre, su correo y su rol{roles}.",
     "copyLink": "Copiar enlace",
     "copyCode": "Copiar código",
     "invitationsTitle": "Invitaciones individuales",
@@ -1197,7 +1195,15 @@
     "reactivate": "Reactivar",
     "deactivate": "Desactivar",
     "deactivateNote": "Desactivar no borra nada: la persona deja de poder entrar y sus notas y evaluaciones se conservan.",
-    "roleFor": "Perfil de {name}"
+    "roleFor": "Perfil de {name}",
+    "codesTitle": "Códigos de acceso por rol",
+    "codesText": "Cada rol tiene su código. Quien tenga el de jurado entra como jurado; quien tenga el de participante, como participante. Nadie puede elegir otro rol.",
+    "codeOff": "Sin código: nadie puede entrar con este rol por su cuenta.",
+    "renew": "Nuevo código",
+    "enableCode": "Activar código",
+    "disableCode": "Desactivar",
+    "renewTitle": "¿Cambiar el código de {role}?",
+    "renewText": "El código actual dejará de funcionar. Quien ya ha entrado no pierde el acceso."
   },
   "invite": {
     "email": "Correo",
@@ -1616,7 +1622,7 @@
   },
   "assistant": {
     "title": "Asistente del espacio",
-    "intro": "Pídele que prepare la evaluación y la rúbrica, cree los grupos o monte la agenda. Si le falta algo, te lo preguntará.",
+    "intro": "Pídele que prepare la evaluación y la rúbrica, cree los grupos, monte la agenda o cambie ajustes del menú: activar las grabaciones, abrir la votación del público, publicar resultados, invitar a alguien… Si le falta algo, te lo preguntará. Nada se aplica sin que lo confirmes.",
     "notConfigured": "Falta configurar <code>NVIDIA_API_KEY</code> en el servidor. La interfaz ya está preparada.",
     "examplesTitle": "Por ejemplo:",
     "example1": "Crea una rúbrica para Proyectos de IA de 2.º: cinco criterios, escala del 1 al 5 y requisitos de demo, memoria y repositorio.",
@@ -1653,7 +1659,8 @@
       "askDuration": "¿Cuántos minutos dura cada turno (y si hay descanso entre ellos)?",
       "askGroupsCount": "¿Cuántos {units} quieres crear (o quién va en cada uno)?",
       "askEvaluation": "¿Qué quieres evaluar, con qué criterios (o te los propongo yo) y con qué escala?",
-      "tooShort": "Escribe qué quieres preparar (al menos unas palabras)."
+      "tooShort": "Escribe qué quieres preparar (al menos unas palabras).",
+      "askSettings": "¿Qué ajuste quieres cambiar exactamente y a qué valor?"
     },
     "preview": {
       "page": "Página propuesta",
@@ -1677,7 +1684,46 @@
       "order": "Orden:",
       "random": "al azar",
       "byNumber": "por número",
-      "agendaNote": "Sustituye la agenda actual si ya hay una. Después puedes reordenar los turnos en Organizar agenda."
+      "agendaNote": "Sustituye la agenda actual si ya hay una. Después puedes reordenar los turnos en Organizar agenda.",
+      "settings": {
+        "title": "Cambios en la configuración",
+        "note": "Se aplican igual que si los cambiaras tú en el menú de gestión. Puedes deshacerlos allí cuando quieras.",
+        "recordingOn": "Activar la grabación de las exposiciones (todos verán el aviso y tendrán que aceptarlo)",
+        "recordingOff": "Desactivar la grabación de las exposiciones",
+        "signupOn": "Abrir la entrada con código",
+        "signupOff": "Cerrar la entrada con código (solo con invitación)",
+        "status": "Pasar el espacio a la fase «{phase}»",
+        "phase": {
+          "setup": "Preparación",
+          "building": "En marcha",
+          "judging": "Evaluación",
+          "closed": "Cerrado"
+        },
+        "name": "Cambiar el nombre a «{name}»",
+        "locale": "Cambiar el idioma del espacio a {locale}",
+        "language": {
+          "es": "castellano",
+          "ca": "valencià",
+          "en": "inglés"
+        },
+        "participantMode": "Quién participa: {mode}",
+        "rubricOn": "Enseñar la rúbrica a los participantes",
+        "rubricOff": "Ocultar la rúbrica a los participantes",
+        "resultsOn": "Publicar los resultados a los participantes (recibirán un correo)",
+        "resultsOff": "Ocultar los resultados a los participantes",
+        "voteOn": "Abrir la votación del público",
+        "voteOff": "Cerrar la votación del público",
+        "voteResultsOn": "Enseñar el recuento del público",
+        "voteResultsOff": "Ocultar el recuento del público",
+        "voteTitle": "Título de la votación: «{title}»",
+        "turnReminder": "Avisar por correo {minutes} minutos antes de cada exposición",
+        "materials": "Cambiar la carpeta o las instrucciones de las entregas",
+        "aiInstructions": "Cambiar las instrucciones para la IA",
+        "challenge": "Crear el reto «{name}»",
+        "invite": "Invitar a {email} como {role} (le llegará un correo)",
+        "joinCodeOn": "Crear un código nuevo para {role} (el anterior deja de valer)",
+        "joinCodeOff": "Desactivar el código de {role}"
+      }
     }
   },
   "welcome": {
