@@ -1,0 +1,4 @@
+node_modules
+public/*.webp
+public/music.wav
+out

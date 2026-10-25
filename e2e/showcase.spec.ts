@@ -1,12 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { test, type Browser, type Page } from "@playwright/test";
-import { mkdirSync, readdirSync, renameSync, rmSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import sharp from "sharp";
 import { loadTestEnv } from "../scripts/load-test-env.mjs";
 
-// Capturas y vídeo de la portada y del README. No es una prueba: solo corre cuando
+// Capturas de la portada y del README. No es una prueba: solo corre cuando
 // se pide expresamente (npm run showcase). Crea un hackathon de demostración con usuarios
-// @test.local, saca las imágenes a public/showcase/ y lo borra todo al terminar.
+// @test.local, saca las imágenes a public/showcase/ (el vídeo se monta aparte, en video/) y lo borra todo al terminar.
 
 test.skip(
   !process.env.SHOWCASE && !process.argv.some((arg) => arg.includes("showcase")),
@@ -61,12 +61,11 @@ async function createUser(who: Who) {
   return data.user.id;
 }
 
-async function enter(browser: Browser, who: Who, video = false) {
+async function enter(browser: Browser, who: Who) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2,
     colorScheme: "light",
-    ...(video ? { recordVideo: { dir: `${OUT}/video`, size: { width: 1440, height: 900 } } } : {}),
   });
   const page = await context.newPage();
   await page.goto("/login");
@@ -84,17 +83,6 @@ async function shot(page: Page, path: string, name: string) {
   await page.waitForLoadState("networkidle");
   // WebP a 1600 px de ancho: pesa unas cinco veces menos que el PNG.
   await sharp(await page.screenshot()).resize(1600).webp({ quality: 82 }).toFile(`${OUT}/${name}.webp`);
-}
-
-/** Desplazamiento suave para el vídeo. */
-async function glide(page: Page, path: string, pause = 1800) {
-  await page.goto(path);
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(pause);
-  await page.mouse.wheel(0, 500);
-  await page.waitForTimeout(pause / 2);
-  await page.mouse.wheel(0, -500);
-  await page.waitForTimeout(400);
 }
 
 test.describe.configure({ mode: "serial" });
@@ -193,10 +181,6 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  // Playwright pone un nombre aleatorio al vídeo: se deja como demo.webm.
-  const recorded = readdirSync(`${OUT}/video`, { withFileTypes: true }).find((file) => file.name.endsWith(".webm"));
-  if (recorded) renameSync(`${OUT}/video/${recorded.name}`, `${OUT}/demo.webm`);
-  rmSync(`${OUT}/video`, { recursive: true, force: true });
   if (eventId) await db.from("events").delete().eq("id", eventId);
   for (const id of Object.values(ids)) {
     if (!id) continue;
@@ -230,24 +214,4 @@ test("capturas", async ({ browser }) => {
     await shot(page, path, name);
     await context.close();
   }
-});
-
-test("vídeo", async ({ browser }) => {
-  const judge = await enter(browser, "judge", true);
-  await glide(judge, "/equipos");
-  await glide(judge, `/equipos/${firstTeam}/evaluar`, 2400);
-  await glide(judge, "/sala");
-  // Un solo vídeo: se cambia de cuenta en la misma ventana.
-  await judge.context().clearCookies();
-  await judge.goto("/login");
-  await judge.getByLabel("Correo electrónico").fill(people.admin.email);
-  await judge.getByLabel("Contraseña").fill(password);
-  await judge.getByRole("button", { name: "Entrar en la plataforma" }).click();
-  await judge.waitForURL("**/espacios");
-  await judge.locator("article", { hasText: spaceName }).getByRole("button", { name: "Entrar al espacio" }).click();
-  await judge.waitForURL(/\/(equipos|admin)/);
-  await glide(judge, "/admin");
-  await glide(judge, "/resultados", 2400);
-  await glide(judge, "/proyector", 2400);
-  await judge.context().close();
 });

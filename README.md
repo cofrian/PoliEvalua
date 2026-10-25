@@ -72,7 +72,7 @@ transcripción con IA en una sola plataforma. Gratis, accesible y de código abi
 | **Panel de gestión** | **Agenda** |
 | ![Gestión](public/showcase/admin.webp) | ![Agenda](public/showcase/agenda-admin.webp) |
 
-🎬 **Vídeo del recorrido:** [public/showcase/demo.webm](public/showcase/demo.webm)
+🎬 **Vídeo de presentación:** [public/showcase/promo.mp4](public/showcase/promo.mp4). Se monta con código en [`video/`](video/) (Remotion) y lleva música original sintetizada: `cd video && npm install && npm run render`.
 (también en la [portada](https://polievalua.tech/#demo)).
 
 Todas las imágenes y el vídeo se generan solos con `npm run showcase`, que crea
