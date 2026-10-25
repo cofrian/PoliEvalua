@@ -1,6 +1,13 @@
 <div align="center">
 
-# Poli[Evalúa]
+<a href="https://polievalua.tech"><img alt="" src="docs/brand/icon-512.png" width="88"></a>
+
+<h1>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wordmark-dark.png">
+  <img alt="Poli[Evalúa]" src="docs/brand/wordmark-light.png" width="420">
+</picture>
+</h1>
 
 **Evalúa hackathons y clases sin papeles ni hojas de cálculo.**
 
@@ -285,3 +292,15 @@ docs/               Arquitectura de IA, plan, pruebas y revisiones
 Código bajo licencia [MIT](LICENSE). Los nombres, marcas y logotipos de cada
 organización (incluidos los de la UPV y los patrocinadores) pertenecen a sus
 titulares y no quedan cubiertos por esa licencia.
+
+## Marca
+
+Los logos están en [`docs/brand/`](docs/brand) y se regeneran con `node scripts/brand-assets.mjs`:
+
+| Archivo | Uso |
+|---|---|
+| `wordmark-light.png` / `wordmark-dark.png` | Logo Poli[Evalúa] sobre fondo claro u oscuro |
+| `icon.svg` / `icon-512.png` | Icono de la aplicación |
+| `social-preview.png` | Imagen al compartir el repositorio (1280×640) |
+
+PoliEvalúa es un proyecto independiente; no es un servicio oficial de la Universitat Politècnica de València.
