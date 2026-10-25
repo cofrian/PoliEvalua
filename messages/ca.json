@@ -144,7 +144,7 @@
   },
   "auth": {
     "loginMeta": "Entrar",
-    "loginTitle": "Entrar en Evalúa",
+    "loginTitle": "Entra a PoliEvalúa",
     "loginDescription": "Entra amb el teu compte per a consultar, crear o administrar tots els teus espais.",
     "disabledNotice": "Compte desactivat, contacta amb l'administració.",
     "registerMeta": "Crear un compte",

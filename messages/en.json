@@ -144,7 +144,7 @@
   },
   "auth": {
     "loginMeta": "Sign in",
-    "loginTitle": "Sign in to Evalúa",
+    "loginTitle": "Sign in to PoliEvalúa",
     "loginDescription": "Sign in to view, create or manage all your spaces.",
     "disabledNotice": "Account disabled, contact the admin.",
     "registerMeta": "Create account",

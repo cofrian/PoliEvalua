@@ -9,6 +9,11 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
   const t = await getTranslations("auth");
   return (
     <main className="relative flex min-h-svh flex-col overflow-hidden bg-muted text-upv-ink dark:bg-ink-950 dark:text-upv-100">
+      {/* Formas de color a los dos lados: la tarjeta queda centrada entre ellas. */}
+      <div aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-[26%] bg-upv-yellow [clip-path:polygon(0_0,100%_0,66%_100%,0_100%)] lg:block" />
+      <div aria-hidden="true" className="absolute bottom-0 left-[12%] hidden h-[46%] w-[18%] bg-upv-blue [clip-path:polygon(0_0,60%_0,100%_100%,40%_100%)] lg:block" />
+      <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[26%] bg-upv-yellow [clip-path:polygon(34%_0,100%_0,100%_100%,0_100%)] lg:block" />
+      <div aria-hidden="true" className="absolute top-0 right-[12%] hidden h-[46%] w-[18%] bg-upv-blue [clip-path:polygon(40%_0,100%_0,60%_100%,0_100%)] lg:block" />
 
       <header className="relative border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
