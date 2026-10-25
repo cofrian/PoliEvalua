@@ -1850,6 +1850,10 @@
       "cta": "Triar contrasenya",
       "footer": "Si no ho has demanat tu, ignora aquest correu: la teua contrasenya no canvia."
     },
-    "noReply": "Aquest correu s’envia automàticament des d’una adreça que no rep respostes. Per a escriure’ns: contacto@polievalua.tech"
+    "noReply": "Aquest correu s’envia automàticament des d’una adreça que no rep respostes. Per a escriure’ns: contacto@polievalua.tech",
+    "signature": {
+      "tagline": "Avaluació en directe per a hackathons i classes",
+      "independent": "Projecte independent de codi obert. No és un servei oficial de la Universitat Politècnica de València."
+    }
   }
 }
