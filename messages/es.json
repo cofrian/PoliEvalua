@@ -137,10 +137,17 @@
       "rate": "Hay demasiados votos desde esta red. Espera unos minutos.",
       "closed": "La votación está cerrada.",
       "gone": "Esa opción ya no existe.",
-      "save": "No se ha podido registrar el voto. Inténtalo de nuevo."
+      "save": "No se ha podido registrar el voto. Inténtalo de nuevo.",
+      "allCriteria": "Puntúa todos los criterios antes de guardar."
     },
     "saved": "¡Voto registrado! Puedes cambiarlo mientras la votación siga abierta.",
-    "defaultTitle": "Premio del público"
+    "defaultTitle": "Premio del público",
+    "introRubric": "Puntúa cada proyecto con los mismos criterios que el jurado. Puedes corregir tus notas mientras la votación siga abierta.",
+    "noRubric": "La organización todavía no ha preparado la rúbrica.",
+    "scored": "Ya puntuado",
+    "saveScore": "Guardar puntuación",
+    "updateScore": "Actualizar puntuación",
+    "scoreSaved": "¡Puntuación guardada! Puedes cambiarla mientras la votación siga abierta."
   },
   "auth": {
     "loginMeta": "Entrar",
@@ -1440,7 +1447,7 @@
   "publicAdmin": {
     "description": "Un QR para que el público vote y una pantalla con el recuento en directo.",
     "title": "Voto del público",
-    "formDescription": "Cualquiera con el enlace o el QR vota sin crear cuenta: un voto por dispositivo, que puede cambiar mientras esté abierta. No cuenta en la evaluación del jurado.",
+    "formDescription": "Cualquiera con el enlace o el QR vota desde su móvil, sin crear cuenta, y puede cambiar su voto mientras esté abierta. El voto del público va aparte: nunca cuenta en la evaluación del jurado.",
     "formTitle": "Votación",
     "titleLabel": "Título",
     "titleHint": "Lo que verá el público al abrir el enlace.",
@@ -1456,7 +1463,13 @@
     "resetText": "Se eliminan los {count} votos del público. No se puede deshacer.",
     "resetTitle": "¿Borrar todos los votos?",
     "resetButton": "Borrar todos los votos",
-    "defaultTitle": "Premio del público"
+    "defaultTitle": "Premio del público",
+    "mode": "Cómo vota el público",
+    "modeHint": "El favorito: cada persona elige un proyecto. Con la rúbrica: puntúa cada proyecto con los criterios del jurado. Nunca cuenta en la nota del jurado.",
+    "modeFavorite": "Elige su proyecto favorito",
+    "modeRubric": "Puntúa con la rúbrica",
+    "countRubric": "Puntuaciones del público ({count} personas)",
+    "rubricValue": "{value}/100 · {count}"
   },
   "projector": {
     "meta": "Proyector",
@@ -1722,7 +1735,9 @@
         "challenge": "Crear el reto «{name}»",
         "invite": "Invitar a {email} como {role} (le llegará un correo)",
         "joinCodeOn": "Crear un código nuevo para {role} (el anterior deja de valer)",
-        "joinCodeOff": "Desactivar el código de {role}"
+        "joinCodeOff": "Desactivar el código de {role}",
+        "voteModeRubric": "El público puntúa con la rúbrica",
+        "voteModeFavorite": "El público elige su proyecto favorito"
       }
     }
   },

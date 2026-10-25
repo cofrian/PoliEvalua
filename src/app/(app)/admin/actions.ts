@@ -405,7 +405,7 @@ async function applySettingsChangesRun(changes: SettingsChange[]) {
     const settings = (current?.settings ?? {}) as {
       participant_mode?: string;
       students?: { show_rubric?: boolean; publish_results?: boolean };
-      public_vote?: { open?: boolean; show_results?: boolean; title?: string | null };
+      public_vote?: { open?: boolean; show_results?: boolean; title?: string | null; mode?: string };
       materials?: { drive_url?: string | null; instructions?: string | null };
     };
     const eventForm = (patch: Record<string, string | boolean>) =>
@@ -459,6 +459,7 @@ async function applySettingsChangesRun(changes: SettingsChange[]) {
             open: change.open ?? settings.public_vote?.open === true,
             showResults: change.showResults ?? settings.public_vote?.show_results === true,
             title: change.title ?? settings.public_vote?.title ?? "",
+            mode: change.mode ?? settings.public_vote?.mode ?? "favorite",
           }),
         );
         break;
@@ -590,6 +591,7 @@ async function updatePublicVoteActionRun(formData: FormData) {
     open: formData.get("open") === "on",
     show_results: formData.get("showResults") === "on",
     title: text(formData, "title").slice(0, 120) || null,
+    mode: text(formData, "mode") === "rubric" ? "rubric" : "favorite",
   };
   const { data: current } = await supabase.from("events").select("settings").eq("id", event.id).single();
   const settings = { ...((current?.settings as Record<string, unknown> | null) ?? {}), public_vote: publicVote };
@@ -602,7 +604,11 @@ async function updatePublicVoteActionRun(formData: FormData) {
 async function resetPublicVotesActionRun() {
   const { user, event, supabase } = await requireAdmin();
   // Los votos no tienen política de borrado para nadie: se borran con la clave de servicio.
-  await createAdminClient().from("public_votes").delete().eq("event_id", event.id);
+  const admin = createAdminClient();
+  await Promise.all([
+    admin.from("public_votes").delete().eq("event_id", event.id),
+    admin.from("public_scores").delete().eq("event_id", event.id),
+  ]);
   await logAudit(supabase, event.id, user.id, "reiniciar_voto_publico", "public_votes", null);
   refreshAll();
 }

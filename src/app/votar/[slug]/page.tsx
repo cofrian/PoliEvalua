@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 
+import { PublicScoreForm } from "@/components/app/public-score-form";
 import { PublicVoteForm } from "@/components/app/public-vote-form";
 import { LocaleSwitcher } from "@/components/app/locale-switcher";
 import { PoliBrand } from "@/components/brand/poli-brand";
 import { publicVoteSettings } from "@/lib/app/public-vote";
+import { publicRubric } from "@/lib/app/public-vote-data";
 import { pickClientMessages } from "@/i18n/client-messages";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -40,14 +42,20 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
     getMessages({ locale }),
   ]);
   const token = cookieStore.get(`pv_${event.id.slice(0, 8)}`)?.value;
-  const { data: current } = token
-    ? await admin
-        .from("public_votes")
-        .select("team_id")
-        .eq("event_id", event.id)
-        .eq("voter_hash", createHash("sha256").update(`${event.id}:${token}`).digest("hex"))
-        .maybeSingle()
-    : { data: null };
+  const voterHash = token ? createHash("sha256").update(`${event.id}:${token}`).digest("hex") : null;
+  const rubricMode = settings.mode === "rubric";
+  const [{ data: current }, rubric, { data: myScores }] = await Promise.all([
+    voterHash && !rubricMode
+      ? admin.from("public_votes").select("team_id").eq("event_id", event.id).eq("voter_hash", voterHash).maybeSingle()
+      : Promise.resolve({ data: null }),
+    rubricMode ? publicRubric(admin, event.id) : Promise.resolve(null),
+    voterHash && rubricMode
+      ? admin.from("public_scores").select("team_id, criterion_id, score").eq("event_id", event.id).eq("voter_hash", voterHash)
+      : Promise.resolve({ data: [] as { team_id: string; criterion_id: string; score: number }[] }),
+  ]);
+  // Lo que este dispositivo ya puntuó, para poder corregirlo.
+  const saved: Record<string, Record<string, number>> = {};
+  for (const row of myScores ?? []) (saved[row.team_id] ??= {})[row.criterion_id] = Number(row.score);
 
   return (
     <NextIntlClientProvider locale={locale} messages={pickClientMessages(messages)}>
@@ -61,9 +69,17 @@ export default async function PublicVotePage({ params }: { params: Promise<{ slu
       {settings.open ? (
         <>
           <p className="mt-2 text-sm text-muted-foreground">
-            {t("intro")}
+            {rubricMode ? t("introRubric") : t("intro")}
           </p>
-          <PublicVoteForm locale={locale} currentTeamId={current?.team_id ?? null} slug={slug} teams={teams ?? []} />
+          {rubricMode ? (
+            rubric ? (
+              <PublicScoreForm locale={locale} rubric={rubric} saved={saved} slug={slug} teams={teams ?? []} />
+            ) : (
+              <p className="mt-6 rounded-xl border border-border bg-white p-6 text-center dark:bg-card">{t("noRubric")}</p>
+            )
+          ) : (
+            <PublicVoteForm locale={locale} currentTeamId={current?.team_id ?? null} slug={slug} teams={teams ?? []} />
+          )}
         </>
       ) : (
         <p className="mt-6 rounded-xl border border-border bg-white p-6 text-center dark:bg-card">

@@ -10,16 +10,17 @@ import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { publicVoteSettings } from "@/lib/app/public-vote";
-import { publicVoteCounts, publicVoteUrl, qrSvg } from "@/lib/app/public-vote-data";
+import { publicResults, publicVoteUrl, qrSvg } from "@/lib/app/public-vote-data";
 import { getSession } from "@/lib/app/session";
-import { cardClass } from "@/lib/app/ui";
+import { cardClass, selectClass } from "@/lib/app/ui";
 
 export default async function PublicAdminPage() {
   const { supabase, event } = await getSession();
   const settings = publicVoteSettings(event.settings);
   const t = await getTranslations("publicAdmin");
   const url = await publicVoteUrl(event.slug);
-  const [svg, counts] = await Promise.all([qrSvg(url), publicVoteCounts(supabase, event.id)]);
+  const [svg, results] = await Promise.all([qrSvg(url), publicResults(supabase, event.id, settings.mode)]);
+  const max = Math.max(1, ...results.teams.map((team) => team.value));
 
   return (
     <div className="space-y-6">
@@ -34,6 +35,12 @@ export default async function PublicAdminPage() {
       >
         <SettingRow htmlFor="title" label={t("titleLabel")} description={t("titleHint")}>
           <Input defaultValue={settings.title ?? ""} id="title" maxLength={120} name="title" placeholder={t("defaultTitle")} />
+        </SettingRow>
+        <SettingRow htmlFor="mode" label={t("mode")} description={t("modeHint")}>
+          <select className={`${selectClass} w-full`} defaultValue={settings.mode} id="mode" name="mode">
+            <option value="favorite">{t("modeFavorite")}</option>
+            <option value="rubric">{t("modeRubric")}</option>
+          </select>
         </SettingRow>
         <SettingRow htmlFor="open" label={t("open")} description={t("openHint")}>
           <SettingSwitch defaultChecked={settings.open} id="open" name="open" />
@@ -67,12 +74,14 @@ export default async function PublicAdminPage() {
 
       <section className={`${cardClass} space-y-3`}>
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl">{t("count", { count: counts.total })}</h2>
-          {counts.total ? (
+          <h2 className="font-display text-xl">
+            {results.mode === "rubric" ? t("countRubric", { count: results.voters }) : t("count", { count: results.voters })}
+          </h2>
+          {results.voters ? (
             <ActionForm action={resetPublicVotesAction}>
               <ConfirmSubmit
                 confirmLabel={t("reset")}
-                description={t("resetText", { count: counts.total })}
+                description={t("resetText", { count: results.voters })}
                 title={t("resetTitle")}
               >
                 {t("resetButton")}
@@ -81,16 +90,18 @@ export default async function PublicAdminPage() {
           ) : null}
         </div>
         <ol className="space-y-2">
-          {counts.teams.map((team) => (
+          {results.teams.map((team) => (
             <li className="flex items-center gap-3 text-sm" key={team.id}>
               <span className="w-40 truncate font-semibold sm:w-60">#{team.number} · {team.name}</span>
               <span className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                 <span
                   className="block h-full rounded-full bg-primary"
-                  style={{ width: `${counts.total ? (team.votes / counts.total) * 100 : 0}%` }}
+                  style={{ width: `${results.mode === "rubric" ? team.value : (team.value / max) * 100}%` }}
                 />
               </span>
-              <span className="w-10 text-right font-mono">{team.votes}</span>
+              <span className="w-28 text-right font-mono text-xs sm:text-sm">
+                {results.mode === "rubric" ? t("rubricValue", { value: team.value, count: team.count }) : team.value}
+              </span>
             </li>
           ))}
         </ol>
