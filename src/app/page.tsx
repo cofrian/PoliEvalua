@@ -176,12 +176,11 @@ export default async function Home() {
           aria-label={t("demoTitle")}
           className="mt-10 w-full rounded-xl border border-border shadow-2xl"
           controls
-          muted
           playsInline
-          poster="/showcase/admin.webp"
+          poster="/showcase/promo-poster.webp"
           preload="none"
         >
-          <source src="/showcase/demo.webm" type="video/webm" />
+          <source src="/showcase/promo.mp4" type="video/mp4" />
         </video>
       </section>
 
