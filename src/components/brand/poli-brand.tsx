@@ -11,7 +11,7 @@ export function Github({ className }: { className?: string }) {
   );
 }
 
-export const REPO_URL = "https://github.com/cofrian/valencia-hack-jurado";
+export const REPO_URL = "https://github.com/cofrian/PoliEvalua";
 
 /** Sugerencias y errores: se abren como incidencias públicas en GitHub. */
 export const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;

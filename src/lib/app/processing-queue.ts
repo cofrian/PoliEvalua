@@ -120,7 +120,7 @@ export function workerUrls() {
  */
 async function dispatchKaggleWorker(admin: SupabaseClient) {
   const token = process.env.GITHUB_DISPATCH_TOKEN;
-  const repo = process.env.GITHUB_REPOSITORY || "cofrian/valencia-hack-jurado";
+  const repo = process.env.GITHUB_REPOSITORY || "cofrian/PoliEvalua";
   if (!token) return;
   const { data: allowed } = await admin.rpc("take_provider_slot", {
     p_provider: "kaggle-dispatch",
