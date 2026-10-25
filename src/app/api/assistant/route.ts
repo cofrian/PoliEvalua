@@ -237,7 +237,7 @@ export async function POST(request: Request) {
           abortSignal,
           maxOutputTokens: 4000,
         }),
-      { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 60_000 },
+      { deadlineMs: startedAt + 110_000, attemptTimeoutMs: 40_000 },
     );
 
     // El servidor decide si falta algo imprescindible: los modelos a veces se

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * Estado de los modelos de IA en producción. Protegido con JOBS_CRON_SECRET;
  * lo consulta el workflow «Modelos de IA» de GitHub. 503 si alguna tarea se ha
- * quedado sin ningún modelo disponible en el catálogo de NVIDIA.
+ * quedado sin ningún modelo que responda (catálogo de NVIDIA + llamada real).
  */
 export async function GET(request: Request) {
   if (!isCronRequest(request)) {
