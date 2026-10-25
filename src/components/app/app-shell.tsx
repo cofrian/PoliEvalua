@@ -367,7 +367,7 @@ export function AppShell({
           <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
             <div className="flex min-w-0 flex-1 items-center gap-3 lg:hidden">
               <Link className="shrink-0 font-heading text-base font-bold" href="/equipos">
-                Evalúa
+                PoliEvalúa
               </Link>
               <SpaceSwitcher className="min-w-0 max-w-none flex-1 sm:max-w-64 sm:flex-none" current={current} spaces={spaces} />
             </div>
