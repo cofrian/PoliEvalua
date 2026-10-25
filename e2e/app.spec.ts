@@ -53,7 +53,7 @@ const testPassword = `Prueba-${stamp}!`;
 const createdUserIds = new Set<string>();
 const createdEventIds = new Set<string>();
 
-let accessCode = "";
+const accessCodes: Record<string, string> = {};
 let eventId = "";
 let team: { id: string; name: string };
 let secondTeam: { id: string; name: string };
@@ -92,8 +92,8 @@ async function register(
 }
 
 async function joinSpace(page: Page, role: "Juez" | "Mentor") {
-  await page.getByLabel("Código del espacio").fill(accessCode);
-  await page.getByLabel("Participaré como").selectOption(role === "Juez" ? "judge" : "mentor");
+  // Cada rol tiene su código: el de jurado da jurado, el de mentor da mentor.
+  await page.getByLabel("Código del espacio").fill(accessCodes[role === "Juez" ? "judge" : "mentor"]);
   await page.getByRole("button", { name: "Entrar al espacio" }).click();
   await page.waitForURL("**/equipos");
 }
@@ -133,7 +133,9 @@ test.beforeAll(async () => {
     .eq("slug", "valencia-hack")
     .single();
   eventId = event!.id;
-  accessCode = event!.signup_code;
+  const { data: codes } = await db.from("event_join_codes").select("role, code").eq("event_id", event!.id);
+  for (const row of codes ?? []) accessCodes[row.role] = row.code;
+  expect(accessCodes.judge && accessCodes.mentor, "el espacio necesita código de jurado y de mentor").toBeTruthy();
   expect(event!.status, "el evento no debe estar cerrado para probar").not.toBe(
     "closed",
   );

@@ -874,9 +874,9 @@
   "join": {
     "code": "Código del espacio",
     "codePlaceholder": "Código de la organización",
-    "as": "Participaré como",
     "entering": "Entrando…",
-    "enter": "Entrar al espacio"
+    "enter": "Entrar al espacio",
+    "codeDecidesRole": "Cada rol tiene su propio código: entrarás con el rol del código que te hayan dado. Si ya estás en el espacio, el código nuevo te da los permisos de ese rol."
   },
   "duplicate": {
     "summary": "Duplicar para otro curso",
@@ -1008,8 +1008,8 @@
     "who": "5. Quién participa",
     "whoHint": "Tú serás la persona propietaria. Activa los demás perfiles que utilizará este espacio.",
     "access": "6. Acceso mediante código",
-    "code": "Código inicial",
-    "codeHint": "Elige qué perfiles pueden darse de alta con el código. Los demás necesitarán una invitación personal.",
+    "code": "Base de los códigos",
+    "codeHint": "Marca qué perfiles pueden entrar con código. Cada uno tendrá el suyo (por ejemplo INNOVA-2027-JURADO-7K3F) y los verás en Personas. Los demás necesitarán una invitación personal.",
     "creating": "Creando espacio…",
     "create": "Crear espacio",
     "questionsTitle": "Para prepararlo mejor necesito saber:",
@@ -1166,8 +1166,6 @@
   "people": {
     "description": "Cómo entra la gente, invitaciones y quién participa.",
     "title": "Personas",
-    "codeTitle": "Acceso por código",
-    "codeText": "Comparte el enlace y el código. Cada persona entra con su nombre, su correo y su rol{roles}.",
     "copyLink": "Copiar enlace",
     "copyCode": "Copiar código",
     "invitationsTitle": "Invitaciones individuales",
@@ -1197,7 +1195,15 @@
     "reactivate": "Reactivar",
     "deactivate": "Desactivar",
     "deactivateNote": "Desactivar no borra nada: la persona deja de poder entrar y sus notas y evaluaciones se conservan.",
-    "roleFor": "Perfil de {name}"
+    "roleFor": "Perfil de {name}",
+    "codesTitle": "Códigos de acceso por rol",
+    "codesText": "Cada rol tiene su código. Quien tenga el de jurado entra como jurado; quien tenga el de participante, como participante. Nadie puede elegir otro rol.",
+    "codeOff": "Sin código: nadie puede entrar con este rol por su cuenta.",
+    "renew": "Nuevo código",
+    "enableCode": "Activar código",
+    "disableCode": "Desactivar",
+    "renewTitle": "¿Cambiar el código de {role}?",
+    "renewText": "El código actual dejará de funcionar. Quien ya ha entrado no pierde el acceso."
   },
   "invite": {
     "email": "Correo",

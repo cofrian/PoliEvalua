@@ -18,6 +18,7 @@ import {
 import { logAudit } from "@/lib/app/audit";
 import { TURN_REMINDER_OPTIONS, sendInvitationEmail, sendResultsPublished } from "@/lib/app/email-notifications";
 import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
+import { asJoinableRole, setJoinCodes } from "@/lib/app/join-codes";
 import { getSession } from "@/lib/app/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -377,6 +378,29 @@ async function updateTurnReminderActionRun(formData: FormData) {
   const { error } = await supabase.from("events").update({ settings }).eq("id", event.id);
   if (error) throw new Error(await adminMessage("agendaSaveFailed"));
   await logAudit(supabase, event.id, user.id, "aviso_turno", "events", event.id, { turn_minutes: minutes });
+  refreshAll();
+}
+
+// ========== CÓDIGOS POR ROL ==========
+
+/** Genera un código nuevo para el rol (el anterior deja de valer) o lo activa si no tenía. */
+async function renewJoinCodeActionRun(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const role = asJoinableRole(text(formData, "role"));
+  if (!role) return;
+  const { data: current } = await supabase.from("events").select("signup_code").eq("id", event.id).single();
+  await setJoinCodes(createAdminClient(), event.id, current?.signup_code ?? event.name, [role]);
+  await logAudit(supabase, event.id, user.id, "codigo_rol_nuevo", "event_join_codes", event.id, { role });
+  refreshAll();
+}
+
+/** Nadie más podrá entrar con ese rol usando un código. */
+async function disableJoinCodeActionRun(formData: FormData) {
+  const { supabase, user, event } = await requireAdmin();
+  const role = asJoinableRole(text(formData, "role"));
+  if (!role) return;
+  await createAdminClient().from("event_join_codes").delete().eq("event_id", event.id).eq("role", role);
+  await logAudit(supabase, event.id, user.id, "codigo_rol_desactivado", "event_join_codes", event.id, { role });
   refreshAll();
 }
 
@@ -943,6 +967,14 @@ export async function clearAgendaAction(): Promise<ActionResult> {
 
 export async function updateTurnReminderAction(formData: FormData): Promise<ActionResult> {
   return guard(() => updateTurnReminderActionRun(formData));
+}
+
+export async function renewJoinCodeAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => renewJoinCodeActionRun(formData));
+}
+
+export async function disableJoinCodeAction(formData: FormData): Promise<ActionResult> {
+  return guard(() => disableJoinCodeActionRun(formData));
 }
 
 export async function updatePeerReviewSettingsAction(formData: FormData): Promise<ActionResult> {

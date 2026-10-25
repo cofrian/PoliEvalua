@@ -874,9 +874,9 @@
   "join": {
     "code": "Space code",
     "codePlaceholder": "Organization's code",
-    "as": "I'll take part as",
     "entering": "Joining…",
-    "enter": "Enter space"
+    "enter": "Enter space",
+    "codeDecidesRole": "Each role has its own code: you join with the role of the code you were given. If you are already in the space, the new code gives you that role's permissions."
   },
   "duplicate": {
     "summary": "Duplicate for another term",
@@ -1008,8 +1008,8 @@
     "who": "5. Who takes part",
     "whoHint": "You'll be the owner. Enable the other roles this space will use.",
     "access": "6. Access with a code",
-    "code": "Initial code",
-    "codeHint": "Choose which roles can sign up with the code. The rest will need a personal invitation.",
+    "code": "Code prefix",
+    "codeHint": "Tick which roles can join with a code. Each one gets its own (for example INNOVA-2027-JURADO-7K3F) and you will find them under People. Everyone else needs a personal invitation.",
     "creating": "Creating space…",
     "create": "Create space",
     "questionsTitle": "To prepare it better I need to know:",
@@ -1166,8 +1166,6 @@
   "people": {
     "description": "How people join, invitations and who takes part.",
     "title": "People",
-    "codeTitle": "Access with a code",
-    "codeText": "Share the link and the code. Each person joins with their name, email and role{roles}.",
     "copyLink": "Copy link",
     "copyCode": "Copy code",
     "invitationsTitle": "Individual invitations",
@@ -1197,7 +1195,15 @@
     "reactivate": "Reactivate",
     "deactivate": "Deactivate",
     "deactivateNote": "Deactivating deletes nothing: the person can no longer sign in and their notes and evaluations are kept.",
-    "roleFor": "Role for {name}"
+    "roleFor": "Role for {name}",
+    "codesTitle": "Access codes by role",
+    "codesText": "Each role has its own code. Whoever has the judge code joins as a judge; whoever has the participant code, as a participant. Nobody can choose another role.",
+    "codeOff": "No code: nobody can join with this role on their own.",
+    "renew": "New code",
+    "enableCode": "Enable code",
+    "disableCode": "Disable",
+    "renewTitle": "Change the {role} code?",
+    "renewText": "The current code will stop working. People who already joined keep their access."
   },
   "invite": {
     "email": "Email",

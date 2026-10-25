@@ -1,17 +1,22 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import {
+  disableJoinCodeAction,
+  renewJoinCodeAction,
   revokeInvitationAction,
   setUserRoleAction,
   toggleUserDisabledAction,
 } from "@/app/(app)/admin/actions";
 import { ActionForm } from "@/components/app/action-form";
+import { ConfirmSubmit } from "@/components/app/confirm-submit";
 import { CopyButton } from "@/components/app/copy-button";
 import { InvitationForm } from "@/components/app/invitation-form";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { JOINABLE_ROLES } from "@/lib/app/join-codes";
 import { getSession, type SpaceRole } from "@/lib/app/session";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { cardClass, selectClass } from "@/lib/app/ui";
 
 const ROLES: SpaceRole[] = ["owner", "manager", "judge", "mentor", "teacher", "student", "reviewer", "viewer"];
@@ -30,14 +35,11 @@ export default async function AdminPeoplePage({
   const { supabase, user, event } = await getSession();
   const [t, tRoles, format] = await Promise.all([getTranslations("people"), getTranslations("roles"), getFormatter()]);
   const roleLabel = (role: string) => (ROLES.includes(role as SpaceRole) ? tRoles(role as SpaceRole) : role);
-  const settings = (event.settings ?? {}) as { join_roles?: string[] };
-  const joinRoles = (settings.join_roles ?? ["judge", "mentor"])
-    .map((role) => roleLabel(role).toLowerCase())
-    .filter(Boolean);
 
-  const [{ data: eventSettings }, { data: memberships }, { data: evals }, { data: invitations }] =
+  // Los códigos solo los lee el servidor (la tabla no es visible para los navegadores).
+  const [{ data: joinCodes }, { data: memberships }, { data: evals }, { data: invitations }] =
     await Promise.all([
-      supabase.from("events").select("signup_code").eq("id", event.id).single(),
+      createAdminClient().from("event_join_codes").select("role, code").eq("event_id", event.id),
       supabase
         .from("event_members")
         .select("user_id, role, status, joined_at, profile:profiles!event_members_user_id_fkey(id, full_name, organization, last_seen_at)")
@@ -69,20 +71,52 @@ export default async function AdminPeoplePage({
     <div className="space-y-6">
       <PageHeader description={t("description")} title={t("title")} />
       <section className={cardClass}>
-        <h2 className="mb-2 font-display text-lg">{t("codeTitle")}</h2>
-        <p className="text-sm text-muted-foreground">
-          {t("codeText", { roles: joinRoles.length ? ` (${joinRoles.join(", ")})` : "" })}
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3">
-            <span className="min-w-0 truncate font-mono text-sm">{loginUrl}</span>
-            <CopyButton label={t("copyLink")} value={loginUrl} />
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3">
-            <span className="font-mono text-sm font-semibold tracking-wider">{eventSettings?.signup_code}</span>
-            <CopyButton label={t("copyCode")} value={eventSettings?.signup_code ?? ""} />
-          </div>
+        <h2 className="mb-2 font-display text-lg">{t("codesTitle")}</h2>
+        <p className="text-sm text-muted-foreground">{t("codesText")}</p>
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3">
+          <span className="min-w-0 truncate font-mono text-sm">{loginUrl}</span>
+          <CopyButton label={t("copyLink")} value={loginUrl} />
         </div>
+        <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
+          {JOINABLE_ROLES.map((role) => {
+            const code = joinCodes?.find((row) => row.role === role)?.code;
+            return (
+              <li className="flex flex-wrap items-center gap-3 px-4 py-3" key={role}>
+                <span className="w-28 shrink-0 text-sm font-semibold">{tRoles(role)}</span>
+                {code ? (
+                  <>
+                    <span className="min-w-0 flex-1 break-all font-mono text-sm font-semibold tracking-wider">{code}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CopyButton label={t("copyCode")} value={code} />
+                      <ActionForm action={renewJoinCodeAction}>
+                        <input name="role" type="hidden" value={role} />
+                        <ConfirmSubmit
+                          confirmLabel={t("renew")}
+                          description={t("renewText")}
+                          title={t("renewTitle", { role: tRoles(role) })}
+                        >
+                          {t("renew")}
+                        </ConfirmSubmit>
+                      </ActionForm>
+                      <ActionForm action={disableJoinCodeAction}>
+                        <input name="role" type="hidden" value={role} />
+                        <Button size="sm" type="submit" variant="ghost">{t("disableCode")}</Button>
+                      </ActionForm>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="min-w-0 flex-1 text-sm text-muted-foreground">{t("codeOff")}</span>
+                    <ActionForm action={renewJoinCodeAction}>
+                      <input name="role" type="hidden" value={role} />
+                      <Button size="sm" type="submit" variant="outline">{t("enableCode")}</Button>
+                    </ActionForm>
+                  </>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section className={cardClass}>

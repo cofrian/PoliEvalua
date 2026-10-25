@@ -874,9 +874,9 @@
   "join": {
     "code": "Codi de l'espai",
     "codePlaceholder": "Codi de l'organització",
-    "as": "Hi participaré com a",
     "entering": "Entrant…",
-    "enter": "Entrar a l'espai"
+    "enter": "Entrar a l'espai",
+    "codeDecidesRole": "Cada rol té el seu propi codi: entraràs amb el rol del codi que t’hagen donat. Si ja estàs a l’espai, el codi nou et dona els permisos d’aquest rol."
   },
   "duplicate": {
     "summary": "Duplicar per a un altre curs",
@@ -1008,8 +1008,8 @@
     "who": "5. Qui participa",
     "whoHint": "Tu seràs la persona propietària. Activa els altres perfils que usarà este espai.",
     "access": "6. Accés amb codi",
-    "code": "Codi inicial",
-    "codeHint": "Tria quins perfils poden donar-se d'alta amb el codi. La resta necessitarà una invitació personal.",
+    "code": "Base dels codis",
+    "codeHint": "Marca quins perfils poden entrar amb codi. Cadascun tindrà el seu (per exemple INNOVA-2027-JURADO-7K3F) i els veuràs a Persones. La resta necessitarà una invitació personal.",
     "creating": "Creant l'espai…",
     "create": "Crear l'espai",
     "questionsTitle": "Per a preparar-ho millor necessite saber:",
@@ -1166,8 +1166,6 @@
   "people": {
     "description": "Com entra la gent, invitacions i qui participa.",
     "title": "Persones",
-    "codeTitle": "Accés amb codi",
-    "codeText": "Comparteix l'enllaç i el codi. Cada persona entra amb el seu nom, el seu correu i el seu rol{roles}.",
     "copyLink": "Copiar l'enllaç",
     "copyCode": "Copiar el codi",
     "invitationsTitle": "Invitacions individuals",
@@ -1197,7 +1195,15 @@
     "reactivate": "Reactivar",
     "deactivate": "Desactivar",
     "deactivateNote": "Desactivar no esborra res: la persona deixa de poder entrar i les seues notes i avaluacions es conserven.",
-    "roleFor": "Perfil de {name}"
+    "roleFor": "Perfil de {name}",
+    "codesTitle": "Codis d’accés per rol",
+    "codesText": "Cada rol té el seu codi. Qui tinga el de jurat entra com a jurat; qui tinga el de participant, com a participant. Ningú pot triar un altre rol.",
+    "codeOff": "Sense codi: ningú pot entrar amb aquest rol pel seu compte.",
+    "renew": "Codi nou",
+    "enableCode": "Activar codi",
+    "disableCode": "Desactivar",
+    "renewTitle": "Vols canviar el codi de {role}?",
+    "renewText": "El codi actual deixarà de funcionar. Qui ja ha entrat no perd l’accés."
   },
   "invite": {
     "email": "Correu",
