@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { LocaleSwitcher } from "@/components/app/locale-switcher";
-import { UpvBrand } from "@/components/brand/upv-brand";
+import { PoliBrand } from "@/components/brand/poli-brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
@@ -14,7 +14,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
 
       <header className="relative border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <UpvBrand />
+          <PoliBrand />
           <div className="flex items-center gap-2">
             <LocaleSwitcher />
             <ThemeToggle />

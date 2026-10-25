@@ -84,7 +84,9 @@
       "sponsors": "Logos de patrocinadors en la portada.",
       "audit": "Registre de tot el que s'ha canviat i qui."
     },
-    "skip": "Saltar al contingut"
+    "skip": "Saltar al contingut",
+    "sourceCode": "Codi a GitHub",
+    "feedback": "Enviar comentaris"
   },
   "userMenu": {
     "open": "Menú d'usuari",
@@ -148,7 +150,7 @@
     "registerMeta": "Crear un compte",
     "registerTitle": "Crear un compte",
     "registerDescription": "Crea un únic compte per a participar en diversos projectes, assignatures, premis o hackatons.",
-    "footer": "Evalúa UPV · Accés segur als teus espais d'avaluació",
+    "footer": "PoliEvalúa · Accés segur als teus espais d'avaluació",
     "invitation": "Esta invitació afegirà l'espai i el rol corresponent al teu compte.",
     "email": "Correu electrònic",
     "emailPlaceholder": "tu@correu.com",
@@ -686,17 +688,137 @@
       }
     },
     "login": "Entrar",
-    "kicker": "Avaluació oberta i reutilitzable",
-    "title": "Crea el procés d'avaluació que necessita la teua activitat",
-    "lead": "Gestiona espais, formularis, rúbriques, participants i invitacions per a projectes, assignatures, premis i hackatons.",
-    "access": "Accedir a la plataforma",
-    "createSpace": "Crear un espai",
-    "aside": "Una base comuna. Cada espai conserva la seua identitat, regles i persones.",
-    "kicker2": "Un sistema, contextos diferents",
-    "title2": "Tot es configura des del mateix espai",
-    "lead2": "El gestor decidix qui participa, què es pregunta, com es calcula el resultat i quina informació pot veure cada rol.",
-    "footer": "Evalúa · Universitat Politècnica de València",
-    "footerTags": "Accessible · Adaptable · Dades protegides per RLS"
+    "navLabel": "Seccions",
+    "navFeatures": "Funcions",
+    "navDemo": "Demo",
+    "navOpenSource": "Codi obert",
+    "badge": "Codi obert · Llicència MIT",
+    "title": "Avalua hackathons i classes sense papers ni fulls de càlcul",
+    "lead": "Rúbriques, jurat en directe, coavaluació, agenda d'exposicions i transcripció amb IA en una sola plataforma. Gratuïta, accessible i de codi obert.",
+    "createSpace": "Crear un espai gratis",
+    "watchDemo": "Veure la demo",
+    "heroAlt": "Pantalla d'avaluació amb la rúbrica, el cronòmetre i les notes del jurat",
+    "stat1": {
+      "label": "Cost",
+      "value": "0 €"
+    },
+    "stat2": {
+      "label": "Idiomes",
+      "value": "3"
+    },
+    "stat3": {
+      "label": "Accessibilitat",
+      "value": "AA"
+    },
+    "featuresKicker": "Tot en un lloc",
+    "featuresTitle": "El que necessita un jurat, un professor i els seus equips",
+    "featuresLead": "Cada espai activa només el que fa servir: un hackathon de 48 hores o una assignatura de tot el quadrimestre.",
+    "features": {
+      "rubric": {
+        "title": "Rúbriques ponderades",
+        "text": "Criteris amb pes, nivells descrits i nota sobre 100 calculada al moment."
+      },
+      "live": {
+        "title": "Resultats en directe",
+        "text": "Rànquing que s'actualitza sol, discrepàncies entre jutges i exportació a CSV i PDF."
+      },
+      "peer": {
+        "title": "Coavaluació anònima",
+        "text": "L'alumnat avalua altres grups i a si mateix, sempre sense noms."
+      },
+      "recording": {
+        "title": "Gravació i transcripció",
+        "text": "L'exposició es transcriu amb IA i l'àudio s'esborra tan prompte com hi ha text."
+      },
+      "agenda": {
+        "title": "Agenda i cronòmetre",
+        "text": "Torns per sala, mode projector i cronòmetre compartit."
+      },
+      "assistant": {
+        "title": "Assistent amb IA",
+        "text": "Descriu la teua activitat i et prepara l'espai, la rúbrica i l'agenda."
+      },
+      "notices": {
+        "title": "Avisos",
+        "text": "Campana a l'aplicació i correu abans del teu torn o en publicar resultats."
+      },
+      "languages": {
+        "title": "Castellano, valencià, English",
+        "text": "Tota la interfície i la transcripció en els tres idiomes."
+      },
+      "access": {
+        "title": "Accessible",
+        "text": "Auditada amb WCAG 2.1 AA, en mode clar i fosc."
+      },
+      "privacy": {
+        "title": "Dades protegides",
+        "text": "Cada espai aïllat amb seguretat a nivell de fila i registre d'auditoria."
+      }
+    },
+    "showcase": {
+      "evaluate": {
+        "kicker": "Per al jurat",
+        "title": "Puntuar és tocar un botó",
+        "text": "Cada criteri mostra els seus nivells. La nota sobre 100 es calcula a l'instant, es guarda sola i el cronòmetre marca el temps de l'exposició."
+      },
+      "results": {
+        "kicker": "Per a l'organització",
+        "title": "Resultats mentre es vota",
+        "text": "Veus cada avaluació conforme arriba, quins equips tenen poques notes i on discrepen els jutges. En tancar, descarregues el rànquing."
+      },
+      "room": {
+        "kicker": "El dia de les exposicions",
+        "title": "La sala, sota control",
+        "text": "Qui exposa ara, qui va després i el temps que queda. La gravació es converteix en resum i material de suport per a avaluar."
+      },
+      "projector": {
+        "kicker": "A la pantalla gran",
+        "title": "Mode projector",
+        "text": "Una vista neta per a projectar l'agenda a la sala i que tots sàpiguen quan els toca."
+      }
+    },
+    "demoTitle": "Mira-la en acció",
+    "demoLead": "Un recorregut real: el jurat avalua un equip, consulta la sala i l'organització segueix els resultats en directe.",
+    "stepsTitle": "A punt en tres passos",
+    "steps": {
+      "one": {
+        "title": "Crea el teu espai",
+        "text": "Tria plantilla (hackathon, assignatura, premis o projecte) o deixa que l'assistent el prepare."
+      },
+      "two": {
+        "title": "Convida la gent",
+        "text": "Importa la llista de PoliformaT, comparteix el codi o envia invitacions per correu."
+      },
+      "three": {
+        "title": "Avalua i publica",
+        "text": "El jurat puntua des del mòbil i tu publiques els resultats amb un clic."
+      }
+    },
+    "openTitle": "Codi obert, de la comunitat per a la comunitat",
+    "openLead": "PoliEvalúa és un projecte independent i obert nascut a la UPV. Pots llegir tot el codi, proposar millores o instal·lar-lo al teu propi servidor.",
+    "openRepo": "Veure a GitHub",
+    "openContribute": "Com contribuir",
+    "open": {
+      "license": {
+        "title": "Llicència MIT",
+        "text": "Usa'l, modifica'l i comparteix-lo lliurement."
+      },
+      "stack": {
+        "title": "Tecnologia moderna",
+        "text": "Next.js, Supabase, Tailwind i models d'IA oberts."
+      },
+      "selfHost": {
+        "title": "Instal·la'l tu",
+        "text": "Guia pas a pas per al teu propi desplegament."
+      },
+      "free": {
+        "title": "Gratuït",
+        "text": "Funciona amb els plans gratuïts de cada servei."
+      }
+    },
+    "disclaimer": "Projecte independent de codi obert. No és un servei oficial de la Universitat Politècnica de València.",
+    "footerLicense": "Llicència",
+    "footerFeedback": "Comentaris"
   },
   "platform": {
     "account": "El teu compte",

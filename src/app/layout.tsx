@@ -27,16 +27,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("meta");
   return {
     title: {
-      default: "Evalúa · UPV",
-      template: "%s · Evalúa UPV",
+      default: "PoliEvalúa",
+      template: "%s · PoliEvalúa",
     },
     description: t("description"),
     appleWebApp: {
       capable: true,
-      title: "Evalúa UPV",
+      title: "PoliEvalúa",
       statusBarStyle: "default",
     },
-    icons: { icon: "/icons/upv-evalua.svg" },
+    icons: { icon: "/icons/polievalua.svg" },
   };
 }
 

@@ -27,7 +27,8 @@
     "smoke:audio": "node scripts/smoke-audio.mjs",
     "lock:fix": "node scripts/fix-lock-optional-deps.mjs",
     "bench:models": "node scripts/benchmark-nvidia-models.mjs",
-    "test:all": "npm run test:ci && npm run test:security && npm run test:e2e"
+    "test:all": "npm run test:ci && npm run test:security && npm run test:e2e",
+    "showcase": "playwright test e2e/showcase.spec.ts --workers=1"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.75",

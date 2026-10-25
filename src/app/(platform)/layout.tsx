@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { UserMenu } from "@/components/app/app-shell";
-import { UpvBrand } from "@/components/brand/upv-brand";
+import { PoliBrand } from "@/components/brand/poli-brand";
 import { getAccount } from "@/lib/app/session";
 
 export default async function PlatformLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -14,7 +14,7 @@ export default async function PlatformLayout({ children }: Readonly<{ children: 
     <div className="min-h-svh bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-          <UpvBrand compact href="/espacios" />
+          <PoliBrand compact href="/espacios" />
           <UserMenu
             profile={{ name: profile.full_name || t("account"), avatarUrl: profile.avatar_url ?? null, roleLabel: t("yourSpaces") }}
           />
