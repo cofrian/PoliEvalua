@@ -16,6 +16,9 @@ export const REPO_URL = "https://github.com/cofrian/valencia-hack-jurado";
 /** Sugerencias y errores: se abren como incidencias públicas en GitHub. */
 export const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;
 
+/** Buzón público: ImprovMX lo reenvía al correo del proyecto. */
+export const CONTACT_EMAIL = "contacto@polievalua.tech";
+
 type PoliBrandProps = {
   className?: string;
   href?: string;

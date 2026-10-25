@@ -12,6 +12,7 @@ import {
   Layers,
   ListChecks,
   LogOut,
+  Mail,
   Menu,
   MessageSquare,
   Mic,
@@ -39,7 +40,7 @@ import { useState, type ReactNode } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { OPEN_TOUR_EVENT } from "@/components/app/product-tour";
 import { SpaceSwitcher, type SpaceOption } from "@/components/app/space-switcher";
-import { FEEDBACK_URL, Github, PoliBrand, REPO_URL } from "@/components/brand/poli-brand";
+import { CONTACT_EMAIL, FEEDBACK_URL, Github, PoliBrand, REPO_URL } from "@/components/brand/poli-brand";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -308,6 +309,10 @@ function ProjectLinks() {
       <a className={link} href={FEEDBACK_URL} rel="noreferrer" target="_blank">
         <MessageSquare aria-hidden="true" className="size-4" />
         {t("feedback")}
+      </a>
+      <a className={link} href={`mailto:${CONTACT_EMAIL}`}>
+        <Mail aria-hidden="true" className="size-4" />
+        {CONTACT_EMAIL}
       </a>
     </div>
   );
