@@ -1540,7 +1540,10 @@
     "publishNoCriteria": "Antes de publicar, añade los criterios de la rúbrica (Evaluación → Rúbrica).",
     "publishWeights": "Los pesos de la rúbrica suman {total} %; deben sumar 100 % para publicar.",
     "brandingFailed": "No se ha podido guardar la imagen del espacio.",
-    "generic": "No se ha podido completar la acción. Inténtalo de nuevo."
+    "generic": "No se ha podido completar la acción. Inténtalo de nuevo.",
+    "codeLength": "El código debe tener entre 6 y 40 caracteres.",
+    "codeInUse": "Ese código ya lo usa otro espacio. Elige otro.",
+    "saveFailed": "No se pudieron guardar los cambios."
   },
   "rubricEditor": {
     "levels": {

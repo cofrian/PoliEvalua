@@ -1540,7 +1540,10 @@
     "publishNoCriteria": "Abans de publicar, afig els criteris de la rúbrica (Avaluació → Rúbrica).",
     "publishWeights": "Els pesos de la rúbrica sumen {total} %; han de sumar 100 % per a publicar.",
     "brandingFailed": "No s'ha pogut guardar la imatge de l'espai.",
-    "generic": "No s'ha pogut completar l'acció. Torna-ho a provar."
+    "generic": "No s'ha pogut completar l'acció. Torna-ho a provar.",
+    "codeLength": "El codi ha de tindre entre 6 i 40 caràcters.",
+    "codeInUse": "Aquest codi ja l’utilitza un altre espai. Tria’n un altre.",
+    "saveFailed": "No s’han pogut guardar els canvis."
   },
   "rubricEditor": {
     "levels": {

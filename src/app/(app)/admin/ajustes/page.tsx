@@ -89,6 +89,8 @@ export default async function AdminSettingsPage() {
                 className="font-mono uppercase"
                 defaultValue={eventSettings.signup_code}
                 id="signupCode"
+                maxLength={40}
+                minLength={6}
                 name="signupCode"
               />
             </SettingRow>

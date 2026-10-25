@@ -122,7 +122,12 @@ export async function joinSpaceAction(
   const allowedRoles = Array.isArray(settings?.join_roles)
     ? settings.join_roles
     : ["judge", "mentor"];
-  if (!allowedRoles.includes(parsed.data.role)) {
+  // «teacher» y «reviewer» son nombres antiguos de jurado.
+  const judgeAliases = ["judge", "teacher", "reviewer"];
+  const allowed =
+    allowedRoles.includes(parsed.data.role) ||
+    (judgeAliases.includes(parsed.data.role) && allowedRoles.some((role) => judgeAliases.includes(role)));
+  if (!allowed) {
     return { error: t("roleNotAllowed") };
   }
 
@@ -287,7 +292,7 @@ export async function duplicateSpaceAction(
     source_event: parsed.data.sourceId,
     p_name: parsed.data.name,
     p_slug: parsed.data.slug,
-    p_signup_code: parsed.data.accessCode,
+    p_signup_code: parsed.data.accessCode.toUpperCase(),
   });
   if (error || typeof data !== "string") {
     return {

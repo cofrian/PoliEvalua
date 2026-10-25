@@ -35,7 +35,7 @@ export function JoinSpaceForm() {
       <div className="space-y-1.5">
         <Label htmlFor="join-role">{t("as")}</Label>
         <select className={`${selectClass} w-full`} defaultValue="judge" id="join-role" name="role">
-          {(["judge", "mentor", "student", "reviewer", "viewer"] as const).map((role) => (
+          {(["judge", "mentor", "student", "viewer"] as const).map((role) => (
             <option key={role} value={role}>
               {tRoles(role)}
             </option>
