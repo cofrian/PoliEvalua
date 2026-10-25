@@ -7,7 +7,7 @@ import { PoliBrand } from "@/components/brand/poli-brand";
 import { byRoom, scheduleRoom, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
 import { publicVoteSettings } from "@/lib/app/public-vote";
-import { publicVoteCounts, publicVoteUrl, qrSvg } from "@/lib/app/public-vote-data";
+import { publicResults, publicVoteUrl, qrSvg } from "@/lib/app/public-vote-data";
 import { getSession } from "@/lib/app/session";
 import { vocabulary } from "@/lib/app/vocabulary";
 
@@ -33,7 +33,7 @@ export default async function ProjectorPage() {
   const [agenda, url] = await Promise.all([loadAgenda(supabase, event.id), publicVoteUrl(event.slug)]);
   const [svg, counts] = await Promise.all([
     vote.open ? qrSvg(url) : Promise.resolve(null),
-    vote.open && vote.showResults ? publicVoteCounts(supabase, event.id) : Promise.resolve(null),
+    vote.open && vote.showResults ? publicResults(supabase, event.id, vote.mode) : Promise.resolve(null),
   ]);
   const rooms = byRoom(agenda).map(([room, slots]) => {
     const scheduled = scheduleRoom(slots);
@@ -44,7 +44,7 @@ export default async function ProjectorPage() {
     };
   });
   const top = counts?.teams.slice(0, 8) ?? [];
-  const max = Math.max(1, ...top.map((team) => team.votes));
+  const max = counts?.mode === "rubric" ? 100 : Math.max(1, ...top.map((team) => team.value));
 
   return (
     <main className="min-h-svh bg-ink-950 p-8 text-white" lang={event.locale}>
@@ -109,9 +109,9 @@ export default async function ProjectorPage() {
                   <li className="flex items-center gap-3 text-lg" key={team.id}>
                     <span className="w-44 truncate">{team.name}</span>
                     <span className="h-4 flex-1 overflow-hidden rounded-full bg-white/10">
-                      <span className="block h-full rounded-full bg-yellow-400" style={{ width: `${(team.votes / max) * 100}%` }} />
+                      <span className="block h-full rounded-full bg-yellow-400" style={{ width: `${(team.value / max) * 100}%` }} />
                     </span>
-                    <span className="w-10 text-right font-mono">{team.votes}</span>
+                    <span className="w-16 text-right font-mono">{team.value}</span>
                   </li>
                 ))}
               </ol>

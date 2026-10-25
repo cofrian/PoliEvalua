@@ -116,7 +116,7 @@ export const settingsChangeSchema = z.discriminatedUnion("setting", [
   z.object({ setting: z.literal("locale"), locale: z.enum(["es", "ca", "en"]) }),
   z.object({ setting: z.literal("participantMode"), mode: z.enum(["teams", "groups", "individuals", "candidates"]) }),
   z.object({ setting: z.literal("students"), showRubric: z.boolean().nullish(), publishResults: z.boolean().nullish() }),
-  z.object({ setting: z.literal("publicVote"), open: z.boolean().nullish(), showResults: z.boolean().nullish(), title: z.string().trim().max(120).nullish() }),
+  z.object({ setting: z.literal("publicVote"), open: z.boolean().nullish(), showResults: z.boolean().nullish(), title: z.string().trim().max(120).nullish(), mode: z.enum(["favorite", "rubric"]).nullish() }),
   z.object({ setting: z.literal("turnReminder"), minutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(30)]) }),
   z.object({ setting: z.literal("materials"), driveUrl: z.string().trim().max(2000).nullish(), instructions: z.string().trim().max(2000).nullish() }),
   z.object({ setting: z.literal("aiInstructions"), instructions: z.string().trim().max(2000) }),

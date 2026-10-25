@@ -68,7 +68,7 @@ type EventSettings = {
   recording?: { enabled?: boolean };
   participant_mode?: string;
   students?: { show_rubric?: boolean; publish_results?: boolean };
-  public_vote?: { open?: boolean; show_results?: boolean; title?: string | null };
+  public_vote?: { open?: boolean; show_results?: boolean; title?: string | null; mode?: string };
   notifications?: { turn_minutes?: number };
   materials?: { drive_url?: string | null };
 };
@@ -91,6 +91,7 @@ function currentSettings(
       open: settings.public_vote?.open === true,
       showResults: settings.public_vote?.show_results === true,
       title: settings.public_vote?.title ?? null,
+      mode: settings.public_vote?.mode === "rubric" ? "rubric" : "favorite",
     },
     turnReminderMinutes: settings.notifications?.turn_minutes ?? 10,
     materialsFolder: Boolean(settings.materials?.drive_url),
@@ -109,7 +110,7 @@ const SETTINGS_GUIDE = `  - {"setting":"recording","enabled":true|false} grabar 
   - {"setting":"locale","locale":"es"|"ca"|"en"} idioma del espacio.
   - {"setting":"participantMode","mode":"teams"|"groups"|"individuals"|"candidates"} quién participa.
   - {"setting":"students","showRubric":true|false|null,"publishResults":true|false|null} qué ven los participantes (null = no cambiar). «Publicar los resultados» o «enseñar las notas» es publishResults: true; no tiene nada que ver con la fase.
-  - {"setting":"publicVote","open":true|false|null,"showResults":true|false|null,"title":"…"|null} votación del público.
+  - {"setting":"publicVote","open":true|false|null,"showResults":true|false|null,"title":"…"|null,"mode":"favorite"|"rubric"|null} votación del público: "favorite" = cada persona elige su proyecto favorito; "rubric" = el público puntúa cada proyecto con los criterios de la rúbrica.
   - {"setting":"turnReminder","minutes":5|10|15|30} aviso por correo antes de cada exposición.
   - {"setting":"materials","driveUrl":"https://…"|null,"instructions":"…"|null} carpeta e instrucciones de las entregas.
   - {"setting":"aiInstructions","instructions":"…"} instrucciones para la IA que analiza las exposiciones.

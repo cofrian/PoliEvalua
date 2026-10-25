@@ -148,6 +148,7 @@ function SettingsPreview({ changes }: { changes: SettingsChange[] }) {
           change.open == null ? null : t(change.open ? "voteOn" : "voteOff"),
           change.showResults == null ? null : t(change.showResults ? "voteResultsOn" : "voteResultsOff"),
           change.title ? t("voteTitle", { title: change.title }) : null,
+          change.mode ? t(change.mode === "rubric" ? "voteModeRubric" : "voteModeFavorite") : null,
         ].filter(Boolean).join(" · ");
       case "turnReminder":
         return t("turnReminder", { minutes: change.minutes });

@@ -1,6 +1,9 @@
 // Voto del público: configuración (events.settings.public_vote).
 
-export type PublicVoteSettings = { open: boolean; title: string | null; showResults: boolean };
+/** «favorite»: cada dispositivo elige un proyecto. «rubric»: puntúa cada proyecto con la rúbrica. */
+export type PublicVoteMode = "favorite" | "rubric";
+
+export type PublicVoteSettings = { open: boolean; title: string | null; showResults: boolean; mode: PublicVoteMode };
 
 export function publicVoteSettings(settings: unknown): PublicVoteSettings {
   const raw =
@@ -11,5 +14,6 @@ export function publicVoteSettings(settings: unknown): PublicVoteSettings {
     open: raw.open === true,
     title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim() : null,
     showResults: raw.show_results === true,
+    mode: raw.mode === "rubric" ? "rubric" : "favorite",
   };
 }

@@ -137,10 +137,17 @@
       "rate": "Hi ha massa vots des d'esta xarxa. Espera uns minuts.",
       "closed": "La votació està tancada.",
       "gone": "Eixa opció ja no existix.",
-      "save": "No s'ha pogut registrar el vot. Torna-ho a provar."
+      "save": "No s'ha pogut registrar el vot. Torna-ho a provar.",
+      "allCriteria": "Puntua tots els criteris abans de guardar."
     },
     "saved": "Vot registrat! Pots canviar-lo mentre la votació continue oberta.",
-    "defaultTitle": "Premi del públic"
+    "defaultTitle": "Premi del públic",
+    "introRubric": "Puntua cada projecte amb els mateixos criteris que el jurat. Pots corregir les teues notes mentre la votació continue oberta.",
+    "noRubric": "L’organització encara no ha preparat la rúbrica.",
+    "scored": "Ja puntuat",
+    "saveScore": "Guardar puntuació",
+    "updateScore": "Actualitzar puntuació",
+    "scoreSaved": "Puntuació guardada! Pots canviar-la mentre la votació continue oberta."
   },
   "auth": {
     "loginMeta": "Entrar",
@@ -1440,7 +1447,7 @@
   "publicAdmin": {
     "description": "Un QR perquè el públic vote i una pantalla amb el recompte en directe.",
     "title": "Vot del públic",
-    "formDescription": "Qualsevol amb l'enllaç o el QR vota sense crear compte: un vot per dispositiu, que pot canviar mentre estiga oberta. No compta en l'avaluació del jurat.",
+    "formDescription": "Qualsevol amb l’enllaç o el QR vota des del mòbil, sense crear compte, i pot canviar el vot mentre estiga oberta. El vot del públic va a banda: mai no compta en l’avaluació del jurat.",
     "formTitle": "Votació",
     "titleLabel": "Títol",
     "titleHint": "El que veurà el públic en obrir l'enllaç.",
@@ -1456,7 +1463,13 @@
     "resetText": "S'eliminen els {count} vots del públic. No es pot desfer.",
     "resetTitle": "Vols esborrar tots els vots?",
     "resetButton": "Esborrar tots els vots",
-    "defaultTitle": "Premi del públic"
+    "defaultTitle": "Premi del públic",
+    "mode": "Com vota el públic",
+    "modeHint": "El favorit: cada persona tria un projecte. Amb la rúbrica: puntua cada projecte amb els criteris del jurat. Mai no compta en la nota del jurat.",
+    "modeFavorite": "Tria el seu projecte favorit",
+    "modeRubric": "Puntua amb la rúbrica",
+    "countRubric": "Puntuacions del públic ({count} persones)",
+    "rubricValue": "{value}/100 · {count}"
   },
   "projector": {
     "meta": "Projector",
@@ -1722,7 +1735,9 @@
         "challenge": "Crear el repte «{name}»",
         "invite": "Convidar {email} com a {role} (li arribarà un correu)",
         "joinCodeOn": "Crear un codi nou per a {role} (l’anterior deixa de valdre)",
-        "joinCodeOff": "Desactivar el codi de {role}"
+        "joinCodeOff": "Desactivar el codi de {role}",
+        "voteModeRubric": "El públic puntua amb la rúbrica",
+        "voteModeFavorite": "El públic tria el seu projecte favorit"
       }
     }
   },

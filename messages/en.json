@@ -137,10 +137,17 @@
       "rate": "Too many votes from this network. Wait a few minutes.",
       "closed": "Voting is closed.",
       "gone": "That option no longer exists.",
-      "save": "Your vote couldn't be recorded. Try again."
+      "save": "Your vote couldn't be recorded. Try again.",
+      "allCriteria": "Score every criterion before saving."
     },
     "saved": "Vote recorded! You can change it while voting is open.",
-    "defaultTitle": "Audience award"
+    "defaultTitle": "Audience award",
+    "introRubric": "Score each project with the same criteria as the jury. You can change your scores while the vote is open.",
+    "noRubric": "The organisers have not set up the rubric yet.",
+    "scored": "Already scored",
+    "saveScore": "Save score",
+    "updateScore": "Update score",
+    "scoreSaved": "Score saved! You can change it while the vote is open."
   },
   "auth": {
     "loginMeta": "Sign in",
@@ -1440,7 +1447,7 @@
   "publicAdmin": {
     "description": "A QR code for the audience to vote and a screen with the live count.",
     "title": "Audience vote",
-    "formDescription": "Anyone with the link or QR can vote without an account: one vote per device, which can be changed while voting is open. It doesn't count in the jury's evaluation.",
+    "formDescription": "Anyone with the link or QR votes from their phone without an account, and can change their vote while it is open. The audience vote is separate: it never counts towards the jury evaluation.",
     "formTitle": "Voting",
     "titleLabel": "Title",
     "titleHint": "What the audience sees when opening the link.",
@@ -1456,7 +1463,13 @@
     "resetText": "All {count} audience votes will be deleted. This can't be undone.",
     "resetTitle": "Delete all votes?",
     "resetButton": "Delete all votes",
-    "defaultTitle": "Audience award"
+    "defaultTitle": "Audience award",
+    "mode": "How the audience votes",
+    "modeHint": "Favourite: each person picks one project. With the rubric: they score each project with the jury criteria. It never counts towards the jury score.",
+    "modeFavorite": "Pick their favourite project",
+    "modeRubric": "Score with the rubric",
+    "countRubric": "Audience scores ({count} people)",
+    "rubricValue": "{value}/100 · {count}"
   },
   "projector": {
     "meta": "Projector",
@@ -1722,7 +1735,9 @@
         "challenge": "Create the challenge “{name}”",
         "invite": "Invite {email} as {role} (they will get an email)",
         "joinCodeOn": "Create a new code for {role} (the old one stops working)",
-        "joinCodeOff": "Disable the {role} code"
+        "joinCodeOff": "Disable the {role} code",
+        "voteModeRubric": "The audience scores with the rubric",
+        "voteModeFavorite": "The audience picks its favourite project"
       }
     }
   },
