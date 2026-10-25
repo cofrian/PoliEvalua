@@ -10,7 +10,8 @@ export type AttemptKind =
   | "transcription"
   | "bad_code"
   | "bad_password"
-  | "public_vote";
+  | "public_vote"
+  | "password_reset";
 
 // Cuántos intentos se permiten en cada ventana antes de bloquear.
 export const LIMITS: Record<AttemptKind, { max: number; minutes: number }> = {
@@ -20,6 +21,7 @@ export const LIMITS: Record<AttemptKind, { max: number; minutes: number }> = {
   bad_password: { max: 5, minutes: 15 }, // contraseñas incorrectas por email o IP
   // Generoso: en un aula o auditorio muchos móviles comparten la misma IP.
   public_vote: { max: 400, minutes: 10 },
+  password_reset: { max: 3, minutes: 30 }, // correos de recuperación por email o IP
 };
 
 export async function clientIp() {

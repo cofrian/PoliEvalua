@@ -182,8 +182,24 @@
       "exists": "An account with that email already exists. Sign in with your password.",
       "createFailed": "The account couldn't be created. Try again.",
       "activateFailed": "The account couldn't be activated. Try again.",
-      "signInFailed": "The account was created, but signing in failed."
-    }
+      "signInFailed": "The account was created, but signing in failed.",
+      "resetLimit": "You have requested several links in a row. Wait half an hour and try again.",
+      "updateFailed": "The password could not be saved. Request a new link."
+    },
+    "forgot": "Forgot your password?",
+    "resetMeta": "Reset password",
+    "resetTitle": "Reset your password",
+    "resetDescription": "We will send you a link to choose a new one.",
+    "resetSend": "Send link",
+    "resetSending": "Sending…",
+    "resetSent": "If there is an account with that email, a link will arrive in a few minutes. Check your spam folder too.",
+    "resetBack": "Back to sign in",
+    "newMeta": "New password",
+    "newTitle": "Choose a new password",
+    "newDescription": "Use it from now on to sign in.",
+    "newSave": "Save password",
+    "newSaving": "Saving…",
+    "linkInvalid": "The link has expired or was already used. Request another one."
   },
   "teams": {
     "status": {
@@ -1826,6 +1842,13 @@
       "heading": "Results are out",
       "body": "The results for {event} have been published. Sign in to see your group's grade and feedback.",
       "cta": "View results"
+    },
+    "reset": {
+      "subject": "Reset your PoliEvalúa password",
+      "heading": "Choose a new password",
+      "body": "Someone asked to change the password of your account. Press the button to choose a new one. The link expires in one hour.",
+      "cta": "Choose password",
+      "footer": "If you did not request this, ignore this email: your password does not change."
     }
   }
 }

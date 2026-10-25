@@ -3,11 +3,13 @@
 import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import type { AuthActionState } from "@/lib/auth/types";
 import { clearAttempts, clientIp, isBlocked, recordAttempt } from "@/lib/auth/rate-limit";
+import { sendPasswordResetEmail } from "@/lib/app/email-notifications";
+import { siteUrl } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -246,4 +248,58 @@ export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: "local" });
   redirect("/login");
+}
+
+export async function requestPasswordResetAction(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const t = await authT();
+  const parsed = z.object({ email: emailSchema }).safeParse({ email: value(formData, "email") });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: t("checkFields"),
+      fieldErrors: translateFieldErrors(parsed.error.flatten().fieldErrors, t),
+    };
+  }
+
+  const { email } = parsed.data;
+  const admin = createAdminClient();
+  const keys = [`reset:email:${email}`, `reset:ip:${await clientIp()}`];
+  if (await isBlocked(admin, "password_reset", keys)) {
+    return { status: "error", message: t("resetLimit"), values: { email } };
+  }
+  await recordAttempt(admin, "password_reset", keys);
+
+  // El enlace lo genera Supabase, pero el correo sale por Resend con el resto de avisos.
+  const { data } = await admin.auth.admin.generateLink({ type: "recovery", email });
+  const tokenHash = data?.properties?.hashed_token;
+  if (tokenHash) {
+    const link = `${siteUrl()}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=recovery&next=/nueva-contrasena`;
+    await sendPasswordResetEmail({ email, link, locale: (await getLocale()) as Parameters<typeof sendPasswordResetEmail>[0]["locale"] });
+  }
+
+  // Misma respuesta exista o no la cuenta: no se revela quién está registrado.
+  return { status: "success", message: (await getTranslations("auth"))("resetSent") };
+}
+
+export async function updatePasswordAction(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const t = await authT();
+  const parsed = z.object({ password: passwordSchema }).safeParse({ password: value(formData, "password") });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: t("checkFields"),
+      fieldErrors: translateFieldErrors(parsed.error.flatten().fieldErrors, t),
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { status: "error", message: t("updateFailed") };
+  redirect("/espacios");
 }

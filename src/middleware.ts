@@ -8,6 +8,8 @@ const PUBLIC_ROUTES = new Set([
   "/login",
   "/registro",
   "/auth/callback",
+  "/auth/confirm",
+  "/recuperar",
 ]);
 
 const AUTH_ENTRY_ROUTES = new Set(["/", "/login", "/registro"]);

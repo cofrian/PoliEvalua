@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
-import { loginAction, registerAction } from "@/app/(auth)/actions";
+import { loginAction, registerAction, requestPasswordResetAction, updatePasswordAction } from "@/app/(auth)/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,11 +66,11 @@ function EmailField({ state }: { state: AuthActionState }) {
   );
 }
 
-function PasswordField({ state, registering = false }: { state: AuthActionState; registering?: boolean }) {
+function PasswordField({ state, registering = false, label }: { state: AuthActionState; registering?: boolean; label?: string }) {
   const t = useTranslations("auth");
   return (
     <div className="space-y-2">
-      <Label htmlFor="password">{t("password")}</Label>
+      <Label htmlFor="password">{label ?? t("password")}</Label>
       <Input
         aria-describedby={state.fieldErrors?.password ? "password-error" : "password-hint"}
         aria-invalid={Boolean(state.fieldErrors?.password)}
@@ -113,6 +113,11 @@ export function LoginForm({ inviteToken, notice }: { inviteToken?: string; notic
       <input name="inviteToken" type="hidden" value={inviteToken ?? ""} />
       <EmailField state={state} />
       <PasswordField state={state} />
+      <p className="-mt-2 text-right text-sm">
+        <Link className="font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground" href="/recuperar">
+          {t("forgot")}
+        </Link>
+      </p>
       <SubmitButton idleLabel={t("login")} pendingLabel={t("loggingIn")} />
       <p className="text-center text-sm text-muted-foreground">
         {t("noAccount")}{" "}
@@ -158,6 +163,43 @@ export function RegisterForm({ inviteToken }: { inviteToken?: string }) {
           {t("enter")}
         </Link>
       </p>
+    </form>
+  );
+}
+
+export function ResetRequestForm() {
+  const [state, formAction] = useActionState(requestPasswordResetAction, initialAuthActionState);
+  const t = useTranslations("auth");
+
+  return (
+    <form action={formAction} className="space-y-5" noValidate>
+      {state.status === "success" ? (
+        <div aria-live="polite" className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-sm" role="status">
+          {state.message}
+        </div>
+      ) : (
+        <StatusMessage state={state} />
+      )}
+      <EmailField state={state} />
+      <SubmitButton idleLabel={t("resetSend")} pendingLabel={t("resetSending")} />
+      <p className="text-center text-sm">
+        <Link className="font-semibold text-foreground underline underline-offset-4" href="/login">
+          {t("resetBack")}
+        </Link>
+      </p>
+    </form>
+  );
+}
+
+export function NewPasswordForm() {
+  const [state, formAction] = useActionState(updatePasswordAction, initialAuthActionState);
+  const t = useTranslations("auth");
+
+  return (
+    <form action={formAction} className="space-y-5" noValidate>
+      <StatusMessage state={state} />
+      <PasswordField label={t("newMeta")} registering state={state} />
+      <SubmitButton idleLabel={t("newSave")} pendingLabel={t("newSaving")} />
     </form>
   );
 }
