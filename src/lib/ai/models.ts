@@ -18,11 +18,11 @@ export const DEFAULT_MODELS: Record<ModelTask, string[]> = {
   // Solo modelos con «Free Endpoint» en build.nvidia.com que responden con la
   // cuenta del proyecto (scripts/benchmark-nvidia-models.mjs --all). Los
   // populares (DeepSeek, GLM) no entran: suelen estar en cola.
-  // Medido el 24/10/2026 (rúbrica completa): super-vl 8 s, lightning 12 s,
-  // step-5 31 s; DeepSeek v4.1 flash no respondió en 20 s.
+  // Medido el 25/10/2026 (rúbrica completa): lightning 10 s; super-vl daba
+  // HTTP 500 o se colgaba y step-5 pasaba de 90 s. Va primero el más estable.
   builder: [
-    "nvidia/nemotron-3.5-super-vl-120b-a12b",
     "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nvidia/nemotron-3.5-super-vl-120b-a12b",
     "stepfun-ai/step-5-preview",
   ],
   // Análisis de transcripciones largas en segundo plano: prima la calidad.
@@ -197,14 +197,38 @@ export async function availableModelIds() {
   return ids;
 }
 
+/** Llamada mínima con la clave de producción: que esté en el catálogo no basta. */
+async function pingModel(id: string) {
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.NVIDIA_API_KEY}` },
+      body: JSON.stringify({
+        model: id,
+        messages: [{ role: "user", content: "Responde solo: OK" }],
+        max_tokens: 5,
+        ...NVIDIA_NO_THINKING,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    return { responds: response.ok, status: response.status, seconds: (Date.now() - startedAt) / 1000 };
+  } catch {
+    return { responds: false, status: 0, seconds: (Date.now() - startedAt) / 1000 };
+  }
+}
+
 export async function modelHealth() {
   const ids = await availableModelIds();
-  return (Object.keys(DEFAULT_MODELS) as ModelTask[]).map((task) => {
-    const models = modelChain(task).map((id) => ({ id, listed: ids.has(id) }));
+  const chains = (Object.keys(DEFAULT_MODELS) as ModelTask[]).map((task) => ({ task, chain: modelChain(task) }));
+  const unique = [...new Set(chains.flatMap(({ chain }) => chain))];
+  const pings = new Map(await Promise.all(unique.map(async (id) => [id, await pingModel(id)] as const)));
+  return chains.map(({ task, chain }) => {
+    const models = chain.map((id) => ({ id, listed: ids.has(id), ...pings.get(id)! }));
     return {
       task,
-      ok: models.some((model) => model.listed),
-      primaryListed: models[0]?.listed ?? false,
+      ok: models.some((model) => model.listed && model.responds),
+      primaryResponds: models[0]?.responds ?? false,
       models,
     };
   });

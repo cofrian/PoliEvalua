@@ -48,6 +48,8 @@ jobs:
             -H "Authorization: Bearer $JOBS_CRON_SECRET" \
             "${HEALTH_URL%/}/api/health/ai")
           cat body.json
+          # El principal caído no rompe la app (hay respaldo), pero conviene saberlo.
+          jq -r ".tasks[]? | select(.primaryResponds == false) | \"::warning::El modelo principal de \(.task) no responde; se usa el respaldo.\"" body.json
           if [ "$status" != "200" ]; then
             echo "::error::La IA de producción no está sana (HTTP $status)."
             exit 1
