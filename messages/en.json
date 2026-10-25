@@ -1540,7 +1540,10 @@
     "publishNoCriteria": "Before publishing, add the rubric criteria (Evaluation → Rubric).",
     "publishWeights": "The rubric weights add up to {total} %; they must add up to 100 % to publish.",
     "brandingFailed": "The space's look couldn't be saved.",
-    "generic": "The action couldn't be completed. Try again."
+    "generic": "The action couldn't be completed. Try again.",
+    "codeLength": "The code must be between 6 and 40 characters.",
+    "codeInUse": "Another space already uses that code. Choose a different one.",
+    "saveFailed": "The changes could not be saved."
   },
   "rubricEditor": {
     "levels": {

@@ -163,6 +163,9 @@ async function updateEventActionRun(formData: FormData) {
   };
 
   if (id !== event.id) throw new Error(await adminMessage("spaceMismatch"));
+  if (signupCode && (signupCode.length < 6 || signupCode.length > 40)) {
+    throw new Error(await adminMessage("codeLength"));
+  }
   // Quién participa (equipos, grupos, personas…) se puede cambiar después de crear el espacio.
   const mode = text(formData, "participantMode");
   if (["teams", "groups", "individuals", "candidates"].includes(mode)) {
@@ -171,7 +174,10 @@ async function updateEventActionRun(formData: FormData) {
       settings: { ...((current?.settings as Record<string, unknown> | null) ?? {}), participant_mode: mode },
     });
   }
-  await supabase.from("events").update(changes).eq("id", event.id);
+  const { error: updateError } = await supabase.from("events").update(changes).eq("id", event.id);
+  if (updateError) {
+    throw new Error(await adminMessage(updateError.code === "23505" ? "codeInUse" : "saveFailed"));
+  }
   await logAudit(supabase, event.id, user.id, "actualizar_evento", "events", id, changes);
   refreshAll();
 }
