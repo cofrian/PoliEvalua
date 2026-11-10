@@ -38,6 +38,7 @@ import { useTheme } from "next-themes";
 import { useState, type ReactNode } from "react";
 
 import { logoutAction } from "@/app/(auth)/actions";
+import { JuryViewToggle } from "@/components/app/jury-view-toggle";
 import { OPEN_TOUR_EVENT } from "@/components/app/product-tour";
 import { SpaceSwitcher, type SpaceOption } from "@/components/app/space-switcher";
 import { CONTACT_EMAIL, FEEDBACK_URL, Github, PoliBrand, REPO_URL } from "@/components/brand/poli-brand";
@@ -324,8 +325,11 @@ export function AppShell({
   spaces,
   profile,
   notices,
+  juryView,
   children,
 }: {
+  /** Solo para la gestión: null si no puede usar la vista de jurado. */
+  juryView?: { active: boolean } | null;
   groups: NavGroup[];
   notices: Notice[];
   current: SpaceOption;
@@ -373,6 +377,7 @@ export function AppShell({
             </div>
             <div className="hidden lg:block" />
             <div className="flex items-center gap-1">
+              {juryView ? <JuryViewToggle active={juryView.active} /> : null}
               <NotificationBell notices={notices} />
               <UserMenu profile={profile} />
             </div>
@@ -384,6 +389,11 @@ export function AppShell({
           id="contenido"
           tabIndex={-1}
         >
+          {juryView?.active ? (
+            <p className="mb-4 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-semibold print:hidden">
+              {t("juryViewBanner")}
+            </p>
+          ) : null}
           <SectionTabs groups={groups} />
           {children}
         </main>

@@ -52,11 +52,12 @@ export default async function AppLayout({
       <AppShell
         current={{ id: event.id, name: event.name }}
         groups={buildNavigation(session, tNav)}
+        juryView={session.realAdmin ? { active: session.juryView } : null}
         notices={notices}
         profile={{
           name: profile.full_name,
           avatarUrl: profile.avatar_url,
-          roleLabel: tRoles(profile.role),
+          roleLabel: session.juryView ? tRoles("judge") : tRoles(profile.role),
         }}
         spaces={spaces}
       >

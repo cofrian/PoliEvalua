@@ -86,7 +86,8 @@
     },
     "skip": "Saltar al contenido",
     "sourceCode": "Código en GitHub",
-    "feedback": "Enviar comentarios"
+    "feedback": "Enviar comentarios",
+    "juryViewBanner": "Estás en la vista de jurado: las secciones de gestión están ocultas. Pulsa «Volver a gestión» para recuperarlas."
   },
   "userMenu": {
     "open": "Menú de usuario",
@@ -446,7 +447,9 @@
     "reset": "Reiniciar",
     "skip": "Saltar",
     "twoMinutes": "Quedan menos de 2 minutos.",
-    "timeUp": "Tiempo agotado."
+    "timeUp": "Tiempo agotado.",
+    "reopen": "Volver a exponer",
+    "backToQueue": "Devolver a la cola"
   },
   "peer": {
     "title": "Coevaluación",
@@ -1295,7 +1298,9 @@
     "noChallenges": "Aún no hay retos. <link>Créalos aquí</link> si quieres agrupar por categorías.",
     "personName": "Nombre y apellidos",
     "personEmail": "Correo (para que entre y vea su nota)",
-    "personEmailHint": "nombre@upv.es"
+    "personEmailHint": "nombre@upv.es",
+    "alsoIn": "También se presenta a",
+    "alsoInHint": "Marca otros retos en los que compite: su evaluación cuenta en el ranking de cada uno."
   },
   "importTeams": {
     "help": "Mismo formato que <code>equipos.txt</code>: Reto, Nº, Equipo, Miembro 1, Miembro 2… (separado por tabuladores o comas). Crea o actualiza por nombre y añade los integrantes que falten; no borra nada.",
@@ -1919,5 +1924,19 @@
       "tagline": "Evaluación en directo para hackathons y clases",
       "independent": "Proyecto independiente de código abierto. No es un servicio oficial de la Universitat Politècnica de València."
     }
+  },
+  "juryView": {
+    "enter": "Vista jurado",
+    "exit": "Volver a gestión",
+    "enterHint": "Ver la app solo como jurado, sin las secciones de gestión",
+    "exitHint": "Recuperar las secciones de gestión"
+  },
+  "roomQueue": {
+    "title": "Orden de la sala",
+    "hint": "Pulsa un grupo para ir a él, aunque se haya saltado. Con las flechas cambias el orden; con ↳ lo pones a continuación.",
+    "putNext": "Poner a {name} a continuación",
+    "up": "Subir a {name}",
+    "down": "Bajar a {name}",
+    "moveError": "No se ha podido cambiar el orden."
   }
 }

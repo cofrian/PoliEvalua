@@ -693,6 +693,18 @@ async function saveTeamActionRun(formData: FormData) {
       : await supabase.from("team_members").insert({ ...member, event_id: event.id, team_id: teamId });
     if (error?.code === "23505") throw new Error(await adminMessage("emailInOtherGroup"));
   }
+  if (teamId && formData.has("challengeId")) {
+    // Retos adicionales: se reemplaza la lista entera (sin repetir el principal).
+    const extra = [...new Set(formData.getAll("extraChallengeIds").map(String))].filter(
+      (challengeId) => challengeId && challengeId !== values.challenge_id,
+    );
+    await supabase.from("team_challenges").delete().eq("team_id", teamId).eq("event_id", event.id);
+    if (extra.length) {
+      await supabase
+        .from("team_challenges")
+        .insert(extra.map((challengeId) => ({ team_id: teamId, challenge_id: challengeId, event_id: event.id })));
+    }
+  }
   refreshAll();
 }
 

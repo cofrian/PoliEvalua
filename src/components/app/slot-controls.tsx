@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play, SkipForward, Square } from "lucide-react";
+import { Pause, Play, RotateCcw, SkipForward, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -86,6 +86,16 @@ export function SlotControls({
               <Pause className="size-4" /> {t("reset")}
             </Button>
           </>
+        ) : null}
+        {status === "done" ? (
+          <Button className="h-11 px-5 font-bold" disabled={pending} onClick={() => setStatus("live")} variant="outline">
+            <RotateCcw className="size-4" /> {t("reopen")}
+          </Button>
+        ) : null}
+        {status === "done" || status === "skipped" ? (
+          <Button className="h-11" disabled={pending} onClick={() => setStatus("pending")} variant="ghost">
+            <Pause className="size-4" /> {t("backToQueue")}
+          </Button>
         ) : null}
         {status === "pending" ? (
           <Button className="h-11" disabled={pending} onClick={() => setStatus("skipped")} variant="ghost">

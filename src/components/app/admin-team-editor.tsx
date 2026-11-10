@@ -20,6 +20,8 @@ export type AdminTeam = {
   number: number | null;
   name: string;
   challenge_id: string | null;
+  /** Otros retos a los que se presenta, además del principal. */
+  extra_challenge_ids?: string[];
   project_title: string | null;
   description: string | null;
   table_location: string | null;
@@ -104,6 +106,26 @@ export function AdminTeamEditor({
             </span>
           )}
         </label>
+        {challenges.length > 1 ? (
+          <fieldset className="space-y-1 text-sm sm:col-span-6">
+            <legend className="font-semibold">{t("alsoIn")}</legend>
+            <p className="text-xs text-muted-foreground">{t("alsoInHint")}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {challenges.map((c) => (
+                <label className="inline-flex items-center gap-2" key={c.id}>
+                  <input
+                    className="size-4"
+                    defaultChecked={team?.extra_challenge_ids?.includes(c.id) ?? false}
+                    name="extraChallengeIds"
+                    type="checkbox"
+                    value={c.id}
+                  />
+                  {c.name}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
         <label className="space-y-1 text-sm font-semibold sm:col-span-4">
           <span className="block">{t("project")}</span>
           <Input defaultValue={team?.project_title ?? ""} name="projectTitle" />

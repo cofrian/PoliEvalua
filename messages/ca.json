@@ -86,7 +86,8 @@
     },
     "skip": "Saltar al contingut",
     "sourceCode": "Codi a GitHub",
-    "feedback": "Enviar comentaris"
+    "feedback": "Enviar comentaris",
+    "juryViewBanner": "Estàs en la vista de jurat: les seccions de gestió estan amagades. Prem «Tornar a gestió» per recuperar-les."
   },
   "userMenu": {
     "open": "Menú d'usuari",
@@ -446,7 +447,9 @@
     "reset": "Reiniciar",
     "skip": "Saltar",
     "twoMinutes": "Queden menys de 2 minuts.",
-    "timeUp": "Temps esgotat."
+    "timeUp": "Temps esgotat.",
+    "reopen": "Tornar a exposar",
+    "backToQueue": "Tornar a la cua"
   },
   "peer": {
     "title": "Coavaluació",
@@ -1295,7 +1298,9 @@
     "noChallenges": "Encara no hi ha reptes. <link>Crea'ls ací</link> si vols agrupar per categories.",
     "personName": "Nom i cognoms",
     "personEmail": "Correu (perquè entre i veja la seua nota)",
-    "personEmailHint": "nom@upv.es"
+    "personEmailHint": "nom@upv.es",
+    "alsoIn": "També es presenta a",
+    "alsoInHint": "Marca altres reptes on competeix: la seua avaluació compta en el rànquing de cadascun."
   },
   "importTeams": {
     "help": "El mateix format que <code>equipos.txt</code>: Repte, Núm., Equip, Membre 1, Membre 2… (separat per tabuladors o comes). Crea o actualitza per nom i afig els integrants que falten; no esborra res.",
@@ -1919,5 +1924,19 @@
       "tagline": "Avaluació en directe per a hackathons i classes",
       "independent": "Projecte independent de codi obert. No és un servei oficial de la Universitat Politècnica de València."
     }
+  },
+  "juryView": {
+    "enter": "Vista jurat",
+    "exit": "Tornar a gestió",
+    "enterHint": "Veure l'app només com a jurat, sense les seccions de gestió",
+    "exitHint": "Recuperar les seccions de gestió"
+  },
+  "roomQueue": {
+    "title": "Ordre de la sala",
+    "hint": "Prem un grup per anar-hi, encara que s'haja saltat. Amb les fletxes canvies l'ordre; amb ↳ el poses a continuació.",
+    "putNext": "Posar {name} a continuació",
+    "up": "Pujar {name}",
+    "down": "Baixar {name}",
+    "moveError": "No s'ha pogut canviar l'ordre."
   }
 }

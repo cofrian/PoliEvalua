@@ -8,6 +8,7 @@ import { AiEvidencePanel } from "@/components/app/ai-evidence-panel";
 import { EvaluationForm } from "@/components/app/evaluation-form";
 import { NotesPanel } from "@/components/app/notes-panel";
 import { PresentationStudio } from "@/components/app/presentation-studio";
+import { RoomQueue } from "@/components/app/room-queue";
 import { SlotControls } from "@/components/app/slot-controls";
 import { scheduleRoom, timeFormat } from "@/lib/app/agenda";
 import { loadAgenda } from "@/lib/app/agenda-data";
@@ -94,7 +95,12 @@ export default async function RoomPage({
     scheduled.find((slot) => slot.status === "live") ??
     scheduled.find((slot) => slot.status === "pending") ??
     scheduled.at(-1)!;
-  const next = scheduled.find((slot) => slot.position > current.position && slot.status === "pending");
+  // Siguiente: el primer pendiente detrás del actual; si no queda ninguno,
+  // el primero que se quedó atrás (pendiente o saltado) para poder volver a él.
+  const currentIndex = scheduled.indexOf(current);
+  const next =
+    scheduled.find((slot, index) => index > currentIndex && slot.status === "pending") ??
+    scheduled.find((slot) => slot.id !== current.id && (slot.status === "pending" || slot.status === "skipped"));
 
   const [evaluation, presentations] = await Promise.all([
     loadEvaluationContext(session, current.team_id),
@@ -144,6 +150,16 @@ export default async function RoomPage({
           slotId={current.id}
           startedAt={current.started_at}
           status={current.status}
+        />
+        <RoomQueue
+          currentId={current.id}
+          room={room}
+          slots={scheduled.map((slot) => ({
+            id: slot.id,
+            status: slot.status,
+            team: slot.team,
+            time: slot.expectedStart ? timeFormat.format(slot.expectedStart) : null,
+          }))}
         />
       </section>
 
