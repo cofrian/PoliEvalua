@@ -13,6 +13,8 @@ export type TeamResult = {
   number: number | null;
   name: string;
   challengeId: string | null;
+  /** Reto principal y los demás retos a los que se presenta. */
+  challengeIds: string[];
   average: number | null;
   stddev: number | null;
   min: number | null;
@@ -40,12 +42,12 @@ export function resultSections(data: ResultsData, fallbackTitle: string, noChall
     ...data.challenges.map((challenge) => ({
       id: challenge.id,
       name: challenge.name,
-      teams: data.teams.filter((team) => team.challengeId === challenge.id),
+      teams: data.teams.filter((team) => team.challengeIds.includes(challenge.id)),
     })),
     {
       id: "none",
       name: data.challenges.length ? noChallengeTitle : fallbackTitle,
-      teams: data.teams.filter((team) => !team.challengeId || !known.has(team.challengeId)),
+      teams: data.teams.filter((team) => !team.challengeIds.some((id) => known.has(id))),
     },
   ].filter((section) => section.teams.length);
 }
@@ -164,6 +166,16 @@ export function findDiscrepancies(data: ResultsData, minEvaluations: number): Di
   return { judges, criteria, underEvaluated };
 }
 
+/** Reto principal primero y después los adicionales, sin repetir. */
+export function teamChallengeIds(
+  team: { id: string; challenge_id: string | null },
+  extra: { team_id: string; challenge_id: string }[],
+) {
+  const ids = team.challenge_id ? [team.challenge_id] : [];
+  for (const row of extra) if (row.team_id === team.id && !ids.includes(row.challenge_id)) ids.push(row.challenge_id);
+  return ids;
+}
+
 // Reúne todo lo necesario para resultados y exportaciones. Solo cuentan las
 // evaluaciones enviadas y siempre con la rúbrica actual (pesos vigentes).
 export async function loadResults(
@@ -176,6 +188,7 @@ export async function loadResults(
     { data: rubric },
     { data: evaluations },
     { data: profiles },
+    { data: extraChallenges },
   ] = await Promise.all([
     supabase.from("challenges").select("id, name").eq("event_id", eventId ?? "").order("order"),
     supabase.from("teams").select("id, number, name, challenge_id").eq("event_id", eventId ?? "").order("number"),
@@ -198,6 +211,7 @@ export async function loadResults(
       .select("user_id, profile:profiles!event_members_user_id_fkey(id, full_name)")
       .eq("event_id", eventId ?? "")
       .eq("status", "active"),
+    supabase.from("team_challenges").select("team_id, challenge_id").eq("event_id", eventId ?? ""),
   ]);
 
   const scaleMax = rubric?.scale_max ?? 5;
@@ -280,6 +294,7 @@ export async function loadResults(
       number: team.number,
       name: team.name,
       challengeId: team.challenge_id,
+      challengeIds: teamChallengeIds(team, extraChallenges ?? []),
       average: average === null ? null : round(average),
       stddev: stddev === null ? null : round(stddev),
       min: totals.length ? Math.min(...totals) : null,

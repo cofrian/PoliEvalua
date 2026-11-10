@@ -16,7 +16,7 @@ export type TeamSummary = {
   number: number | null;
   name: string;
   projectTitle: string | null;
-  challengeId: string | null;
+  challengeIds: string[];
   memberCount: number;
   myNotes: number;
   sharedNotes: number;
@@ -57,7 +57,7 @@ export function TeamsBrowser({
     const q = query.trim().toLowerCase();
     return teams.filter(
       (team) =>
-        (challenge === "all" || team.challengeId === challenge) &&
+        (challenge === "all" || team.challengeIds.includes(challenge)) &&
         (!q ||
           team.name.toLowerCase().includes(q) ||
           team.projectTitle?.toLowerCase().includes(q) ||
@@ -148,7 +148,10 @@ export function TeamsBrowser({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold text-muted-foreground">
-                      {[challenges.find((c) => c.id === team.challengeId)?.name, `#${team.number}`]
+                      {[
+                        ...team.challengeIds.map((id) => challenges.find((c) => c.id === id)?.name),
+                        `#${team.number}`,
+                      ]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>

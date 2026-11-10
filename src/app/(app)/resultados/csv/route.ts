@@ -70,7 +70,7 @@ export async function GET(request: Request) {
 
   const rows: Record<string, string | number>[] = ranking
     ? teams.map((team) => ({
-        reto: challengeName(team.challengeId),
+        reto: team.challengeIds.map(challengeName).filter(Boolean).join(" | "),
         equipo_numero: team.number ?? "",
         equipo: team.name,
         media: team.average ?? "",
@@ -82,7 +82,7 @@ export async function GET(request: Request) {
       }))
     : teams.flatMap((team) =>
         team.evaluations.map((evaluation) => ({
-          reto: challengeName(team.challengeId),
+          reto: team.challengeIds.map(challengeName).filter(Boolean).join(" | "),
           equipo_numero: team.number ?? "",
           equipo: team.name,
           juez: evaluation.judgeName,

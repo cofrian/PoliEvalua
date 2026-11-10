@@ -91,7 +91,11 @@ export const getSession = cache(async () => {
     .eq("event_id", event.id)
     .maybeSingle();
   const locale = (await getLocale()) as Locale;
-  const isAdmin = role === "owner" || role === "manager";
+  const realAdmin = role === "owner" || role === "manager";
+  // Vista de jurado: la gestión puede ocultar todo lo de administración y ver
+  // la app exactamente como un miembro del jurado (cookie por dispositivo).
+  const juryView = realAdmin && cookieStore.get("jury_view")?.value === "1";
+  const isAdmin = realAdmin && !juryView;
   const canVote = ["owner", "manager", "judge", "reviewer", "teacher"].includes(
     role,
   );
@@ -105,6 +109,9 @@ export const getSession = cache(async () => {
     role,
     canVote,
     isAdmin,
+    /** Gestión de verdad, aunque esté en vista de jurado. */
+    realAdmin,
+    juryView,
     event,
     eventClosed: event.status === "closed",
     recording: recordingSettings(event.settings),

@@ -16,7 +16,7 @@ export default async function AdminTeamsPage() {
   const settings = (event.settings ?? {}) as { enabled_roles?: string[] };
   const hasStudents = (settings.enabled_roles ?? []).includes("student");
 
-  const [{ data: challenges }, { data: teams }] = await Promise.all([
+  const [{ data: challenges }, { data: teams }, { data: extraChallenges }] = await Promise.all([
     supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order"),
     supabase
       .from("teams")
@@ -25,21 +25,29 @@ export default async function AdminTeamsPage() {
       )
       .eq("event_id", event.id)
       .order("number"),
+    supabase.from("team_challenges").select("team_id, challenge_id").eq("event_id", event.id),
   ]);
 
-  const allTeams = (teams ?? []) as AdminTeam[];
+  const allTeams = ((teams ?? []) as AdminTeam[]).map((team) => ({
+    ...team,
+    extra_challenge_ids: (extraChallenges ?? [])
+      .filter((row) => row.team_id === team.id)
+      .map((row) => row.challenge_id),
+  }));
+  const inChallenge = (team: AdminTeam, id: string) =>
+    team.challenge_id === id || Boolean(team.extra_challenge_ids?.includes(id));
   // Sin retos (p. ej. una asignatura) todos los grupos van en una sola lista.
   const sections = [
     ...(challenges ?? []).map((challenge) => ({
       id: challenge.id,
       title: challenge.name,
-      list: allTeams.filter((team) => team.challenge_id === challenge.id),
+      list: allTeams.filter((team) => inChallenge(team, challenge.id)),
     })),
     {
       id: "none",
       title: challenges?.length ? t("noChallenge") : words.units,
       list: allTeams.filter(
-        (team) => !team.challenge_id || !(challenges ?? []).some((c) => c.id === team.challenge_id),
+        (team) => !(challenges ?? []).some((c) => inChallenge(team, c.id)),
       ),
     },
   ].filter((section) => section.list.length || section.id === "none");

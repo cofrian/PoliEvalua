@@ -77,6 +77,16 @@ export default async function TeamPage({
     : { data: [] };
 
   const challenge = team.challenge as unknown as { name: string } | null;
+  // Retos adicionales del grupo (además del principal).
+  const { data: extraRows } = await supabase
+    .from("team_challenges")
+    .select("challenge_id, challenge:challenges(name)")
+    .eq("team_id", team.id);
+  const extraChallenges = (extraRows ?? []).map((row) => {
+    const relation = row.challenge as unknown as { name: string } | { name: string }[] | null;
+    return { id: row.challenge_id as string, name: (Array.isArray(relation) ? relation[0] : relation)?.name ?? "" };
+  });
+  const challengeNames = [challenge?.name, ...extraChallenges.map((item) => item.name)].filter(Boolean).join(" · ");
   const members = (team.team_members ?? []) as { id: string; full_name: string; user_id: string | null }[];
   const isMyTeam = members.some((member) => member.user_id === user.id);
   const links = ((team.team_links ?? []) as (TeamLink & { created_at: string })[]).sort((a, b) =>
@@ -95,7 +105,7 @@ export default async function TeamPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-bold text-muted-foreground">
-            {challenge?.name ? `${challenge.name} · ` : ""}{words.unit} #{team.number}
+            {challengeNames ? `${challengeNames} · ` : ""}{words.unit} #{team.number}
             {team.table_location ? ` · ${t("table", { table: team.table_location })}` : ""}
           </p>
           <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{team.name}</h1>
@@ -173,7 +183,10 @@ export default async function TeamPage({
                   individual={words.mode === "individuals"}
                   allowDelete={false}
                   challenges={challenges ?? []}
-                  team={team as unknown as AdminTeam}
+                  team={{
+                    ...(team as unknown as AdminTeam),
+                    extra_challenge_ids: extraChallenges.map((item) => item.id),
+                  }}
                 />
               </div>
             </details>

@@ -86,7 +86,8 @@
     },
     "skip": "Skip to content",
     "sourceCode": "Code on GitHub",
-    "feedback": "Send feedback"
+    "feedback": "Send feedback",
+    "juryViewBanner": "You are in jury view: admin sections are hidden. Press “Back to admin” to bring them back."
   },
   "userMenu": {
     "open": "User menu",
@@ -446,7 +447,9 @@
     "reset": "Reset",
     "skip": "Skip",
     "twoMinutes": "Less than 2 minutes left.",
-    "timeUp": "Time's up."
+    "timeUp": "Time's up.",
+    "reopen": "Present again",
+    "backToQueue": "Back to the queue"
   },
   "peer": {
     "title": "Peer review",
@@ -1295,7 +1298,9 @@
     "noChallenges": "No challenges yet. <link>Create them here</link> if you want to group by category.",
     "personName": "Full name",
     "personEmail": "Email (so they can sign in and see their grade)",
-    "personEmailHint": "name@upv.es"
+    "personEmailHint": "name@upv.es",
+    "alsoIn": "Also competing in",
+    "alsoInHint": "Tick other challenges it enters: its evaluation counts in each challenge's ranking."
   },
   "importTeams": {
     "help": "Same format as <code>equipos.txt</code>: Challenge, No., Team, Member 1, Member 2… (tab- or comma-separated). Creates or updates by name and adds missing members; deletes nothing.",
@@ -1919,5 +1924,19 @@
       "tagline": "Live evaluation for hackathons and classes",
       "independent": "Independent open-source project. Not an official service of the Universitat Politècnica de València."
     }
+  },
+  "juryView": {
+    "enter": "Jury view",
+    "exit": "Back to admin",
+    "enterHint": "See the app only as a juror, without the admin sections",
+    "exitHint": "Bring back the admin sections"
+  },
+  "roomQueue": {
+    "title": "Room order",
+    "hint": "Tap a group to go to it, even if it was skipped. Use the arrows to reorder; ↳ puts it next.",
+    "putNext": "Put {name} next",
+    "up": "Move {name} up",
+    "down": "Move {name} down",
+    "moveError": "Could not change the order."
   }
 }

@@ -1,10 +1,11 @@
 import { TeamsBrowser, type TeamSummary } from "@/components/app/teams-browser";
+import { teamChallengeIds } from "@/lib/app/results";
 import { getSession } from "@/lib/app/session";
 
 export default async function TeamsPage() {
   const { supabase, user, canVote, isAdmin, event, words } = await getSession();
 
-  const [{ data: challenges }, { data: teams }, { data: notes }, { data: evals }, { data: panelMemberships }, { data: panelAssignments }, { data: panels }, { data: evaluationPage }] =
+  const [{ data: challenges }, { data: teams }, { data: notes }, { data: evals }, { data: panelMemberships }, { data: panelAssignments }, { data: panels }, { data: evaluationPage }, { data: extraChallenges }] =
     await Promise.all([
       supabase.from("challenges").select("id, name").eq("event_id", event.id).order("order"),
       supabase
@@ -37,6 +38,7 @@ export default async function TeamsPage() {
         .select("current_round")
         .eq("event_id", event.id)
         .maybeSingle(),
+      supabase.from("team_challenges").select("team_id, challenge_id").eq("event_id", event.id),
     ]);
 
   const myPanelIds = new Set((panelMemberships ?? []).map((item) => item.panel_id));
@@ -57,7 +59,7 @@ export default async function TeamsPage() {
       number: team.number,
       name: team.name,
       projectTitle: team.project_title,
-      challengeId: team.challenge_id,
+      challengeIds: teamChallengeIds(team, extraChallenges ?? []),
       memberCount: members?.[0]?.count ?? 0,
       myNotes: teamNotes.filter((n) => n.author_id === user.id).length,
       sharedNotes: teamNotes.filter(
