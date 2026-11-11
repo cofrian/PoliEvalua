@@ -1267,7 +1267,8 @@
     "importHint": "Apega o puja una llista. Primer veuràs una previsualització; no es guarda res fins que confirmes.",
     "emptyTitle": "Encara no hi ha {units}",
     "emptyText": "Importa'ls des d'una llista (per exemple, el CSV de PoliformaT) o crea'ls d'un en un amb el botó de dalt.",
-    "edit": "Editar"
+    "edit": "Editar",
+    "downloadExcel": "Descarrega Excel"
   },
   "teamEditor": {
     "number": "Núm.",
@@ -1938,5 +1939,12 @@
     "up": "Pujar {name}",
     "down": "Baixar {name}",
     "moveError": "No s'ha pogut canviar l'ordre."
+  },
+  "teamsExcel": {
+    "number": "Núm.",
+    "challenges": "Reptes",
+    "project": "Projecte",
+    "member": "Integrant",
+    "email": "Correu"
   }
 }
