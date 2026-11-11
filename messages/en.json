@@ -1267,7 +1267,8 @@
     "importHint": "Paste or upload a list. You'll see a preview first; nothing is saved until you confirm.",
     "emptyTitle": "No {units} yet",
     "emptyText": "Import them from a list (for example, the PoliformaT CSV) or create them one by one with the button above.",
-    "edit": "Edit"
+    "edit": "Edit",
+    "downloadExcel": "Download Excel"
   },
   "teamEditor": {
     "number": "No.",
@@ -1938,5 +1939,12 @@
     "up": "Move {name} up",
     "down": "Move {name} down",
     "moveError": "Could not change the order."
+  },
+  "teamsExcel": {
+    "number": "No.",
+    "challenges": "Challenges",
+    "project": "Project",
+    "member": "Member",
+    "email": "Email"
   }
 }

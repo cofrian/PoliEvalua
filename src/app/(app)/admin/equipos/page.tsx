@@ -1,6 +1,7 @@
-import { Plus, Upload, UsersRound } from "lucide-react";
+import { FileSpreadsheet, Plus, Upload, UsersRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { Button } from "@/components/ui/button";
 import { AdminTeamEditor, type AdminTeam } from "@/components/app/admin-team-editor";
 import { EmptyState } from "@/components/app/empty-state";
 import { ModalButton } from "@/components/app/modal-button";
@@ -72,6 +73,13 @@ export default async function AdminTeamsPage() {
       <PageHeader
         actions={
           <>
+            {allTeams.length ? (
+              <Button asChild variant="outline">
+                <a download href="/admin/equipos/excel">
+                  <FileSpreadsheet aria-hidden="true" /> {t("downloadExcel")}
+                </a>
+              </Button>
+            ) : null}
             <ModalButton
               description={t("importHint")}
               label={

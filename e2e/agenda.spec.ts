@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { loadTestEnv } from "../scripts/load-test-env.mjs";
@@ -84,6 +85,11 @@ test.beforeAll(async ({ browser }) => {
     .select("id, number");
   for (const t of teams!) team[t.number!] = t.id;
   await db.from("team_challenges").insert({ team_id: team[1], challenge_id: beta, event_id: eventId });
+  await db.from("team_members").insert([
+    { event_id: eventId, team_id: team[1], full_name: "Zoe Prueba", email: `zoe-${stamp}@test.local` },
+    { event_id: eventId, team_id: team[1], full_name: "Ana Prueba", email: `ana-${stamp}@test.local` },
+    { event_id: eventId, team_id: team[2], full_name: "Luis Prueba", email: null },
+  ]);
 
   const base = Date.now() + 60 * 60_000;
   const { data: slots } = await db
@@ -189,4 +195,28 @@ test("7. La gestión entra y sale de la vista de jurado", async () => {
   await ownerPage.getByRole("button", { name: "Volver a gestión" }).click();
   await expect(ownerPage.getByText("Estás en la vista de jurado")).toHaveCount(0);
   await expect(adminLinks.first()).toBeAttached();
+});
+
+test("8. La gestión descarga el Excel de grupos con sus integrantes", async () => {
+  await ownerPage.goto("/admin/equipos");
+  const [download] = await Promise.all([
+    ownerPage.waitForEvent("download"),
+    ownerPage.getByRole("link", { name: "Descargar Excel" }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/\.xlsx$/);
+  // exceljs no carga dentro de Playwright: se lee en un proceso aparte.
+  const read = `const E=require("exceljs");const b=new E.Workbook();b.xlsx.readFile(process.argv[1]).then(()=>console.log(JSON.stringify(b.worksheets[0].getSheetValues().slice(1).map(r=>r.slice(1).map(v=>v??"")))))`;
+  const rows = JSON.parse(execFileSync("node", ["-e", read, (await download.path())!], { encoding: "utf8" })) as unknown[][];
+  expect(rows[0]).toEqual(["Nº", "Equipo", "Retos", "Proyecto", "Integrante", "Correo"]);
+  expect(rows.slice(1)).toEqual([
+    [1, `Grupo 1 ${stamp}`, `Reto Alfa ${stamp}, Reto Beta ${stamp}`, "", "Ana Prueba", `ana-${stamp}@test.local`],
+    [1, `Grupo 1 ${stamp}`, `Reto Alfa ${stamp}, Reto Beta ${stamp}`, "", "Zoe Prueba", `zoe-${stamp}@test.local`],
+    [2, `Grupo 2 ${stamp}`, `Reto Alfa ${stamp}`, "", "Luis Prueba", ""],
+    [3, `Grupo 3 ${stamp}`, `Reto Alfa ${stamp}`, "", "", ""],
+  ]);
+});
+
+test("9. El jurado no puede descargar el Excel", async () => {
+  const response = await judgePage.request.get("/admin/equipos/excel");
+  expect(response.status()).toBe(403);
 });
