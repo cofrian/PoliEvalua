@@ -121,9 +121,10 @@ export function applyPlan(sheets: Sheet[], plan: ImportPlan): ImportResult {
     people.push({ fullName: fullName.slice(0, 160), email, team });
   };
 
-  for (const sheetPlan of plan.sheets) {
-    const sheet = sheets[sheetPlan.sheet];
-    if (!sheet || sheetPlan.layout === "skip") continue;
+  for (const rawPlan of plan.sheets) {
+    const sheet = sheets[rawPlan.sheet];
+    if (!sheet || rawPlan.layout === "skip") continue;
+    const sheetPlan = fixPlan(sheet, rawPlan);
     const rows = sheet.rows.slice(sheetPlan.headerRow === null ? 0 : sheetPlan.headerRow + 1);
     const sheetTeam = sheetPlan.teamFromSheetName ? clean(sheet.name) : null;
     const meta = (row: string[]) => {
@@ -136,7 +137,7 @@ export function applyPlan(sheets: Sheet[], plan: ImportPlan): ImportResult {
     let currentTeam: string | null = sheetTeam;
 
     for (const row of rows) {
-      if (!row.some((value) => clean(value))) continue;
+      if (!row.some((value) => clean(value)) || isTitleRow(row)) continue;
       const teamCell = cell(row, sheetPlan.teamColumn);
       const { challenge, number } = meta(row);
 
@@ -185,6 +186,37 @@ export function applyPlan(sheets: Sheet[], plan: ImportPlan): ImportResult {
   }
 
   return { teams: [...teams.values()], people };
+}
+
+/** Fila de títulos (p. ej. repetida al pie de cada página o mal señalada). */
+function isTitleRow(row: string[]) {
+  const filled = row.map(clean).filter(Boolean);
+  const titles = filled.filter((value) => Object.values(hints).some((hint) => hint.test(value)));
+  return filled.length > 1 && titles.length >= Math.ceil(filled.length / 2);
+}
+
+const COUNT_HEADER = /(miembros|members|integrantes|personas|total|count|membres)/i;
+
+/**
+ * Corrige lo que el modelo suele fallar en la posición de las filas: si la
+ * fila de títulos que indica no lo es pero una cercana sí, usa esa; y una
+ * columna «Nº miembros» nunca es el número del grupo.
+ */
+function fixPlan(sheet: Sheet, plan: SheetPlan): SheetPlan {
+  let headerRow = plan.headerRow;
+  const isHeader = (index: number) => index >= 0 && index < sheet.rows.length && isTitleRow(sheet.rows[index]);
+  if (headerRow === null || !isHeader(headerRow)) {
+    const start = headerRow ?? 0;
+    const found = [start, start + 1, start + 2, start + 3, start - 1].find(isHeader);
+    if (found !== undefined) headerRow = found;
+  }
+  const header = headerRow === null ? [] : sheet.rows[headerRow] ?? [];
+  const numberHeader = plan.numberColumn === null ? "" : clean(header[plan.numberColumn]);
+  return {
+    ...plan,
+    headerRow,
+    numberColumn: numberHeader && COUNT_HEADER.test(numberHeader) ? null : plan.numberColumn,
+  };
 }
 
 const hints = {
