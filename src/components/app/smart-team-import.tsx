@@ -105,15 +105,11 @@ export function SmartTeamImport({
       // Nombres de grupo nuevos que no choquen con los que ya existen.
       const taken = new Set(teamNames.map((name) => name.toLowerCase()));
       const free: string[] = [];
-      const nameFor = (index: number) => {
-        let candidate = 0;
-        while (free.length < index) {
-          candidate += 1;
-          const name = t("groupName", { unit, index: candidate });
-          if (!taken.has(name.toLowerCase())) free.push(name);
-        }
-        return free[index - 1];
-      };
+      for (let candidate = 1; free.length < unassigned.length; candidate += 1) {
+        const name = t("groupName", { unit, index: candidate });
+        if (!taken.has(name.toLowerCase())) free.push(name);
+      }
+      const nameFor = (index: number) => free[index - 1];
       const placed = assignGroups(
         unassigned.map((person) => ({ fullName: person.fullName, email: String(person.index), group: null })),
         mode,

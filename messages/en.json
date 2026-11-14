@@ -1570,7 +1570,7 @@
     "codeLength": "The code must be between 6 and 40 characters.",
     "codeInUse": "Another space already uses that code. Choose a different one.",
     "saveFailed": "The changes could not be saved.",
-    "smartImportDone": "{teams} new groups · {people} people added{skipped, plural, =0 {} other { · # already there}}{unassigned, plural, =0 {} other { · # without a group (not added)}}."
+    "smartImportDone": "{teams, plural, one {# new group} other {# new groups}} · {people, plural, one {# person added} other {# people added}}{skipped, plural, =0 {} other { · # already there}}{unassigned, plural, =0 {} other { · # without a group (not added)}}."
   },
   "rubricEditor": {
     "levels": {

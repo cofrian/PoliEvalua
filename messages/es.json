@@ -1570,7 +1570,7 @@
     "codeLength": "El código debe tener entre 6 y 40 caracteres.",
     "codeInUse": "Ese código ya lo usa otro espacio. Elige otro.",
     "saveFailed": "No se pudieron guardar los cambios.",
-    "smartImportDone": "{teams} grupos nuevos · {people} personas añadidas{skipped, plural, =0 {} other { · # ya estaban}}{unassigned, plural, =0 {} other { · # sin grupo (no se han añadido)}}."
+    "smartImportDone": "{teams, plural, one {# grupo nuevo} other {# grupos nuevos}} · {people, plural, one {# persona añadida} other {# personas añadidas}}{skipped, plural, =0 {} other { · # ya estaban}}{unassigned, plural, =0 {} other { · # sin grupo (no se han añadido)}}."
   },
   "rubricEditor": {
     "levels": {
