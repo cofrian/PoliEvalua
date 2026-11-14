@@ -151,7 +151,7 @@ test("2. CSV con personas sin grupo: se reparten por orden alfabético", async (
   await expect(dialog.getByText(/4 personas no tienen grupo/i)).toBeVisible({ timeout: 120_000 });
 
   await dialog.getByLabel("¿Qué hacemos con ellas?").selectOption("alphabetical");
-  await dialog.getByLabel("Personas por grupo").fill("2");
+  await dialog.locator("#import-group-size").fill("2");
   await dialog.getByRole("button", { name: /^Guardar/ }).click();
   await expect(dialog.getByText(/2 grupos nuevos · 4 personas añadidas · 1 ya estaban/)).toBeVisible({ timeout: 30_000 });
 

@@ -71,7 +71,7 @@ ${hasChallenges ? "- challengeColumn es el reto, categoría o track al que perte
 - teamFromSheetName true solo si cada hoja corresponde a un ${unit.toLowerCase()} distinto y su nombre es el de la hoja.
 - Incluye una entrada en sheets por cada hoja de la muestra.
 - ${LOCALE_RULE[locale] ?? LOCALE_RULE.es} Esto aplica a reply y questions.
-- reply: una o dos frases explicando qué has entendido (cuántas hojas, si hay personas, si tienen correo, si hay ${units.toLowerCase()}).
+- reply: una o dos frases para alguien sin conocimientos técnicos, SIN mencionar layouts, números de fila o columna ni nombres de campos, explicando qué has entendido (cuántas hojas, si hay personas, si tienen correo, si hay ${units.toLowerCase()}).
 - Si algo es ambiguo, haz tu mejor interpretación y pregunta en questions (máximo 3). Si está claro, questions vacío.`;
 
 export async function POST(request: Request) {

@@ -1570,7 +1570,7 @@
     "codeLength": "El codi ha de tindre entre 6 i 40 caràcters.",
     "codeInUse": "Aquest codi ja l’utilitza un altre espai. Tria’n un altre.",
     "saveFailed": "No s’han pogut guardar els canvis.",
-    "smartImportDone": "{teams} grups nous · {people} persones afegides{skipped, plural, =0 {} other { · # ja hi eren}}{unassigned, plural, =0 {} other { · # sense grup (no s'han afegit)}}."
+    "smartImportDone": "{teams, plural, one {# grup nou} other {# grups nous}} · {people, plural, one {# persona afegida} other {# persones afegides}}{skipped, plural, =0 {} other { · # ja hi eren}}{unassigned, plural, =0 {} other { · # sense grup (no s'han afegit)}}."
   },
   "rubricEditor": {
     "levels": {
