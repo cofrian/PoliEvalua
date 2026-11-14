@@ -1268,7 +1268,8 @@
     "emptyTitle": "Todavía no hay {units}",
     "emptyText": "Impórtalos desde una lista (por ejemplo, el CSV de PoliformaT) o créalos uno a uno con el botón de arriba.",
     "edit": "Editar",
-    "downloadExcel": "Descargar Excel"
+    "downloadExcel": "Descargar Excel",
+    "importSmart": "Importar con IA (cualquier Excel o CSV)"
   },
   "teamEditor": {
     "number": "Nº",
@@ -1568,7 +1569,8 @@
     "generic": "No se ha podido completar la acción. Inténtalo de nuevo.",
     "codeLength": "El código debe tener entre 6 y 40 caracteres.",
     "codeInUse": "Ese código ya lo usa otro espacio. Elige otro.",
-    "saveFailed": "No se pudieron guardar los cambios."
+    "saveFailed": "No se pudieron guardar los cambios.",
+    "smartImportDone": "{teams} grupos nuevos · {people} personas añadidas{skipped, plural, =0 {} other { · # ya estaban}}{unassigned, plural, =0 {} other { · # sin grupo (no se han añadido)}}."
   },
   "rubricEditor": {
     "levels": {
@@ -1946,5 +1948,53 @@
     "project": "Proyecto",
     "member": "Integrante",
     "email": "Correo"
+  },
+  "teamImport": {
+    "help": "Sube el Excel o CSV tal como lo tengas: con personas y correos, solo con nombres, o solo con los nombres de los {units}. El asistente entiende qué columna es qué y te enseña una vista previa; no se guarda nada hasta que confirmes.",
+    "file": "Archivo Excel (.xlsx) o CSV",
+    "paste": "O pega aquí la lista",
+    "placeholder": "Pega aquí las filas copiadas del Excel…",
+    "hint": "Indicaciones para el asistente (opcional)",
+    "hintPlaceholder": "Ej.: la columna «Mesa» es el {unit}; ignora la hoja «Notas»",
+    "analyze": "Analizar archivo",
+    "reanalyze": "Volver a analizar",
+    "analyzing": "Analizando…",
+    "privacy": "Al asistente solo le llega una muestra de las primeras filas, con los correos ocultos. Los datos se leen aquí, no los reescribe la IA.",
+    "failed": "No se ha podido analizar el archivo. Inténtalo de nuevo.",
+    "questions": "El asistente tiene dudas:",
+    "questionsHelp": "Si la vista previa no es correcta, responde en «Indicaciones» y vuelve a analizar.",
+    "summary": "{teams} {units} · {people} personas{unassigned, plural, =0 {} other { · # sin asignar}}",
+    "unassignedTitle": "{count, plural, one {# persona no tiene} other {# personas no tienen}} {unit}",
+    "whatToDo": "¿Qué hacemos con ellas?",
+    "modes": {
+      "manual": "Asignarlas a mano",
+      "random": "Repartirlas al azar en {units} nuevos",
+      "alphabetical": "Repartirlas por orden alfabético en {units} nuevos",
+      "leave": "Dejarlas fuera por ahora"
+    },
+    "perUnit": "Personas por {unit}",
+    "reshuffle": "Repartir de nuevo",
+    "newTeam": "Nuevo {unit}",
+    "addTeam": "Añadir",
+    "assignTo": "{unit} para {name}",
+    "noTeam": "Sin {unit}",
+    "groupName": "{unit} {index}",
+    "alreadyExists": "Ya existe: se añaden solo las personas nuevas.",
+    "empty": "Sin integrantes",
+    "leftOut": "{count, plural, one {# persona se queda fuera} other {# personas se quedan fuera}} por no tener grupo.",
+    "withoutEmail": "{count, plural, one {# persona no tiene} other {# personas no tienen}} correo: se añaden solo con el nombre y no se vinculan solas al entrar.",
+    "submit": "Guardar {teams} {units} y {people} personas",
+    "saving": "Guardando…",
+    "errors": {
+      "onlyAdmin": "Solo la gestión del espacio puede importar.",
+      "tooBig": "El archivo es demasiado grande (máximo 4 MB).",
+      "oldXls": "Los .xls antiguos no se pueden leer. Guárdalo como .xlsx o .csv desde Excel y vuelve a subirlo.",
+      "unreadable": "No se ha podido leer el archivo. Comprueba que es un .xlsx o .csv válido.",
+      "empty": "El archivo está vacío.",
+      "noAi": "El asistente de IA no está configurado: se han detectado las columnas por sus títulos.",
+      "rateLimit": "Has usado mucho el asistente en poco tiempo: se han detectado las columnas por sus títulos.",
+      "aiFailed": "El asistente de IA no ha respondido: se han detectado las columnas por sus títulos. Revisa la vista previa.",
+      "aiEmpty": "La interpretación del asistente no encontraba datos: se han usado los títulos de las columnas."
+    }
   }
 }

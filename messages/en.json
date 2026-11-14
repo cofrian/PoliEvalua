@@ -1268,7 +1268,8 @@
     "emptyTitle": "No {units} yet",
     "emptyText": "Import them from a list (for example, the PoliformaT CSV) or create them one by one with the button above.",
     "edit": "Edit",
-    "downloadExcel": "Download Excel"
+    "downloadExcel": "Download Excel",
+    "importSmart": "Import with AI (any Excel or CSV)"
   },
   "teamEditor": {
     "number": "No.",
@@ -1568,7 +1569,8 @@
     "generic": "The action couldn't be completed. Try again.",
     "codeLength": "The code must be between 6 and 40 characters.",
     "codeInUse": "Another space already uses that code. Choose a different one.",
-    "saveFailed": "The changes could not be saved."
+    "saveFailed": "The changes could not be saved.",
+    "smartImportDone": "{teams} new groups · {people} people added{skipped, plural, =0 {} other { · # already there}}{unassigned, plural, =0 {} other { · # without a group (not added)}}."
   },
   "rubricEditor": {
     "levels": {
@@ -1946,5 +1948,53 @@
     "project": "Project",
     "member": "Member",
     "email": "Email"
+  },
+  "teamImport": {
+    "help": "Upload the Excel or CSV as it is: with people and emails, names only, or just the {units} names. The assistant works out which column is which and shows you a preview; nothing is saved until you confirm.",
+    "file": "Excel (.xlsx) or CSV file",
+    "paste": "Or paste the list here",
+    "placeholder": "Paste the rows copied from Excel…",
+    "hint": "Instructions for the assistant (optional)",
+    "hintPlaceholder": "E.g. the “Table” column is the {unit}; ignore the “Notes” sheet",
+    "analyze": "Analyse file",
+    "reanalyze": "Analyse again",
+    "analyzing": "Analysing…",
+    "privacy": "The assistant only receives a sample of the first rows, with emails hidden. The data is read here; the AI never rewrites it.",
+    "failed": "The file couldn't be analysed. Please try again.",
+    "questions": "The assistant has some questions:",
+    "questionsHelp": "If the preview isn't right, answer in “Instructions” and analyse again.",
+    "summary": "{teams} {units} · {people} people{unassigned, plural, =0 {} other { · # unassigned}}",
+    "unassignedTitle": "{count, plural, one {# person has no} other {# people have no}} {unit}",
+    "whatToDo": "What should we do with them?",
+    "modes": {
+      "manual": "Assign them by hand",
+      "random": "Split them randomly into new {units}",
+      "alphabetical": "Split them alphabetically into new {units}",
+      "leave": "Leave them out for now"
+    },
+    "perUnit": "People per {unit}",
+    "reshuffle": "Shuffle again",
+    "newTeam": "New {unit}",
+    "addTeam": "Add",
+    "assignTo": "{unit} for {name}",
+    "noTeam": "No {unit}",
+    "groupName": "{unit} {index}",
+    "alreadyExists": "Already exists: only new people are added.",
+    "empty": "No members",
+    "leftOut": "{count, plural, one {# person is} other {# people are}} left out for having no group.",
+    "withoutEmail": "{count, plural, one {# person has} other {# people have}} no email: added by name only, and won't be linked automatically when they sign in.",
+    "submit": "Save {teams} {units} and {people} people",
+    "saving": "Saving…",
+    "errors": {
+      "onlyAdmin": "Only the space's managers can import.",
+      "tooBig": "The file is too large (4 MB max).",
+      "oldXls": "Old .xls files can't be read. Save it as .xlsx or .csv from Excel and upload it again.",
+      "unreadable": "The file couldn't be read. Check that it's a valid .xlsx or .csv.",
+      "empty": "The file is empty.",
+      "noAi": "The AI assistant isn't configured: columns were detected from their headers.",
+      "rateLimit": "You've used the assistant a lot in a short time: columns were detected from their headers.",
+      "aiFailed": "The AI assistant didn't respond: columns were detected from their headers. Check the preview.",
+      "aiEmpty": "The assistant's reading found no data: column headers were used instead."
+    }
   }
 }

@@ -1268,7 +1268,8 @@
     "emptyTitle": "Encara no hi ha {units}",
     "emptyText": "Importa'ls des d'una llista (per exemple, el CSV de PoliformaT) o crea'ls d'un en un amb el botó de dalt.",
     "edit": "Editar",
-    "downloadExcel": "Descarrega Excel"
+    "downloadExcel": "Descarrega Excel",
+    "importSmart": "Importar amb IA (qualsevol Excel o CSV)"
   },
   "teamEditor": {
     "number": "Núm.",
@@ -1568,7 +1569,8 @@
     "generic": "No s'ha pogut completar l'acció. Torna-ho a provar.",
     "codeLength": "El codi ha de tindre entre 6 i 40 caràcters.",
     "codeInUse": "Aquest codi ja l’utilitza un altre espai. Tria’n un altre.",
-    "saveFailed": "No s’han pogut guardar els canvis."
+    "saveFailed": "No s’han pogut guardar els canvis.",
+    "smartImportDone": "{teams} grups nous · {people} persones afegides{skipped, plural, =0 {} other { · # ja hi eren}}{unassigned, plural, =0 {} other { · # sense grup (no s'han afegit)}}."
   },
   "rubricEditor": {
     "levels": {
@@ -1946,5 +1948,53 @@
     "project": "Projecte",
     "member": "Integrant",
     "email": "Correu"
+  },
+  "teamImport": {
+    "help": "Puja l'Excel o CSV tal com el tingues: amb persones i correus, només amb noms, o només amb els noms dels {units}. L'assistent entén quina columna és quina i et mostra una vista prèvia; no es guarda res fins que confirmes.",
+    "file": "Fitxer Excel (.xlsx) o CSV",
+    "paste": "O apega ací la llista",
+    "placeholder": "Apega ací les files copiades de l'Excel…",
+    "hint": "Indicacions per a l'assistent (opcional)",
+    "hintPlaceholder": "Ex.: la columna «Taula» és el {unit}; ignora el full «Notes»",
+    "analyze": "Analitzar fitxer",
+    "reanalyze": "Tornar a analitzar",
+    "analyzing": "Analitzant…",
+    "privacy": "A l'assistent només li arriba una mostra de les primeres files, amb els correus ocults. Les dades es llegeixen ací; la IA no les reescriu.",
+    "failed": "No s'ha pogut analitzar el fitxer. Torna-ho a provar.",
+    "questions": "L'assistent té dubtes:",
+    "questionsHelp": "Si la vista prèvia no és correcta, respon a «Indicacions» i torna a analitzar.",
+    "summary": "{teams} {units} · {people} persones{unassigned, plural, =0 {} other { · # sense assignar}}",
+    "unassignedTitle": "{count, plural, one {# persona no té} other {# persones no tenen}} {unit}",
+    "whatToDo": "Què fem amb elles?",
+    "modes": {
+      "manual": "Assignar-les a mà",
+      "random": "Repartir-les a l'atzar en {units} nous",
+      "alphabetical": "Repartir-les per ordre alfabètic en {units} nous",
+      "leave": "Deixar-les fora de moment"
+    },
+    "perUnit": "Persones per {unit}",
+    "reshuffle": "Repartir de nou",
+    "newTeam": "Nou {unit}",
+    "addTeam": "Afegir",
+    "assignTo": "{unit} per a {name}",
+    "noTeam": "Sense {unit}",
+    "groupName": "{unit} {index}",
+    "alreadyExists": "Ja existeix: només s'afegeixen les persones noves.",
+    "empty": "Sense integrants",
+    "leftOut": "{count, plural, one {# persona es queda fora} other {# persones es queden fora}} per no tindre grup.",
+    "withoutEmail": "{count, plural, one {# persona no té} other {# persones no tenen}} correu: s'afegeixen només amb el nom i no es vinculen soles en entrar.",
+    "submit": "Guardar {teams} {units} i {people} persones",
+    "saving": "Guardant…",
+    "errors": {
+      "onlyAdmin": "Només la gestió de l'espai pot importar.",
+      "tooBig": "El fitxer és massa gran (màxim 4 MB).",
+      "oldXls": "Els .xls antics no es poden llegir. Guarda'l com a .xlsx o .csv des de l'Excel i torna a pujar-lo.",
+      "unreadable": "No s'ha pogut llegir el fitxer. Comprova que és un .xlsx o .csv vàlid.",
+      "empty": "El fitxer està buit.",
+      "noAi": "L'assistent d'IA no està configurat: s'han detectat les columnes pels seus títols.",
+      "rateLimit": "Has usat molt l'assistent en poc temps: s'han detectat les columnes pels seus títols.",
+      "aiFailed": "L'assistent d'IA no ha respost: s'han detectat les columnes pels seus títols. Revisa la vista prèvia.",
+      "aiEmpty": "La interpretació de l'assistent no trobava dades: s'han usat els títols de les columnes."
+    }
   }
 }

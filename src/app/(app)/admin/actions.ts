@@ -952,6 +952,146 @@ export async function importRosterAction(
   return { ok: true, message: `${parts.join(" · ")}.` };
 }
 
+const smartImportSchema = z.object({
+  teams: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(120),
+        challenge: z.string().trim().max(120).nullable(),
+        number: z.number().int().min(0).max(100000).nullable(),
+      }),
+    )
+    .max(1000),
+  people: z
+    .array(
+      z.object({
+        fullName: z.string().trim().min(1).max(160),
+        email: z.string().trim().toLowerCase().email().nullable(),
+        team: z.string().trim().max(120).nullable(),
+      }),
+    )
+    .max(3000),
+});
+
+/**
+ * Guarda lo que el asistente de importación ha leído y la gestión ha revisado.
+ * Crea los retos y grupos que falten (por nombre) y añade a las personas con
+ * grupo; las que siguen sin grupo no se añaden. No borra ni mueve a nadie.
+ */
+export async function applyTeamImportAction(
+  _previous: RosterImportState,
+  formData: FormData,
+): Promise<RosterImportState> {
+  const { supabase, user, event } = await requireAdmin();
+  let data: z.infer<typeof smartImportSchema>;
+  try {
+    data = smartImportSchema.parse(JSON.parse(text(formData, "payload")));
+  } catch {
+    return { ok: false, message: await adminMessage("rosterInvalid") };
+  }
+
+  const [{ data: challenges }, { data: teams }, { data: members }] = await Promise.all([
+    supabase.from("challenges").select("id, name, order").eq("event_id", event.id),
+    supabase.from("teams").select("id, name, number, challenge_id").eq("event_id", event.id),
+    supabase.from("team_members").select("team_id, full_name, email").eq("event_id", event.id),
+  ]);
+  const challengeIds = new Map((challenges ?? []).map((c) => [c.name.toLowerCase(), c.id]));
+  let nextChallengeOrder = Math.max(0, ...(challenges ?? []).map((c) => c.order ?? 0)) + 1;
+  const teamIds = new Map((teams ?? []).map((team) => [team.name.toLowerCase(), team.id]));
+  const teamsWithChallenge = new Set((teams ?? []).filter((t) => t.challenge_id).map((t) => t.id));
+  const usedNumbers = new Set((teams ?? []).map((team) => team.number).filter((n) => n !== null));
+  let nextNumber = Math.max(0, ...[...usedNumbers].map(Number)) + 1;
+  const knownEmails = new Set((members ?? []).flatMap((m) => (m.email ? [m.email.toLowerCase()] : [])));
+  const knownNames = new Set((members ?? []).map((m) => `${m.team_id}|${m.full_name.toLowerCase()}`));
+
+  // Grupos a los que va alguien aunque no vinieran en la lista de grupos.
+  const wanted = new Map(data.teams.map((team) => [team.name.toLowerCase(), team]));
+  for (const person of data.people) {
+    if (person.team && !wanted.has(person.team.toLowerCase())) {
+      wanted.set(person.team.toLowerCase(), { name: person.team, challenge: null, number: null });
+    }
+  }
+
+  let createdTeams = 0;
+  let createdChallenges = 0;
+  for (const team of wanted.values()) {
+    let challengeId: string | null = null;
+    if (team.challenge) {
+      challengeId = challengeIds.get(team.challenge.toLowerCase()) ?? null;
+      if (!challengeId) {
+        const { data: created } = await supabase
+          .from("challenges")
+          .insert({ event_id: event.id, name: team.challenge, order: nextChallengeOrder++ })
+          .select("id")
+          .single();
+        if (created) {
+          challengeId = created.id;
+          challengeIds.set(team.challenge.toLowerCase(), created.id);
+          createdChallenges += 1;
+        }
+      }
+    }
+    const existing = teamIds.get(team.name.toLowerCase());
+    if (existing) {
+      // Solo se completa el reto si el grupo aún no tenía; no se mueve a nadie.
+      if (challengeId && !teamsWithChallenge.has(existing)) {
+        await supabase.from("teams").update({ challenge_id: challengeId }).eq("id", existing).eq("event_id", event.id);
+      }
+      continue;
+    }
+    const number = team.number !== null && !usedNumbers.has(team.number) ? team.number : nextNumber;
+    usedNumbers.add(number);
+    nextNumber = Math.max(nextNumber, number) + 1;
+    const { data: created, error } = await supabase
+      .from("teams")
+      .insert({ event_id: event.id, name: team.name, number, challenge_id: challengeId })
+      .select("id")
+      .single();
+    if (error || !created) return { ok: false, message: await adminMessage("rosterCreateFailed", { name: team.name }) };
+    teamIds.set(team.name.toLowerCase(), created.id);
+    createdTeams += 1;
+  }
+
+  let skipped = 0;
+  const rows: { event_id: string; team_id: string; full_name: string; email: string | null }[] = [];
+  for (const person of data.people) {
+    if (!person.team) continue;
+    const teamId = teamIds.get(person.team.toLowerCase());
+    if (!teamId) continue;
+    const nameKey = `${teamId}|${person.fullName.toLowerCase()}`;
+    if ((person.email && knownEmails.has(person.email)) || (!person.email && knownNames.has(nameKey))) {
+      skipped += 1;
+      continue;
+    }
+    if (person.email) knownEmails.add(person.email);
+    knownNames.add(nameKey);
+    rows.push({ event_id: event.id, team_id: teamId, full_name: person.fullName, email: person.email });
+  }
+  if (rows.length) {
+    const { error } = await supabase.from("team_members").insert(rows);
+    if (error) return { ok: false, message: await adminMessage("rosterSaveFailed") };
+  }
+  const unassigned = data.people.filter((person) => !person.team).length;
+
+  await logAudit(supabase, event.id, user.id, "importar_equipos_ia", "teams", null, {
+    createdTeams,
+    createdChallenges,
+    added: rows.length,
+    skipped,
+    unassigned,
+  });
+  refreshAll();
+  return {
+    ok: true,
+    message: await adminMessage("smartImportDone", {
+      teams: createdTeams,
+      people: rows.length,
+      skipped,
+      unassigned,
+    }),
+  };
+}
+
 // ========== PATROCINADORES ==========
 
 async function uploadLogo(file: FormDataEntryValue | null, name: string) {
