@@ -8,6 +8,7 @@ import { ModalButton } from "@/components/app/modal-button";
 import { PageHeader } from "@/components/app/page-header";
 import { ImportTeamsForm } from "@/components/app/import-teams-form";
 import { RosterImport } from "@/components/app/roster-import";
+import { SmartTeamImport } from "@/components/app/smart-team-import";
 import { getSession } from "@/lib/app/session";
 import { cardClass } from "@/lib/app/ui";
 
@@ -55,6 +56,14 @@ export default async function AdminTeamsPage() {
 
   const importForms = (
     <div className="space-y-6">
+      <section className="space-y-3">
+        <h3 className="font-display text-lg">{t("importSmart")}</h3>
+        <SmartTeamImport
+          existingTeams={allTeams.map((team) => team.name)}
+          unit={words.unit}
+          units={words.units}
+        />
+      </section>
       {hasStudents ? (
         <section className="space-y-3">
           <h3 className="font-display text-lg">{t("importStudents")}</h3>

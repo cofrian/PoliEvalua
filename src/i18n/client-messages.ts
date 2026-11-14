@@ -19,6 +19,7 @@ export const CLIENT_NAMESPACES = [
   "evalForm",
   "feedback",
   "importTeams",
+  "teamImport",
   "invite",
   "join",
   "juryView",
