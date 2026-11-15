@@ -11,6 +11,7 @@ import { getSession } from "@/lib/app/session";
 import {
   applyPlan,
   completePlan,
+  emailCoverage,
   describeSheets,
   guessPlan,
   importPlanSchema,
@@ -156,10 +157,14 @@ export async function POST(request: Request) {
   }
 
   let result = applyPlan(sheets, plan);
-  // Si la IA no saca nada pero los títulos sí, mejor eso que nada.
-  if (usedAi && !result.teams.length && !result.people.length) {
+  // Red de seguridad: si la lectura por títulos recoge más correos (o la IA no
+  // ha encontrado nada), se usa esa. Los correos no se inventan, así que más
+  // correos recogidos significa una lectura más fiel.
+  if (usedAi) {
     const fallback = applyPlan(sheets, guessPlan(sheets));
-    if (fallback.teams.length || fallback.people.length) {
+    const aiEmpty = !result.teams.length && !result.people.length;
+    if ((aiEmpty && (fallback.teams.length || fallback.people.length)) || emailCoverage(fallback) > emailCoverage(result)) {
+      console.warn("Importación de equipos: la lectura por títulos supera a la de la IA; se usa esa.");
       result = fallback;
       notice = t("aiEmpty");
     }

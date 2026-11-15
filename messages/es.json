@@ -1994,7 +1994,7 @@
       "noAi": "El asistente de IA no está configurado: se han detectado las columnas por sus títulos.",
       "rateLimit": "Has usado mucho el asistente en poco tiempo: se han detectado las columnas por sus títulos.",
       "aiFailed": "El asistente de IA no ha respondido: se han detectado las columnas por sus títulos. Revisa la vista previa.",
-      "aiEmpty": "La interpretación del asistente no encontraba datos: se han usado los títulos de las columnas."
+      "aiEmpty": "Se ha usado la lectura por los títulos de las columnas, que recogía más datos que la del asistente. Revisa la vista previa."
     }
   }
 }

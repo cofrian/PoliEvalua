@@ -1994,7 +1994,7 @@
       "noAi": "L'assistent d'IA no està configurat: s'han detectat les columnes pels seus títols.",
       "rateLimit": "Has usat molt l'assistent en poc temps: s'han detectat les columnes pels seus títols.",
       "aiFailed": "L'assistent d'IA no ha respost: s'han detectat les columnes pels seus títols. Revisa la vista prèvia.",
-      "aiEmpty": "La interpretació de l'assistent no trobava dades: s'han usat els títols de les columnes."
+      "aiEmpty": "S'ha usat la lectura pels títols de les columnes, que recollia més dades que la de l'assistent. Revisa la vista prèvia."
     }
   }
 }

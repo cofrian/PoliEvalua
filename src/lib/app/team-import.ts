@@ -239,12 +239,16 @@ const hints = {
 };
 
 /**
- * Plan sin IA (por si no está configurada o falla): busca títulos conocidos en
- * la primera fila de cada hoja. Cubre los casos sencillos.
+ * Plan sin IA (por si no está configurada, falla o lee peor que esto): busca
+ * la fila de títulos en las primeras filas y reconoce los bloques «nombre del
+ * grupo + integrantes debajo». Cubre los casos habituales.
  */
 export function guessPlan(sheets: Sheet[]): ImportPlan {
   const plans: SheetPlan[] = sheets.map((sheet, index) => {
-    const header = (sheet.rows[0] ?? []).map(clean);
+    const anyHint = (row: string[]) => row.map(clean).some((value) => Object.values(hints).some((hint) => hint.test(value)));
+    let headerRow: number | null = sheet.rows.slice(0, 6).findIndex(isTitleRow);
+    if (headerRow < 0) headerRow = sheet.rows[0] && anyHint(sheet.rows[0]) ? 0 : null;
+    const header = headerRow === null ? [] : sheet.rows[headerRow].map(clean);
     const find = (hint: RegExp) => {
       const found = header.findIndex((value) => hint.test(value));
       return found >= 0 ? found : null;
@@ -259,36 +263,59 @@ export function guessPlan(sheets: Sheet[]): ImportPlan {
       lastNameColumn: find(hints.lastName),
       emailColumn: find(hints.email),
     };
-    const hasHeader = Object.values(columns).some((value) => value !== null) || memberColumns.length > 0;
+    const data = sheet.rows.slice(headerRow === null ? 0 : headerRow + 1);
     let emailColumn = columns.emailColumn;
     if (emailColumn === null) {
-      const sample = sheet.rows.slice(hasHeader ? 1 : 0, 20);
+      const sample = data.slice(0, 40);
       const width = Math.max(0, ...sample.map((row) => row.length));
       for (let i = 0; i < width && emailColumn === null; i += 1) {
         if (sample.some((row) => EMAIL.test(row[i] ?? ""))) emailColumn = i;
       }
     }
-    const hasPerson = columns.nameColumn !== null || columns.firstNameColumn !== null || emailColumn !== null;
-    const layout: SheetPlan["layout"] = memberColumns.length
-      ? "team_rows"
-      : hasPerson
-        ? "person_rows"
-        : sheet.rows.length
-          ? "teams_only"
-          : "skip";
-    return {
+    const base = {
       sheet: index,
-      layout,
-      headerRow: hasHeader ? 0 : null,
+      headerRow,
       ...columns,
-      nameColumn: columns.nameColumn ?? (!hasHeader && emailColumn !== null && emailColumn > 0 ? 0 : null),
       emailColumn,
       memberColumns,
       memberEmailColumns: [],
       teamFromSheetName: false,
     };
+
+    // Bloques: filas con una sola celda (sin correo) seguidas de filas con personas.
+    const filled = (row: string[]) => row.map(clean).filter(Boolean);
+    const blockHeads = data.filter((row, i) => {
+      const cells = filled(row);
+      const next = data.slice(i + 1).find((other) => filled(other).length);
+      return cells.length === 1 && !EMAIL.test(cells[0]) && next !== undefined && next.some((value) => EMAIL.test(value));
+    }).length;
+    const personRows = data.filter((row) => row.some((value) => EMAIL.test(value))).length;
+    if (!memberColumns.length && columns.teamColumn === null && blockHeads >= 1 && personRows > blockHeads) {
+      const nameColumn = emailColumn === 0 ? null : 0;
+      return { ...base, layout: "team_blocks", teamColumn: 0, nameColumn: columns.nameColumn ?? nameColumn };
+    }
+
+    const hasPerson = columns.nameColumn !== null || columns.firstNameColumn !== null || emailColumn !== null;
+    if (memberColumns.length) return { ...base, layout: "team_rows" };
+    if (hasPerson) {
+      return {
+        ...base,
+        layout: "person_rows",
+        nameColumn: columns.nameColumn ?? (headerRow === null && emailColumn !== null && emailColumn > 0 ? 0 : null),
+      };
+    }
+    if (!data.length) return { ...base, layout: "skip" };
+    // Solo grupos: una columna, con o sin título tipo «Equipos inscritos».
+    const firstCells = sheet.rows[0] ? filled(sheet.rows[0]) : [];
+    const titled = headerRow === null && firstCells.length === 1 && LIST_TITLE.test(firstCells[0]);
+    return { ...base, layout: "teams_only", headerRow: titled ? 0 : headerRow, teamColumn: columns.teamColumn ?? 0 };
   });
   return { sheets: plans, reply: "", questions: [] };
+}
+
+/** Cuántos correos distintos recoge una lectura: sirve para elegir la mejor. */
+export function emailCoverage(result: ImportResult) {
+  return result.people.filter((person) => person.email).length;
 }
 
 const COLUMN_KEYS = [
