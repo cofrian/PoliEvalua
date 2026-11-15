@@ -46,8 +46,8 @@ async function readSheets(file: File | null, pasted: string): Promise<Sheet[]> {
   }
   const raw = (file ? await file.text() : pasted).replace(/^﻿/, "").trim();
   if (!raw) return [];
-  const firstLine = raw.split(/\r?\n/, 1)[0];
-  const delimiter = firstLine.includes("\t") ? "\t" : firstLine.includes(";") ? ";" : ",";
+  // Se mira todo el texto: la primera línea puede ser un título sin separadores.
+  const delimiter = raw.includes("\t") ? "\t" : raw.includes(";") ? ";" : ",";
   const rows = Papa.parse<string[]>(raw, { delimiter, skipEmptyLines: true }).data.slice(0, MAX_ROWS);
   return [{ name: file?.name.replace(/\.[^.]+$/, "") || "Lista", rows: rows.map((row) => row.map((c) => c.trim())) }];
 }

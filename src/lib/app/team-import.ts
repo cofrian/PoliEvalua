@@ -143,7 +143,8 @@ export function applyPlan(sheets: Sheet[], plan: ImportPlan): ImportResult {
 
       if (sheetPlan.layout === "teams_only") {
         const name = teamCell || (sheetPlan.teamColumn === null ? clean(row.find((value) => clean(value))) : "");
-        if (name) addTeam(name.slice(0, 120), challenge, number);
+        // Una celda con correo es una persona, nunca el nombre de un grupo.
+        if (name && !EMAIL.test(name)) addTeam(name.slice(0, 120), challenge, number);
         continue;
       }
 
