@@ -1994,7 +1994,7 @@
       "noAi": "The AI assistant isn't configured: columns were detected from their headers.",
       "rateLimit": "You've used the assistant a lot in a short time: columns were detected from their headers.",
       "aiFailed": "The AI assistant didn't respond: columns were detected from their headers. Check the preview.",
-      "aiEmpty": "The assistant's reading found no data: column headers were used instead."
+      "aiEmpty": "The reading based on column headers was used, as it picked up more data than the assistant's. Check the preview."
     }
   }
 }
