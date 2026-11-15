@@ -10,6 +10,7 @@ import { aiConfigured, NVIDIA_BASE_URL, withModelFallback } from "@/lib/ai/model
 import { getSession } from "@/lib/app/session";
 import {
   applyPlan,
+  completePlan,
   describeSheets,
   guessPlan,
   importPlanSchema,
@@ -146,6 +147,7 @@ export async function POST(request: Request) {
       );
       plan = { ...result, sheets: result.sheets.filter((entry) => entry.sheet < sheets.length) };
       if (!hasChallenges) plan.sheets = plan.sheets.map((entry) => ({ ...entry, challengeColumn: null }));
+      plan = completePlan(sheets, plan, hasChallenges);
       usedAi = true;
     } catch (error) {
       console.error("Importación de equipos: la IA ha fallado:", error instanceof Error ? error.message : error);

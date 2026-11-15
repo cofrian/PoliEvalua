@@ -164,3 +164,73 @@ test("2. CSV con personas sin grupo: se reparten por orden alfabético", async (
   expect(team("Fede Vidal")).not.toBe(team("Hugo López"));
   expect(team("Fede Vidal")).not.toBe("Los Bits");
 });
+
+test("3. Solo nombres de grupos, sin personas", async () => {
+  const path = join(dir, "solo-grupos.csv");
+  writeFileSync(path, "Equipos inscritos\nAstro\nNébula\nCometa\n");
+
+  const dialog = await openImporter();
+  await dialog.getByLabel("Archivo Excel (.xlsx) o CSV").setInputFiles(path);
+  await dialog.getByRole("button", { name: "Analizar archivo" }).click();
+  await expect(dialog.getByRole("button", { name: /Guardar 3 grupos y 0 personas/ })).toBeVisible({ timeout: 120_000 });
+  await dialog.getByRole("button", { name: /Guardar 3 grupos y 0 personas/ }).click();
+  await expect(dialog.getByText(/3 grupos nuevos · 0 personas añadidas/)).toBeVisible({ timeout: 30_000 });
+
+  const { data: teams } = await db.from("teams").select("name").eq("event_id", eventId);
+  expect((teams ?? []).map((t) => t.name)).toEqual(expect.arrayContaining(["Astro", "Nébula", "Cometa"]));
+});
+
+test("4. Asignar a mano: a un grupo existente, a uno nuevo y dejar a alguien fuera", async () => {
+  const path = join(dir, "sin-grupo.csv");
+  writeFileSync(
+    path,
+    ["Alumno,Email", "Julia Soler,julia.soler@test.local", "Marcos Vila,marcos.vila@test.local", "Nora Peña,nora.pena@test.local"].join("\n"),
+  );
+
+  const dialog = await openImporter();
+  await dialog.getByLabel("Archivo Excel (.xlsx) o CSV").setInputFiles(path);
+  await dialog.getByRole("button", { name: "Analizar archivo" }).click();
+  await expect(dialog.getByText(/3 personas no tienen grupo/i)).toBeVisible({ timeout: 120_000 });
+  await expect(dialog.getByLabel("¿Qué hacemos con ellas?")).toHaveValue("manual");
+
+  await dialog.getByLabel("Grupo para Julia Soler").selectOption("Astro");
+  await dialog.getByLabel("Nuevo grupo").fill("Grupo Manual");
+  await dialog.getByRole("button", { name: "Añadir", exact: true }).click();
+  await dialog.getByLabel("Grupo para Marcos Vila").selectOption("Grupo Manual");
+  await expect(dialog.getByText(/1 persona se queda fuera/)).toBeVisible();
+
+  await dialog.getByRole("button", { name: /^Guardar/ }).click();
+  await expect(dialog.getByText(/1 grupo nuevo · 2 personas añadidas · 1 sin grupo/)).toBeVisible({ timeout: 30_000 });
+
+  const saved = await members();
+  const team = (name: string) => saved.find((m) => m.name === name)?.team;
+  expect(team("Julia Soler")).toBe("Astro");
+  expect(team("Marcos Vila")).toBe("Grupo Manual");
+  expect(saved.find((m) => m.name === "Nora Peña")).toBeUndefined();
+});
+
+test("5. Texto pegado en bloques: nombre del grupo y debajo sus integrantes", async () => {
+  const dialog = await openImporter();
+  await dialog.getByLabel("O pega aquí la lista").fill(
+    ["Equipo Delta", "Óscar Ramos\toscar.ramos@test.local", "Paula Gil\tpaula.gil@test.local", "", "Equipo Sigma", "Quique Font\tquique.font@test.local"].join("\n"),
+  );
+  await dialog.getByRole("button", { name: "Analizar archivo" }).click();
+  await expect(dialog.getByRole("button", { name: /Guardar 2 grupos y 3 personas/ })).toBeVisible({ timeout: 120_000 });
+  await dialog.getByRole("button", { name: /Guardar 2 grupos y 3 personas/ }).click();
+  await expect(dialog.getByText(/2 grupos nuevos · 3 personas añadidas/)).toBeVisible({ timeout: 30_000 });
+
+  const saved = await members();
+  const team = (name: string) => saved.find((m) => m.name === name)?.team;
+  expect(team("Óscar Ramos")).toBe("Equipo Delta");
+  expect(team("Paula Gil")).toBe("Equipo Delta");
+  expect(team("Quique Font")).toBe("Equipo Sigma");
+});
+
+test("6. Un .xls antiguo da un aviso claro", async () => {
+  const path = join(dir, "viejo.xls");
+  writeFileSync(path, "no es un xls de verdad");
+  const dialog = await openImporter();
+  await dialog.getByLabel("Archivo Excel (.xlsx) o CSV").setInputFiles(path);
+  await dialog.getByRole("button", { name: "Analizar archivo" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Guárdalo como .xlsx o .csv");
+});
