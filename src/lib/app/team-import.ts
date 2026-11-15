@@ -195,6 +195,7 @@ function isTitleRow(row: string[]) {
   return filled.length > 1 && titles.length >= Math.ceil(filled.length / 2);
 }
 
+const LIST_TITLE = /^(listado de |lista de |nombres? de (los )?)?(equipos?|grupos?|grups?|teams?|groups?|proyectos?|participantes)\b/i;
 const COUNT_HEADER = /(miembros|members|integrantes|personas|total|count|membres)/i;
 
 /**
@@ -209,6 +210,12 @@ function fixPlan(sheet: Sheet, plan: SheetPlan): SheetPlan {
     const start = headerRow ?? 0;
     const found = [start, start + 1, start + 2, start + 3, start - 1].find(isHeader);
     if (found !== undefined) headerRow = found;
+  }
+  // Lista de una columna con un título como «Equipos inscritos» o «Grupos 2026».
+  if (headerRow === null && plan.layout === "teams_only") {
+    const first = sheet.rows.findIndex((row) => row.some((value) => clean(value)));
+    const cells = first >= 0 ? sheet.rows[first].map(clean).filter(Boolean) : [];
+    if (cells.length === 1 && LIST_TITLE.test(cells[0])) headerRow = first;
   }
   const header = headerRow === null ? [] : sheet.rows[headerRow] ?? [];
   const numberHeader = plan.numberColumn === null ? "" : clean(header[plan.numberColumn]);
