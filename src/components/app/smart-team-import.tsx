@@ -285,7 +285,7 @@ export function SmartTeamImport({
                           {person.email ? <span className="text-muted-foreground"> · {person.email}</span> : null}
                         </span>
                         <select
-                          aria-label={t("assignTo", { name: person.fullName })}
+                          aria-label={t("assignTo", { name: person.fullName, unit })}
                           className={selectClass}
                           onChange={(event) => setManual((current) => ({ ...current, [person.index]: event.target.value }))}
                           value={manual[person.index] ?? ""}

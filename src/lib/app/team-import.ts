@@ -283,6 +283,47 @@ export function guessPlan(sheets: Sheet[]): ImportPlan {
   return { sheets: plans, reply: "", questions: [] };
 }
 
+const COLUMN_KEYS = [
+  "teamColumn",
+  "challengeColumn",
+  "numberColumn",
+  "nameColumn",
+  "firstNameColumn",
+  "lastNameColumn",
+  "emailColumn",
+] as const;
+
+/**
+ * Completa el plan del modelo con lo que dicen los títulos: si deja vacía una
+ * columna que tiene un título inequívoco (p. ej. «Grupo»), se usa esa.
+ */
+export function completePlan(sheets: Sheet[], plan: ImportPlan, allowChallenges = true): ImportPlan {
+  const guessed = guessPlan(sheets).sheets;
+  return {
+    ...plan,
+    sheets: plan.sheets.map((entry) => {
+      const guess = guessed[entry.sheet];
+      if (!guess || entry.layout === "skip" || entry.layout === "teams_only") return entry;
+      if (guess.headerRow !== entry.headerRow && entry.headerRow !== null) return entry;
+      const used = new Set(
+        [...COLUMN_KEYS.map((key) => entry[key]), ...entry.memberColumns, ...entry.memberEmailColumns].filter(
+          (value) => value !== null,
+        ),
+      );
+      const next = { ...entry, headerRow: entry.headerRow ?? guess.headerRow };
+      for (const key of COLUMN_KEYS) {
+        if (key === "challengeColumn" && !allowChallenges) continue;
+        const value = guess[key];
+        if (next[key] === null && value !== null && !used.has(value)) {
+          next[key] = value;
+          used.add(value);
+        }
+      }
+      return next;
+    }),
+  };
+}
+
 /** Muestra para el agente: pocas filas, celdas cortas y correos enmascarados. */
 export function describeSheets(sheets: Sheet[], rowsPerSheet = 25) {
   const mask = (value: string) =>
