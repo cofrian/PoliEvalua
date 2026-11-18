@@ -84,7 +84,7 @@ function ChallengeForm({ challenge, ownCount }: { challenge: Challenge | null; o
 export default async function AdminChallengesPage() {
   const { supabase, event } = await getSession();
   const t = await getTranslations("challengesAdmin");
-  const [{ data: challenges }, { data: teams }, { data: criteria }] = await Promise.all([
+  const [{ data: challenges }, { data: teams }, { data: criteria }, { data: extraTeams }] = await Promise.all([
     supabase
       .from("challenges")
       .select("id, name, description, order, scoring_mode, general_weight, rubric_id")
@@ -92,6 +92,7 @@ export default async function AdminChallengesPage() {
       .order("order"),
     supabase.from("teams").select("challenge_id").eq("event_id", event.id),
     supabase.from("rubric_criteria").select("rubric_id").eq("event_id", event.id).is("deleted_at", null),
+    supabase.from("team_challenges").select("challenge_id").eq("event_id", event.id),
   ]);
 
   return (
@@ -103,11 +104,18 @@ export default async function AdminChallengesPage() {
       <p className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm dark:bg-card">{t("sameForAll")}</p>
     <div className="space-y-4">
       {(challenges ?? []).map((challenge) => {
-        const count = (teams ?? []).filter((team) => team.challenge_id === challenge.id).length;
+        // Equipos con este reto como principal o como reto adicional.
+        const count =
+          (teams ?? []).filter((team) => team.challenge_id === challenge.id).length +
+          (extraTeams ?? []).filter((row) => row.challenge_id === challenge.id).length;
         const ownCount = (criteria ?? []).filter((row) => row.rubric_id === challenge.rubric_id).length;
         return (
           <section className={cardClass} key={challenge.id}>
-            <ChallengeForm challenge={challenge} ownCount={ownCount} />
+            <ChallengeForm
+              challenge={challenge}
+              key={`${challenge.scoring_mode}-${challenge.general_weight}-${challenge.rubric_id}-${challenge.name}`}
+              ownCount={ownCount}
+            />
             <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
               <span>{t("teams", { count })}</span>
               {count === 0 ? (
