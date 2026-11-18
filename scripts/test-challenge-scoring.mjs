@@ -106,7 +106,7 @@ try {
   const { data: challenges, error: chError } = await owner.client
     .from("challenges")
     .insert([
-      { event_id: eventId, name: "General" },
+      { event_id: eventId, name: "General", scoring_mode: "general", general_weight: 60 },
       { event_id: eventId, name: "Mujer", scoring_mode: "general_plus", general_weight: 60 },
     ])
     .select("id, name, scoring_mode, general_weight");
