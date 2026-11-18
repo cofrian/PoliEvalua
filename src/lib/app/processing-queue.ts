@@ -1,5 +1,6 @@
 import "server-only";
 
+import { asScoringMode, rubricsForTeam } from "@/lib/app/challenge-scoring";
 import { whisperLanguage } from "@/lib/app/recording-notice";
 import { createHash, timingSafeEqual } from "node:crypto";
 
@@ -497,29 +498,55 @@ async function runAssemble(admin: SupabaseClient, job: Job) {
   });
 }
 
+/**
+ * Criterios con los que se evalúa al grupo: los de la rúbrica general y los
+ * propios de cada reto suyo que los tenga, para que la IA los cubra todos.
+ */
 async function rubricCriteria(
   admin: SupabaseClient,
   eventId: string,
+  teamId: string,
 ): Promise<Criterion[]> {
-  const { data: rubric } = await admin
-    .from("rubrics")
-    .select("id")
-    .eq("event_id", eventId)
-    .eq("is_active", true)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!rubric) return [];
+  const [{ data: rubric }, { data: team }, { data: extra }] = await Promise.all([
+    admin
+      .from("rubrics")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin.from("teams").select("challenge_id").eq("id", teamId).maybeSingle(),
+    admin.from("team_challenges").select("challenge_id").eq("team_id", teamId),
+  ]);
+  const challengeIds = [team?.challenge_id, ...(extra ?? []).map((row) => row.challenge_id)].filter(
+    (id): id is string => Boolean(id),
+  );
+  const { data: challenges } = challengeIds.length
+    ? await admin.from("challenges").select("scoring_mode, rubric_id").in("id", challengeIds)
+    : { data: [] as { scoring_mode: string; rubric_id: string | null }[] };
+  const rubricIds = rubricsForTeam(
+    rubric?.id ?? null,
+    (challenges ?? []).map((challenge) => ({
+      scoringMode: asScoringMode(challenge.scoring_mode),
+      rubricId: (challenge.rubric_id as string | null) ?? null,
+    })),
+  );
+  if (!rubricIds.length) return [];
   const { data: criteria } = await admin
     .from("rubric_criteria")
-    .select("title, description, weight, rubric_levels(score, label, descriptor)")
-    .eq("rubric_id", rubric.id)
+    .select("rubric_id, title, description, weight, order, rubric_levels(score, label, descriptor)")
+    .in("rubric_id", rubricIds)
     .is("deleted_at", null)
     .order("order");
-  return (criteria ?? []).map(({ rubric_levels, ...criterion }) => ({
-    ...criterion,
-    levels: [...(rubric_levels ?? [])].sort((a, b) => a.score - b.score),
-  }));
+  return [...(criteria ?? [])]
+    .sort((a, b) => rubricIds.indexOf(a.rubric_id) - rubricIds.indexOf(b.rubric_id) || a.order - b.order)
+    .map((row) => ({
+      title: row.title,
+      description: row.description,
+      weight: row.weight,
+      levels: [...(row.rubric_levels ?? [])].sort((a, b) => a.score - b.score),
+    }));
 }
 
 async function runAnalyze(admin: SupabaseClient, job: Job) {
@@ -552,7 +579,7 @@ async function runAnalyze(admin: SupabaseClient, job: Job) {
     transcript: recording.transcript,
     teamName: team?.name ?? "Proyecto",
     projectTitle: team?.project_title ?? null,
-    criteria: await rubricCriteria(admin, recording.event_id),
+    criteria: await rubricCriteria(admin, recording.event_id, recording.team_id),
     kind,
     instructions,
     locale: event?.locale ?? "es",

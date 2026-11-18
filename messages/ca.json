@@ -329,7 +329,9 @@
     "requirementsDone": "requisits complets",
     "requirementsMissing": "falten requisits",
     "resend": "Tornar a enviar l'avaluació",
-    "send": "Enviar l'avaluació"
+    "send": "Enviar l'avaluació",
+    "sectionGeneral": "Rúbrica general",
+    "sectionChallenge": "Repte {name}"
   },
   "agenda": {
     "status": {
@@ -375,7 +377,10 @@
     "emptyTitle": "La rúbrica encara no té criteris",
     "emptyAdmin": "Afig els criteris amb «Afegir un criteri» o demana a l'assistent que et propose una rúbrica completa.",
     "emptyOther": "L'organització encara no l'ha preparada. Ací veuràs cada criteri i el que s'espera en cada nivell.",
-    "emptyAssistant": "Demanar-la a l'assistent"
+    "emptyAssistant": "Demanar-la a l'assistent",
+    "generalTab": "Rúbrica general",
+    "ownTitle": "Criteris propis · {name}",
+    "ownHint": "Se sumen a la rúbrica general segons el pes que vas triar en Reptes. Els pesos d'aquests criteris sumen 100 entre ells."
   },
   "myGroup": {
     "noneTitle": "{mode, select, teams {Encara no tens equip} groups {Encara no tens grup} candidates {Encara no tens candidatura} other {Encara no tens projecte}}",
@@ -670,7 +675,9 @@
     "chartLabel": "Mitjana per projecte",
     "pdf": "Descarregar PDF",
     "live": "En directe",
-    "updated": "actualitzat {time}"
+    "updated": "actualitzat {time}",
+    "scoringGeneralPlus": "Nota del repte: {general} % rúbrica general + {own} % criteris propis.",
+    "scoringOwn": "Nota del repte: només els seus criteris propis."
   },
   "liveVotes": {
     "title": "Votacions en directe",
@@ -1381,7 +1388,16 @@
     "teams": "{count, plural, one {# equip} other {# equips}}",
     "delete": "Esborrar el repte",
     "deleteTitle": "Vols esborrar «{name}»?",
-    "new": "Repte nou"
+    "new": "Repte nou",
+    "scoringTitle": "Com es puntua",
+    "scoringGeneral": "Només la rúbrica general",
+    "scoringGeneralPlus": "General + criteris propis",
+    "scoringOwn": "Només criteris propis",
+    "generalWeight": "Pes de la general (%)",
+    "scoringExample": "Exemple: general 8,0 i propis 9,0 → 8,0 × {general} % + 9,0 × {own} % = {result}",
+    "editOwnRubric": "Editar criteris propis",
+    "ownCriteria": "{count, plural, =0 {Encara sense criteris propis: afig-los perquè compten.} one {# criteri propi} other {# criteris propis}}",
+    "sameForAll": "Si tots els reptes usen «Només la rúbrica general», tots s'avaluen igual. Si un equip està en diversos reptes, el jurat l'avalua una sola vegada i cada repte calcula la seua nota."
   },
   "academicAdmin": {
     "description": "Titulació, assignatura i curs perquè l'espai encaixe amb la UPV.",

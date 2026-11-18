@@ -47,6 +47,9 @@ export default async function TeamPage({
         .eq("event_id", event.id)
         .eq("team_id", id)
         .eq("judge_id", user.id)
+        // Una fila por rúbrica (general y retos): todas comparten estado.
+        .order("status", { ascending: false })
+        .limit(1)
         .maybeSingle(),
       canVote
         ? supabase.rpc("can_vote_team", {

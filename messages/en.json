@@ -329,7 +329,9 @@
     "requirementsDone": "requirements complete",
     "requirementsMissing": "requirements missing",
     "resend": "Resend evaluation",
-    "send": "Send evaluation"
+    "send": "Send evaluation",
+    "sectionGeneral": "General rubric",
+    "sectionChallenge": "Challenge {name}"
   },
   "agenda": {
     "status": {
@@ -375,7 +377,10 @@
     "emptyTitle": "The rubric has no criteria yet",
     "emptyAdmin": "Add criteria with “Add criterion” or ask the assistant to suggest a complete rubric.",
     "emptyOther": "The organizers haven't prepared it yet. You'll see each criterion and what's expected at each level here.",
-    "emptyAssistant": "Ask the assistant"
+    "emptyAssistant": "Ask the assistant",
+    "generalTab": "General rubric",
+    "ownTitle": "Own criteria · {name}",
+    "ownHint": "They are combined with the general rubric using the weight chosen in Challenges. These criteria's weights add up to 100 among themselves."
   },
   "myGroup": {
     "noneTitle": "{mode, select, teams {You don't have a team yet} groups {You don't have a group yet} candidates {You don't have an entry yet} other {You don't have a project yet}}",
@@ -670,7 +675,9 @@
     "chartLabel": "Average per project",
     "pdf": "Download PDF",
     "live": "Live",
-    "updated": "updated {time}"
+    "updated": "updated {time}",
+    "scoringGeneralPlus": "Challenge score: {general}% general rubric + {own}% own criteria.",
+    "scoringOwn": "Challenge score: its own criteria only."
   },
   "liveVotes": {
     "title": "Live votes",
@@ -1381,7 +1388,16 @@
     "teams": "{count, plural, one {# team} other {# teams}}",
     "delete": "Delete challenge",
     "deleteTitle": "Delete “{name}”?",
-    "new": "New challenge"
+    "new": "New challenge",
+    "scoringTitle": "How it is scored",
+    "scoringGeneral": "General rubric only",
+    "scoringGeneralPlus": "General + own criteria",
+    "scoringOwn": "Own criteria only",
+    "generalWeight": "General weight (%)",
+    "scoringExample": "Example: general 8.0 and own 9.0 → 8.0 × {general}% + 9.0 × {own}% = {result}",
+    "editOwnRubric": "Edit own criteria",
+    "ownCriteria": "{count, plural, =0 {No own criteria yet: add them so they count.} one {# own criterion} other {# own criteria}}",
+    "sameForAll": "If every challenge uses “General rubric only”, all are judged the same way. If a team is in several challenges, the jury evaluates it once and each challenge computes its own score."
   },
   "academicAdmin": {
     "description": "Degree, course and year so the space fits the UPV.",

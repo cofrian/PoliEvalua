@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  asScoringMode,
+  clampWeight,
+  combineScore,
+  usesOwnRubric,
+  type ChallengeScoring,
+} from "@/lib/app/challenge-scoring";
+
 export type JudgeEvaluation = {
   judgeId: string;
   judgeName: string;
@@ -21,35 +29,116 @@ export type TeamResult = {
   max: number | null;
   criterionAverages: Record<string, number | null>;
   evaluations: JudgeEvaluation[];
+  /** Nota media en cada reto según su forma de puntuar (id del reto → nota). */
+  challengeAverages: Record<string, number | null>;
+  /** Evaluaciones en bruto: puntuaciones de todas las rúbricas y total por rúbrica. */
+  raw: RawJudge[];
 };
 
+type RawJudge = {
+  judgeId: string;
+  judgeName: string;
+  generalComment: string | null;
+  scores: JudgeEvaluation["scores"];
+  totals: Record<string, number>;
+};
+
+type ResultCriterion = { id: string; title: string; weight: number };
+
 export type ResultsData = {
-  challenges: { id: string; name: string }[];
-  criteria: { id: string; title: string; weight: number }[];
+  challenges: ChallengeScoring[];
+  /** Criterios de la rúbrica general. */
+  criteria: ResultCriterion[];
+  /** Criterios propios de cada rúbrica de reto (id de rúbrica → criterios). */
+  rubricCriteria: Record<string, ResultCriterion[]>;
+  generalRubricId: string | null;
   scaleMax: number;
+  /** Ranking general (rúbrica general). */
   teams: TeamResult[];
 };
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
+/** Criterios que se ven en la tabla de un reto: general, propios o ambos. */
+export function challengeCriteria(data: ResultsData, challenge: ChallengeScoring | null) {
+  if (!challenge || !usesOwnRubric(challenge)) return data.criteria;
+  const own = data.rubricCriteria[challenge.rubricId!] ?? [];
+  return challenge.scoringMode === "own" ? own : [...data.criteria, ...own];
+}
+
+/** El mismo grupo visto desde un reto: notas recalculadas con su forma de puntuar. */
+export function teamForChallenge(
+  data: ResultsData,
+  team: TeamResult,
+  challenge: ChallengeScoring | null,
+): TeamResult {
+  if (!challenge || !usesOwnRubric(challenge)) return team;
+  const criteria = challengeCriteria(data, challenge);
+  const evaluations = team.raw
+    .map((judge) => {
+      const general = data.generalRubricId ? (judge.totals[data.generalRubricId] ?? null) : null;
+      const own = judge.totals[challenge.rubricId!] ?? null;
+      const total = combineScore(challenge, general, own);
+      return total === null
+        ? null
+        : { judgeId: judge.judgeId, judgeName: judge.judgeName, total, generalComment: judge.generalComment, scores: judge.scores };
+    })
+    .filter((item): item is JudgeEvaluation => item !== null)
+    .sort((a, b) => b.total - a.total);
+  return { ...team, ...summarize(evaluations, criteria), evaluations };
+}
+
 /**
  * Secciones de resultados: una por reto y otra con lo que no tiene reto. En
- * una asignatura (sin retos) todo queda en una sola sección.
+ * una asignatura (sin retos) todo queda en una sola sección. Cada reto ordena
+ * a sus grupos con su propia nota.
  */
 export function resultSections(data: ResultsData, fallbackTitle: string, noChallengeTitle: string) {
   const known = new Set(data.challenges.map((challenge) => challenge.id));
+  const byScore = (a: TeamResult, b: TeamResult) => (b.average ?? -1) - (a.average ?? -1);
   return [
     ...data.challenges.map((challenge) => ({
       id: challenge.id,
       name: challenge.name,
-      teams: data.teams.filter((team) => team.challengeIds.includes(challenge.id)),
+      challenge: challenge as ChallengeScoring | null,
+      criteria: challengeCriteria(data, challenge),
+      teams: data.teams
+        .filter((team) => team.challengeIds.includes(challenge.id))
+        .map((team) => teamForChallenge(data, team, challenge))
+        .sort(byScore),
     })),
     {
       id: "none",
       name: data.challenges.length ? noChallengeTitle : fallbackTitle,
+      challenge: null as ChallengeScoring | null,
+      criteria: data.criteria,
       teams: data.teams.filter((team) => !team.challengeIds.some((id) => known.has(id))),
     },
   ].filter((section) => section.teams.length);
+}
+
+function summarize(evaluations: JudgeEvaluation[], criteria: ResultCriterion[]) {
+  const totals = evaluations.map((e) => e.total);
+  const average = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
+  const stddev =
+    totals.length > 1 && average !== null
+      ? Math.sqrt(totals.reduce((sum, t) => sum + (t - average) ** 2, 0) / (totals.length - 1))
+      : null;
+  const criterionAverages = Object.fromEntries(
+    criteria.map((c) => {
+      const values = evaluations
+        .map((e) => e.scores[c.id]?.score)
+        .filter((v): v is number => typeof v === "number");
+      return [c.id, values.length ? round(values.reduce((a, b) => a + b, 0) / values.length) : null];
+    }),
+  );
+  return {
+    average: average === null ? null : round(average),
+    stddev: stddev === null ? null : round(stddev),
+    min: totals.length ? Math.min(...totals) : null,
+    max: totals.length ? Math.max(...totals) : null,
+    criterionAverages,
+  };
 }
 
 export type PeerTotals = {
@@ -176,6 +265,21 @@ export function teamChallengeIds(
   return ids;
 }
 
+
+type RubricRow = {
+  id: string;
+  is_active: boolean;
+  challenge_id: string | null;
+  scale_max: number;
+  rubric_criteria: { id: string; title: string; weight: number; order: number; deleted_at: string | null }[];
+};
+
+const criteriaOf = (rubric: RubricRow | undefined): ResultCriterion[] =>
+  (rubric?.rubric_criteria ?? [])
+    .filter((c) => !c.deleted_at)
+    .sort((a, b) => a.order - b.order)
+    .map((c) => ({ id: c.id, title: c.title, weight: Number(c.weight) }));
+
 // Reúne todo lo necesario para resultados y exportaciones. Solo cuentan las
 // evaluaciones enviadas y siempre con la rúbrica actual (pesos vigentes).
 export async function loadResults(
@@ -183,27 +287,26 @@ export async function loadResults(
   eventId: string | null | undefined,
 ): Promise<ResultsData> {
   const [
-    { data: challenges },
+    { data: challengeRows },
     { data: teams },
-    { data: rubric },
+    { data: rubricRows },
     { data: evaluations },
     { data: profiles },
     { data: extraChallenges },
   ] = await Promise.all([
-    supabase.from("challenges").select("id, name").eq("event_id", eventId ?? "").order("order"),
+    supabase
+      .from("challenges")
+      .select("id, name, scoring_mode, general_weight, rubric_id")
+      .eq("event_id", eventId ?? "")
+      .order("order"),
     supabase.from("teams").select("id, number, name, challenge_id").eq("event_id", eventId ?? "").order("number"),
     supabase
       .from("rubrics")
-      .select("id, scale_max, rubric_criteria(id, title, weight, order, deleted_at)")
-      .eq("is_active", true)
-      .eq("event_id", eventId ?? "")
-      .limit(1)
-      .maybeSingle(),
+      .select("id, is_active, challenge_id, scale_max, rubric_criteria(id, title, weight, order, deleted_at)")
+      .eq("event_id", eventId ?? ""),
     supabase
       .from("evaluations")
-      .select(
-        "id, team_id, judge_id, general_comment, evaluation_scores(criterion_id, score, comment)",
-      )
+      .select("id, team_id, judge_id, rubric_id, general_comment, evaluation_scores(criterion_id, score, comment)")
       .eq("event_id", eventId ?? "")
       .eq("status", "submitted"),
     supabase
@@ -214,80 +317,71 @@ export async function loadResults(
     supabase.from("team_challenges").select("team_id, challenge_id").eq("event_id", eventId ?? ""),
   ]);
 
-  const scaleMax = rubric?.scale_max ?? 5;
-  const criteria = (
-    (rubric?.rubric_criteria ?? []) as {
-      id: string;
-      title: string;
-      weight: number;
-      order: number;
-      deleted_at: string | null;
-    }[]
-  )
-    .filter((c) => !c.deleted_at)
-    .sort((a, b) => a.order - b.order)
-    .map((c) => ({ id: c.id, title: c.title, weight: Number(c.weight) }));
+  const rubrics = (rubricRows ?? []) as unknown as RubricRow[];
+  const general = rubrics.find((rubric) => rubric.is_active && !rubric.challenge_id);
+  const scaleMax = general?.scale_max ?? 5;
+  const criteria = criteriaOf(general);
+  const rubricCriteria = Object.fromEntries(
+    rubrics.filter((rubric) => rubric.challenge_id).map((rubric) => [rubric.id, criteriaOf(rubric)]),
+  );
+  const rubricScale = new Map(rubrics.map((rubric) => [rubric.id, rubric.scale_max]));
+  const challenges: ChallengeScoring[] = (challengeRows ?? []).map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    scoringMode: asScoringMode(row.scoring_mode),
+    generalWeight: clampWeight(row.general_weight),
+    rubricId: (row.rubric_id as string | null) ?? null,
+  }));
+
+  const judgeName = (judgeId: string) => {
+    const relation = (profiles ?? []).find((profile) => profile.user_id === judgeId)?.profile as unknown as
+      | { full_name: string }
+      | { full_name: string }[]
+      | null
+      | undefined;
+    return (Array.isArray(relation) ? relation[0] : relation)?.full_name ?? "—";
+  };
 
   const results: TeamResult[] = (teams ?? []).map((team) => {
-    const teamEvals: JudgeEvaluation[] = (evaluations ?? [])
-      .filter((e) => e.team_id === team.id)
-      .map((e) => {
-        const profileRelation = (profiles ?? []).find(
-          (profile) => profile.user_id === e.judge_id,
-        )?.profile as unknown as
-          | { id: string; full_name: string }
-          | { id: string; full_name: string }[]
-          | null
-          | undefined;
-        const judgeProfile = Array.isArray(profileRelation)
-          ? profileRelation[0]
-          : profileRelation;
-        const scores = Object.fromEntries(
-          (
-            (e.evaluation_scores ?? []) as {
-              criterion_id: string;
-              score: number | null;
-              comment: string | null;
-            }[]
-          ).map((s) => [s.criterion_id, { score: s.score, comment: s.comment }]),
-        );
-        const total = criteria.reduce((sum, c) => {
-          const score = scores[c.id]?.score;
-          return score ? sum + (score / scaleMax) * c.weight : sum;
-        }, 0);
-        return {
-          judgeId: e.judge_id,
-          judgeName: judgeProfile?.full_name ?? "—",
-          total: round(total),
-          generalComment: e.general_comment,
-          scores,
-        };
-      })
+    // Un jurado tiene una evaluación por rúbrica: se juntan en una sola.
+    const byJudge = new Map<string, RawJudge>();
+    for (const e of (evaluations ?? []).filter((row) => row.team_id === team.id)) {
+      const judge: RawJudge = byJudge.get(e.judge_id) ?? {
+        judgeId: e.judge_id,
+        judgeName: judgeName(e.judge_id),
+        generalComment: null,
+        scores: {},
+        totals: {},
+      };
+      const scores = (e.evaluation_scores ?? []) as { criterion_id: string; score: number | null; comment: string | null }[];
+      for (const s of scores) judge.scores[s.criterion_id] = { score: s.score, comment: s.comment };
+      const ownCriteria = e.rubric_id === general?.id ? criteria : (rubricCriteria[e.rubric_id] ?? []);
+      const scale = rubricScale.get(e.rubric_id) ?? scaleMax;
+      judge.totals[e.rubric_id] = round(
+        ownCriteria.reduce((sum, c) => {
+          const score = judge.scores[c.id]?.score;
+          return score ? sum + (score / scale) * c.weight : sum;
+        }, 0),
+      );
+      if (e.general_comment && (!judge.generalComment || e.rubric_id === general?.id)) {
+        judge.generalComment = e.general_comment;
+      }
+      byJudge.set(e.judge_id, judge);
+    }
+    const raw = [...byJudge.values()];
+
+    // Ranking general: solo cuenta quien ha evaluado con la rúbrica general.
+    const generalId = general?.id;
+    const teamEvals: JudgeEvaluation[] = raw
+      .filter((judge) => generalId !== undefined && judge.totals[generalId] !== undefined)
+      .map((judge) => ({
+        judgeId: judge.judgeId,
+        judgeName: judge.judgeName,
+        total: judge.totals[generalId!],
+        generalComment: judge.generalComment,
+        scores: judge.scores,
+      }))
       .sort((a, b) => b.total - a.total);
-
-    const totals = teamEvals.map((e) => e.total);
-    const average = totals.length
-      ? totals.reduce((a, b) => a + b, 0) / totals.length
-      : null;
-    const stddev =
-      totals.length > 1 && average !== null
-        ? Math.sqrt(
-            totals.reduce((sum, t) => sum + (t - average) ** 2, 0) /
-              (totals.length - 1),
-          )
-        : null;
-
-    const criterionAverages = Object.fromEntries(
-      criteria.map((c) => {
-        const values = teamEvals
-          .map((e) => e.scores[c.id]?.score)
-          .filter((v): v is number => typeof v === "number");
-        return [
-          c.id,
-          values.length ? round(values.reduce((a, b) => a + b, 0) / values.length) : null,
-        ];
-      }),
-    );
 
     return {
       teamId: team.id,
@@ -295,16 +389,28 @@ export async function loadResults(
       name: team.name,
       challengeId: team.challenge_id,
       challengeIds: teamChallengeIds(team, extraChallenges ?? []),
-      average: average === null ? null : round(average),
-      stddev: stddev === null ? null : round(stddev),
-      min: totals.length ? Math.min(...totals) : null,
-      max: totals.length ? Math.max(...totals) : null,
-      criterionAverages,
+      ...summarize(teamEvals, criteria),
       evaluations: teamEvals,
+      challengeAverages: {},
+      raw,
     };
   });
 
-  results.sort((a, b) => (b.average ?? -1) - (a.average ?? -1));
+  const data: ResultsData = {
+    challenges,
+    criteria,
+    rubricCriteria,
+    generalRubricId: general?.id ?? null,
+    scaleMax,
+    teams: results,
+  };
+  for (const team of results) {
+    for (const id of team.challengeIds) {
+      const challenge = challenges.find((item) => item.id === id) ?? null;
+      team.challengeAverages[id] = teamForChallenge(data, team, challenge).average;
+    }
+  }
 
-  return { challenges: challenges ?? [], criteria, scaleMax, teams: results };
+  results.sort((a, b) => (b.average ?? -1) - (a.average ?? -1));
+  return data;
 }

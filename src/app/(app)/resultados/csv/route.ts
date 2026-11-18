@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import { NextResponse } from "next/server";
 
+import { combineScore } from "@/lib/app/challenge-scoring";
 import { combinedGrade, peerReviewSettings } from "@/lib/app/peer-review";
 import { loadPeerTotals, loadResults } from "@/lib/app/results";
 import { getSession } from "@/lib/app/session";
@@ -74,21 +75,51 @@ export async function GET(request: Request) {
         equipo_numero: team.number ?? "",
         equipo: team.name,
         media: team.average ?? "",
+        // Nota de cada reto con criterios propios (puede diferir de la media general).
+        ...Object.fromEntries(
+          challenges
+            .filter((c) => c.rubricId && c.scoringMode !== "general")
+            .map((c) => [`nota ${c.name}`, team.challengeIds.includes(c.id) ? (team.challengeAverages[c.id] ?? "") : ""]),
+        ),
         ...Object.fromEntries(
           criteria.map((c) => [c.title, team.criterionAverages[c.id] ?? ""]),
+        ),
+        ...Object.fromEntries(
+          Object.values(results.rubricCriteria)
+            .flat()
+            .map((c) => {
+              const values = team.raw
+                .map((judge) => judge.scores[c.id]?.score)
+                .filter((v): v is number => typeof v === "number");
+              return [c.title, values.length ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100 : ""];
+            }),
         ),
         dispersion: team.stddev ?? "",
         evaluaciones: team.evaluations.length,
       }))
     : teams.flatMap((team) =>
-        team.evaluations.map((evaluation) => ({
+        team.raw.map((evaluation) => ({
           reto: team.challengeIds.map(challengeName).filter(Boolean).join(" | "),
           equipo_numero: team.number ?? "",
           equipo: team.name,
           juez: evaluation.judgeName,
-          total: evaluation.total,
+          total: team.evaluations.find((e) => e.judgeId === evaluation.judgeId)?.total ?? "",
           ...Object.fromEntries(
-            criteria.flatMap((c) => [
+            challenges
+              .filter((c) => c.rubricId && c.scoringMode !== "general")
+              .map((c) => [
+                `nota ${c.name}`,
+                team.challengeIds.includes(c.id)
+                  ? (combineScore(
+                      c,
+                      results.generalRubricId ? (evaluation.totals[results.generalRubricId] ?? null) : null,
+                      evaluation.totals[c.rubricId!] ?? null,
+                    ) ?? "")
+                  : "",
+              ]),
+          ),
+          ...Object.fromEntries(
+            [...criteria, ...Object.values(results.rubricCriteria).flat()].flatMap((c) => [
               [c.title, evaluation.scores[c.id]?.score ?? ""],
               [`${c.title} (comentario)`, evaluation.scores[c.id]?.comment ?? ""],
             ]),

@@ -20,6 +20,16 @@ export type Criterion = {
   rubric_levels: { score: number; label: string; descriptor: string | null; example?: string | null }[];
 };
 
+/** Rúbrica adicional (criterios propios de un reto) que se evalúa en la misma pantalla. */
+export type ExtraRubric = {
+  id: string;
+  title: string;
+  scaleMax: number;
+  criteria: Criterion[];
+};
+
+const NO_EXTRA_RUBRICS: ExtraRubric[] = [];
+
 type ScoreState = Record<string, { score: number | null; comment: string }>;
 
 type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
@@ -55,8 +65,14 @@ export function EvaluationForm({
   teamId,
   userId,
   canShareWithTeam = false,
+  extraRubrics = NO_EXTRA_RUBRICS,
+  primaryTitle,
 }: {
   criteria: Criterion[];
+  /** Otras rúbricas del grupo (retos con criterios propios). */
+  extraRubrics?: ExtraRubric[];
+  /** Título de la sección principal cuando hay varias rúbricas. */
+  primaryTitle?: string;
   eventId: string;
   initial: {
     id: string;
@@ -87,9 +103,17 @@ export function EvaluationForm({
   const [formAnswers, setFormAnswers] = useState<Record<string, string | boolean>>(
     initial?.formAnswers ?? {},
   );
+  const sections = useMemo(
+    () => [
+      { id: rubricId, title: primaryTitle ?? "", scaleMax, criteria },
+      ...extraRubrics,
+    ],
+    [rubricId, primaryTitle, scaleMax, criteria, extraRubrics],
+  );
+  const allCriteria = useMemo(() => sections.flatMap((section) => section.criteria), [sections]);
   const [scores, setScores] = useState<ScoreState>(() =>
     Object.fromEntries(
-      criteria.map((criterion) => {
+      [...criteria, ...extraRubrics.flatMap((extra) => extra.criteria)].map((criterion) => {
         const existing = initial?.scores.find(
           (s) => s.criterion_id === criterion.id,
         );
@@ -103,11 +127,13 @@ export function EvaluationForm({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [dirty, setDirty] = useState(false);
 
-  const total = criteria.reduce((sum, criterion) => {
-    const score = scores[criterion.id]?.score;
-    return score ? sum + (score / scaleMax) * criterion.weight : sum;
-  }, 0);
-  const scoredCount = criteria.filter((c) => scores[c.id]?.score).length;
+  const sectionTotal = (section: (typeof sections)[number]) =>
+    section.criteria.reduce((sum, criterion) => {
+      const score = scores[criterion.id]?.score;
+      return score ? sum + (score / section.scaleMax) * criterion.weight : sum;
+    }, 0);
+  const total = sectionTotal(sections[0]);
+  const scoredCount = allCriteria.filter((c) => scores[c.id]?.score).length;
   const requiredAnswersComplete = !page || Boolean(
     page.requirements.every(
       (requirement) =>
@@ -120,7 +146,7 @@ export function EvaluationForm({
         return typeof answer === "boolean" ? answer : Boolean(answer?.trim());
       }),
   );
-  const complete = scoredCount === criteria.length && requiredAnswersComplete;
+  const complete = scoredCount === allCriteria.length && requiredAnswersComplete;
 
   const save = useCallback(
     async (nextStatus?: "draft" | "submitted") => {
@@ -156,15 +182,44 @@ export function EvaluationForm({
 
       evaluationId.current = evaluation.id;
 
-      const rows = Object.entries(scores)
-        .filter(([, value]) => value.score || value.comment.trim())
-        .map(([criterionId, value]) => ({
-          event_id: eventId,
-          evaluation_id: evaluation.id,
-          criterion_id: criterionId,
-          score: value.score,
-          comment: value.comment.trim() || null,
-        }));
+      // Una evaluación por rúbrica: la principal lleva comentarios y respuestas;
+      // las de los retos, solo sus puntuaciones y el mismo estado.
+      const evaluationIds: Record<string, string> = { [rubricId]: evaluation.id };
+      for (const extra of extraRubrics) {
+        const { data: extraEvaluation, error: extraError } = await supabase
+          .from("evaluations")
+          .upsert(
+            {
+              event_id: eventId,
+              team_id: teamId,
+              judge_id: userId,
+              rubric_id: extra.id,
+              status: evaluation.status,
+              submitted_at: evaluation.status === "submitted" ? new Date().toISOString() : null,
+            },
+            { onConflict: "team_id,judge_id,rubric_id" },
+          )
+          .select("id")
+          .single();
+        if (extraError || !extraEvaluation) {
+          setSaveState("error");
+          return false;
+        }
+        evaluationIds[extra.id] = extraEvaluation.id;
+      }
+
+      const rows = sections.flatMap((section) =>
+        section.criteria
+          .map((criterion) => [criterion.id, scores[criterion.id]] as const)
+          .filter(([, value]) => value && (value.score || value.comment.trim()))
+          .map(([criterionId, value]) => ({
+            event_id: eventId,
+            evaluation_id: evaluationIds[section.id],
+            criterion_id: criterionId,
+            score: value.score,
+            comment: value.comment.trim() || null,
+          })),
+      );
 
       if (rows.length) {
         const { error: scoresError } = await supabase
@@ -182,7 +237,7 @@ export function EvaluationForm({
       setDirty(false);
       return true;
     },
-    [supabase, eventId, teamId, userId, rubricId, generalComment, shareWithTeam, formAnswers, scores],
+    [supabase, eventId, teamId, userId, rubricId, extraRubrics, sections, generalComment, shareWithTeam, formAnswers, scores],
   );
 
   // Copia local del borrador: si se va la red o se cierra la pestaña antes de
@@ -394,8 +449,16 @@ export function EvaluationForm({
         </section>
       ) : null}
 
+      {sections.map((section) => (
+      <section className="space-y-3" key={section.id}>
+      {sections.length > 1 ? (
+        <div className="flex items-baseline justify-between gap-3 border-b border-border pb-1">
+          <h2 className="font-display text-xl">{section.title}</h2>
+          <span className="text-sm font-bold text-muted-foreground">{sectionTotal(section).toFixed(1)} / 100</span>
+        </div>
+      ) : null}
       <ol className="space-y-5">
-        {criteria.map((criterion, index) => {
+        {section.criteria.map((criterion, index) => {
           const current = scores[criterion.id];
           const selected = criterion.rubric_levels.find(
             (level) => level.score === current?.score,
@@ -469,6 +532,8 @@ export function EvaluationForm({
           );
         })}
       </ol>
+      </section>
+      ))}
 
       <div className="space-y-2">
         <label className="text-sm font-semibold" htmlFor="generalComment">
@@ -512,7 +577,10 @@ export function EvaluationForm({
             <span className="text-base text-muted-foreground"> / 100</span>
           </p>
           <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-            {t("progress", { scored: scoredCount, total: criteria.length })} · {requiredAnswersComplete ? t("requirementsDone") : t("requirementsMissing")}
+            {sections.length > 1
+              ? `${sections.map((section) => `${section.title} ${sectionTotal(section).toFixed(1)}`).join(" · ")} · `
+              : ""}
+            {t("progress", { scored: scoredCount, total: allCriteria.length })} · {requiredAnswersComplete ? t("requirementsDone") : t("requirementsMissing")}
             {saveLabel ? ` · ${saveLabel}` : ""}
           </p>
         </div>

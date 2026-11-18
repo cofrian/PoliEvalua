@@ -91,6 +91,16 @@ export default async function ResultsPage() {
         return (
           <section className="space-y-4 break-inside-avoid-page" key={challenge.id}>
             <h2 className="font-display text-xl">{challenge.name}</h2>
+            {challenge.challenge?.rubricId && challenge.challenge.scoringMode === "general_plus" ? (
+              <p className="text-sm text-muted-foreground">
+                {t("scoringGeneralPlus", {
+                  general: challenge.challenge.generalWeight,
+                  own: 100 - challenge.challenge.generalWeight,
+                })}
+              </p>
+            ) : challenge.challenge?.rubricId && challenge.challenge.scoringMode === "own" ? (
+              <p className="text-sm text-muted-foreground">{t("scoringOwn")}</p>
+            ) : null}
 
             <ResultsChart
               data={ranking
@@ -121,7 +131,7 @@ export default async function ResultsPage() {
                         </th>
                       </>
                     ) : null}
-                    {criteria.map((c) => (
+                    {challenge.criteria.map((c) => (
                       <th className={`${cell} text-right`} key={c.id} title={c.title}>
                         {c.title.split(/[\s/]+/)[0]} ({c.weight}%)
                       </th>
@@ -169,7 +179,7 @@ export default async function ResultsPage() {
                             <td className={`${cell} text-right font-bold`}>{finalGrade(team.teamId, team.average) ?? "–"}</td>
                           </>
                         ) : null}
-                        {criteria.map((c) => (
+                        {challenge.criteria.map((c) => (
                           <td className={`${cell} text-right`} key={c.id}>
                             {team.criterionAverages[c.id] ?? "–"}
                           </td>
@@ -212,7 +222,7 @@ export default async function ResultsPage() {
                             /100
                           </p>
                           <ul className="mt-1 space-y-1 text-sm">
-                            {criteria.map((c) => {
+                            {challenge.criteria.map((c) => {
                               const s = evaluation.scores[c.id];
                               return (
                                 <li key={c.id}>
