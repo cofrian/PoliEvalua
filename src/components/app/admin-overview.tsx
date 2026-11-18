@@ -1,3 +1,4 @@
+import { onePerJudge } from "@/lib/app/challenge-scoring";
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -139,12 +140,13 @@ export async function AdminOverview({ session }: { session: Session }) {
     : 100;
   const next = required.find((step) => !step.done);
 
-  const submitted = (evaluations ?? []).filter((evaluation) => evaluation.status === "submitted");
+  const uniqueEvaluations = onePerJudge(evaluations ?? []);
+  const submitted = uniqueEvaluations.filter((evaluation) => evaluation.status === "submitted");
   const minimum = page?.min_evaluations ?? 1;
   const byTeam = teamList.map((team) => ({
     ...team,
     submitted: submitted.filter((evaluation) => evaluation.team_id === team.id).length,
-    drafts: (evaluations ?? []).filter((evaluation) => evaluation.team_id === team.id && evaluation.status !== "submitted").length,
+    drafts: uniqueEvaluations.filter((evaluation) => evaluation.team_id === team.id && evaluation.status !== "submitted").length,
   }));
   const behind = byTeam.filter((team) => team.submitted < minimum);
   const perJudge = voters

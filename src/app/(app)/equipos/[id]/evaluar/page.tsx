@@ -104,6 +104,8 @@ export default async function EvaluatePage({
         <EvaluationForm
           canShareWithTeam={context.hasStudents}
           criteria={context.criteria}
+          extraRubrics={context.extraRubrics}
+          primaryTitle={context.primaryTitle}
           eventId={event.id}
           initial={context.initial}
           locked={context.locked}

@@ -329,7 +329,9 @@
     "requirementsDone": "requisitos completos",
     "requirementsMissing": "faltan requisitos",
     "resend": "Reenviar evaluación",
-    "send": "Enviar evaluación"
+    "send": "Enviar evaluación",
+    "sectionGeneral": "Rúbrica general",
+    "sectionChallenge": "Reto {name}"
   },
   "agenda": {
     "status": {
@@ -375,7 +377,10 @@
     "emptyTitle": "La rúbrica todavía no tiene criterios",
     "emptyAdmin": "Añade los criterios con «Añadir criterio» o pide al asistente que te proponga una rúbrica completa.",
     "emptyOther": "La organización todavía no la ha preparado. Aquí verás cada criterio y lo que se espera en cada nivel.",
-    "emptyAssistant": "Pedírsela al asistente"
+    "emptyAssistant": "Pedírsela al asistente",
+    "generalTab": "Rúbrica general",
+    "ownTitle": "Criterios propios · {name}",
+    "ownHint": "Se suman a la rúbrica general según el peso que elegiste en Retos. Los pesos de estos criterios suman 100 entre ellos."
   },
   "myGroup": {
     "noneTitle": "{mode, select, teams {Todavía no tienes equipo} groups {Todavía no tienes grupo} candidates {Todavía no tienes candidatura} other {Todavía no tienes proyecto}}",
@@ -670,7 +675,9 @@
     "chartLabel": "Media por proyecto",
     "pdf": "Descargar PDF",
     "live": "En directo",
-    "updated": "actualizado {time}"
+    "updated": "actualizado {time}",
+    "scoringGeneralPlus": "Nota del reto: {general} % rúbrica general + {own} % criterios propios.",
+    "scoringOwn": "Nota del reto: solo sus criterios propios."
   },
   "liveVotes": {
     "title": "Votaciones en directo",
@@ -1381,7 +1388,16 @@
     "teams": "{count, plural, one {# equipo} other {# equipos}}",
     "delete": "Borrar reto",
     "deleteTitle": "¿Borrar «{name}»?",
-    "new": "Nuevo reto"
+    "new": "Nuevo reto",
+    "scoringTitle": "Cómo se puntúa",
+    "scoringGeneral": "Solo la rúbrica general",
+    "scoringGeneralPlus": "General + criterios propios",
+    "scoringOwn": "Solo criterios propios",
+    "generalWeight": "Peso de la general (%)",
+    "scoringExample": "Ejemplo: general 8,0 y propios 9,0 → 8,0 × {general} % + 9,0 × {own} % = {result}",
+    "editOwnRubric": "Editar criterios propios",
+    "ownCriteria": "{count, plural, =0 {Aún sin criterios propios: añádelos para que cuenten.} one {# criterio propio} other {# criterios propios}}",
+    "sameForAll": "Si todos los retos usan «Solo la rúbrica general», todos se evalúan igual. Si un equipo está en varios retos, el jurado lo evalúa una sola vez y cada reto calcula su propia nota."
   },
   "academicAdmin": {
     "description": "Titulación, asignatura y curso para que el espacio encaje con la UPV.",

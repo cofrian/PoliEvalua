@@ -51,7 +51,15 @@ export default async function TeamsPage() {
 
   const summaries: TeamSummary[] = (teams ?? []).map((team) => {
     const teamNotes = (notes ?? []).filter((n) => n.team_id === team.id);
-    const evaluation = (evals ?? []).find((e) => e.team_id === team.id);
+    // Una fila por rúbrica (general y retos con criterios propios): se suman.
+    const rows = (evals ?? []).filter((e) => e.team_id === team.id);
+    const evaluation = rows.length
+      ? {
+          status: rows.every((e) => e.status === "submitted") ? "submitted" : "draft",
+          scored_criteria: rows.reduce((sum, e) => sum + (e.scored_criteria ?? 0), 0),
+          total_criteria: rows.reduce((sum, e) => sum + (e.total_criteria ?? 0), 0),
+        }
+      : null;
     const members = team.team_members as unknown as { count: number }[];
 
     return {

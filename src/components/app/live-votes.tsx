@@ -25,7 +25,9 @@ export async function LiveVotes({
   const [{ data: evaluations }, { data: teams }, { data: profiles }] = await Promise.all([
     supabase
       .from("evaluations")
-      .select("id, team_id, judge_id, status, updated_at, evaluation_scores(criterion_id, score)")
+      .select("id, team_id, judge_id, status, updated_at, evaluation_scores(criterion_id, score), rubric:rubrics!inner(challenge_id)")
+      // Solo la rúbrica general: los criterios propios de cada reto se ven en Resultados.
+      .is("rubric.challenge_id", null)
       .eq("event_id", eventId)
       .order("updated_at", { ascending: false }),
     supabase.from("teams").select("id, number, name").eq("event_id", eventId),

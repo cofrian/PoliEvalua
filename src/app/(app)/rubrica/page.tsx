@@ -13,7 +13,8 @@ import {
 import { RubricLiveUpdates } from "@/components/app/rubric-live-updates";
 import { getSession } from "@/lib/app/session";
 
-export default async function RubricPage() {
+export default async function RubricPage({ searchParams }: { searchParams: Promise<{ reto?: string }> }) {
+  const { reto } = await searchParams;
   const { supabase, user, profile, isAdmin, event, role, words } = await getSession();
   const isStudent = role === "student";
   const [t, format] = await Promise.all([getTranslations("rubric"), getFormatter()]);
@@ -21,13 +22,26 @@ export default async function RubricPage() {
     return <p>{t("hiddenForStudents")}</p>;
   }
 
-  const { data: rubric } = await supabase
+  // Retos con criterios propios: cada uno tiene su pestaña.
+  const { data: ownChallenges } = await supabase
+    .from("challenges")
+    .select("id, name, scoring_mode, rubric_id")
+    .eq("event_id", event.id)
+    .neq("scoring_mode", "general")
+    .not("rubric_id", "is", null)
+    .order("order");
+  const selected = (ownChallenges ?? []).find((challenge) => challenge.id === reto) ?? null;
+
+  const rubricQuery = supabase
     .from("rubrics")
     .select(
       "id, name, locked, version, scale_min, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, updated_at, rubric_levels(id, score, label, descriptor, example))",
     )
-    .eq("is_active", true)
-    .eq("event_id", event.id)
+    .eq("event_id", event.id);
+  const { data: rubric } = await (selected
+    ? rubricQuery.eq("id", selected.rubric_id)
+    : rubricQuery.eq("is_active", true).is("challenge_id", null)
+  )
     .limit(1)
     .maybeSingle();
 
@@ -63,9 +77,26 @@ export default async function RubricPage() {
   return (
     <div className="space-y-8">
       <RubricLiveUpdates rubricId={rubric.id} userId={user.id} />
+      {ownChallenges?.length ? (
+        <nav className="flex flex-wrap gap-2" aria-label={t("title")}>
+          <Button asChild size="sm" variant={selected ? "outline" : "default"}>
+            <Link href="/rubrica">{t("generalTab")}</Link>
+          </Button>
+          {ownChallenges.map((challenge) => (
+            <Button asChild key={challenge.id} size="sm" variant={selected?.id === challenge.id ? "default" : "outline"}>
+              <Link href={`/rubrica?reto=${challenge.id}`}>{challenge.name}</Link>
+            </Button>
+          ))}
+        </nav>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">{t("title")}</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
+            {selected ? t("ownTitle", { name: selected.name }) : t("title")}
+          </h1>
+          {selected?.scoring_mode === "general_plus" ? (
+            <p className="mt-1 text-sm text-muted-foreground">{t("ownHint")}</p>
+          ) : null}
           <p className="mt-1 text-sm text-muted-foreground">
             {isAdmin
               ? t("meta", { name: rubric.name, min: rubric.scale_min, max: rubric.scale_max })

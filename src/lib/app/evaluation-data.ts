@@ -3,7 +3,8 @@ import "server-only";
 import { getTranslations } from "next-intl/server";
 
 import type { AiEvidence } from "@/components/app/ai-evidence-panel";
-import type { Criterion, EvaluationPageConfig } from "@/components/app/evaluation-form";
+import type { Criterion, EvaluationPageConfig, ExtraRubric } from "@/components/app/evaluation-form";
+import { asScoringMode, rubricsForTeam } from "@/lib/app/challenge-scoring";
 import type { Note } from "@/components/app/notes-panel";
 import type { CriterionEvidence, JuryWeakness } from "@/lib/ai/presentation-insights";
 import type { getSession } from "@/lib/app/session";
@@ -16,6 +17,10 @@ export type EvaluationContext =
       ok: true;
       rubric: { id: string; name: string; scale_max: number };
       criteria: Criterion[];
+      /** Título de la rúbrica principal cuando el grupo tiene varias. */
+      primaryTitle: string;
+      /** Rúbricas de retos con criterios propios, en la misma pantalla. */
+      extraRubrics: ExtraRubric[];
       page: EvaluationPageConfig | null;
       locked: boolean;
       initial: {
@@ -60,16 +65,15 @@ export async function loadEvaluationContext(
     };
   }
 
-  const [{ data: rubric }, { data: evaluationPage }] = await Promise.all([
+  const [{ data: rubricRows }, { data: team }, { data: extraChallenges }, { data: evaluationPage }] = await Promise.all([
     supabase
       .from("rubrics")
       .select(
-        "id, name, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor, example))",
+        "id, name, is_active, challenge_id, scale_max, rubric_criteria(id, title, description, weight, order, deleted_at, rubric_levels(score, label, descriptor, example))",
       )
-      .eq("is_active", true)
-      .eq("event_id", event.id)
-      .limit(1)
-      .maybeSingle(),
+      .eq("event_id", event.id),
+    supabase.from("teams").select("challenge_id").eq("event_id", event.id).eq("id", teamId).maybeSingle(),
+    supabase.from("team_challenges").select("challenge_id").eq("event_id", event.id).eq("team_id", teamId),
     supabase
       .from("evaluation_pages")
       .select("title, description, instructions, requirements, questions, status, opens_at, closes_at")
@@ -77,21 +81,45 @@ export async function loadEvaluationContext(
       .maybeSingle(),
   ]);
 
+  // Rúbricas del grupo: la general y las propias de sus retos, sin repetir.
+  const challengeIds = [team?.challenge_id, ...(extraChallenges ?? []).map((row) => row.challenge_id)].filter(
+    (id): id is string => Boolean(id),
+  );
+  const { data: challenges } = challengeIds.length
+    ? await supabase.from("challenges").select("id, name, scoring_mode, rubric_id").eq("event_id", event.id).in("id", challengeIds)
+    : { data: [] as { id: string; name: string; scoring_mode: string; rubric_id: string | null }[] };
+  const generalRubric = (rubricRows ?? []).find((row) => row.is_active && !row.challenge_id) ?? null;
+  const rubricIds = rubricsForTeam(
+    generalRubric?.id ?? null,
+    (challenges ?? []).map((challenge) => ({
+      scoringMode: asScoringMode(challenge.scoring_mode),
+      rubricId: challenge.rubric_id ?? null,
+    })),
+  );
+  const teamRubrics = rubricIds
+    .map((id) => (rubricRows ?? []).find((row) => row.id === id))
+    .filter((row): row is NonNullable<typeof row> => Boolean(row));
+  const rubric = teamRubrics[0];
   if (!rubric) return { ok: false, tone: "info", message: t("noRubric") };
+  const tSections = await getTranslations("evalForm");
+  const rubricTitle = (row: (typeof teamRubrics)[number]) => {
+    if (!row.challenge_id) return tSections("sectionGeneral");
+    const challenge = (challenges ?? []).find((item) => item.id === row.challenge_id);
+    return tSections("sectionChallenge", { name: challenge?.name ?? row.name });
+  };
   if (evaluationPage?.status === "draft" && !isAdmin) {
     return { ok: false, tone: "info", message: t("pageDraft") };
   }
 
-  const [{ data: evaluation }, { data: notes }, { data: reports }, { count: processingCount }] =
+  const [{ data: judgeEvaluations }, { data: notes }, { data: reports }, { count: processingCount }] =
     await Promise.all([
       supabase
         .from("evaluations")
-        .select("id, status, general_comment, share_with_team, form_answers, evaluation_scores(criterion_id, score, comment)")
+        .select("id, rubric_id, status, general_comment, share_with_team, form_answers, evaluation_scores(criterion_id, score, comment)")
         .eq("event_id", event.id)
         .eq("team_id", teamId)
         .eq("judge_id", user.id)
-        .eq("rubric_id", rubric.id)
-        .maybeSingle(),
+        .in("rubric_id", rubricIds),
       supabase
         .from("notes")
         .select("id, body, is_shared, created_at, author_id, author:profiles(full_name)")
@@ -133,16 +161,22 @@ export async function loadEvaluationContext(
       }
     : null;
 
-  const criteria: Criterion[] = (
-    (rubric.rubric_criteria ?? []) as unknown as (Criterion & { order: number; deleted_at: string | null })[]
-  )
-    .filter((criterion) => !criterion.deleted_at)
-    .sort((a, b) => a.order - b.order)
-    .map((criterion) => ({
-      ...criterion,
-      weight: Number(criterion.weight),
-      rubric_levels: [...criterion.rubric_levels].sort((a, b) => a.score - b.score),
-    }));
+  const criteriaOf = (row: (typeof teamRubrics)[number]): Criterion[] =>
+    ((row.rubric_criteria ?? []) as unknown as (Criterion & { order: number; deleted_at: string | null })[])
+      .filter((criterion) => !criterion.deleted_at)
+      .sort((a, b) => a.order - b.order)
+      .map((criterion) => ({
+        ...criterion,
+        weight: Number(criterion.weight),
+        rubric_levels: [...criterion.rubric_levels].sort((a, b) => a.score - b.score),
+      }));
+  const criteria = criteriaOf(rubric);
+  const extraRubrics: ExtraRubric[] = teamRubrics
+    .slice(1)
+    .map((row) => ({ id: row.id, title: rubricTitle(row), scaleMax: row.scale_max, criteria: criteriaOf(row) }))
+    .filter((row) => row.criteria.length);
+  const evaluation = (judgeEvaluations ?? []).find((row) => row.rubric_id === rubric.id) ?? null;
+  const allScores = (judgeEvaluations ?? []).flatMap((row) => row.evaluation_scores ?? []);
 
   if (!criteria.length) {
     return {
@@ -173,6 +207,8 @@ export async function loadEvaluationContext(
     ok: true,
     rubric: { id: rubric.id, name: rubric.name, scale_max: rubric.scale_max },
     criteria,
+    primaryTitle: rubricTitle(rubric),
+    extraRubrics,
     page,
     locked,
     initial: evaluation
@@ -187,7 +223,7 @@ export async function loadEvaluationContext(
             !Array.isArray(evaluation.form_answers)
               ? (evaluation.form_answers as Record<string, string | boolean>)
               : {},
-          scores: evaluation.evaluation_scores ?? [],
+          scores: allScores,
         }
       : null,
     notes: (notes ?? []) as unknown as Note[],

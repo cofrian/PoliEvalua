@@ -1,3 +1,4 @@
+import { onePerJudge } from "@/lib/app/challenge-scoring";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import {
@@ -45,7 +46,7 @@ export default async function AdminPeoplePage({
         .select("user_id, role, status, joined_at, profile:profiles!event_members_user_id_fkey(id, full_name, organization, last_seen_at)")
         .eq("event_id", event.id)
         .order("joined_at"),
-      supabase.from("evaluations").select("judge_id, status").eq("event_id", event.id),
+      supabase.from("evaluations").select("team_id, judge_id, status").eq("event_id", event.id),
       supabase
         .from("event_invitations")
         .select("id, email, role, expires_at, accepted_at, revoked_at")
@@ -248,7 +249,7 @@ export default async function AdminPeoplePage({
                     </td>
                     <td className="px-3 py-2 text-right">
                       {
-                        (evals ?? []).filter(
+                        onePerJudge(evals ?? []).filter(
                           (e) => e.judge_id === profile.id && e.status === "submitted",
                         ).length
                       }

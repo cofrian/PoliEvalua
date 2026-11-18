@@ -15,6 +15,7 @@ import {
   cleanAdminText,
   INSTRUCTIONS_MAX,
 } from "@/lib/ai/prompts/presentation";
+import { asScoringMode, clampWeight } from "@/lib/app/challenge-scoring";
 import { logAudit } from "@/lib/app/audit";
 import { TURN_REMINDER_OPTIONS, sendInvitationEmail, sendResultsPublished } from "@/lib/app/email-notifications";
 import { assignPeerReviews, peerReviewSettings } from "@/lib/app/peer-review";
@@ -622,9 +623,17 @@ async function saveChallengeActionRun(formData: FormData) {
     name: text(formData, "name"),
     description: optional(formData, "description"),
     order: Number(text(formData, "order")) || 0,
+    // Los formularios antiguos (asistente) no envían estos campos: se respeta lo guardado.
+    ...(formData.has("scoring_mode")
+      ? {
+          scoring_mode: asScoringMode(text(formData, "scoring_mode")),
+          general_weight: clampWeight(text(formData, "general_weight")),
+        }
+      : {}),
   };
   if (!values.name) return;
 
+  let challengeId = id;
   if (id) {
     await supabase.from("challenges").update(values).eq("id", id).eq("event_id", event.id);
     await logAudit(supabase, event.id, user.id, "editar_reto", "challenges", id, values);
@@ -634,9 +643,54 @@ async function saveChallengeActionRun(formData: FormData) {
       .insert({ ...values, event_id: event.id })
       .select("id")
       .single();
+    challengeId = data?.id ?? "";
     await logAudit(supabase, event.id, user.id, "crear_reto", "challenges", data?.id ?? null, values);
   }
+
+  // Un reto con criterios propios necesita su rúbrica: se crea la primera vez.
+  if (challengeId && values.scoring_mode && values.scoring_mode !== "general") {
+    await ensureChallengeRubric(supabase, event.id, challengeId, values.name);
+  }
   refreshAll();
+}
+
+async function ensureChallengeRubric(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"],
+  eventId: string,
+  challengeId: string,
+  name: string,
+) {
+  const { data: challenge } = await supabase
+    .from("challenges")
+    .select("rubric_id")
+    .eq("id", challengeId)
+    .eq("event_id", eventId)
+    .single();
+  if (challenge?.rubric_id) return challenge.rubric_id as string;
+
+  const { data: general } = await supabase
+    .from("rubrics")
+    .select("scale_min, scale_max")
+    .eq("event_id", eventId)
+    .eq("is_active", true)
+    .is("challenge_id", null)
+    .limit(1)
+    .maybeSingle();
+  const { data: rubric, error } = await supabase
+    .from("rubrics")
+    .insert({
+      event_id: eventId,
+      challenge_id: challengeId,
+      name,
+      is_active: false,
+      scale_min: general?.scale_min ?? 1,
+      scale_max: general?.scale_max ?? 5,
+    })
+    .select("id")
+    .single();
+  if (error || !rubric) throw new Error(error?.message ?? "No se ha podido crear la rúbrica del reto.");
+  await supabase.from("challenges").update({ rubric_id: rubric.id }).eq("id", challengeId).eq("event_id", eventId);
+  return rubric.id as string;
 }
 
 async function deleteChallengeActionRun(formData: FormData) {

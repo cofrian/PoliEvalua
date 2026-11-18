@@ -178,6 +178,8 @@ export default async function RoomPage({
           <EvaluationForm
             canShareWithTeam={evaluation.hasStudents}
             criteria={evaluation.criteria}
+            extraRubrics={evaluation.extraRubrics}
+            primaryTitle={evaluation.primaryTitle}
             eventId={event.id}
             initial={evaluation.initial}
             key={current.team_id}
