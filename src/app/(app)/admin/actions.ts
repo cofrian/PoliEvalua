@@ -701,7 +701,12 @@ async function deleteChallengeActionRun(formData: FormData) {
     .select("id", { count: "exact", head: true })
     .eq("event_id", event.id)
     .eq("challenge_id", id);
-  if (count) throw new Error(await adminMessage("challengeHasTeams"));
+  const { count: extraCount } = await supabase
+    .from("team_challenges")
+    .select("team_id", { count: "exact", head: true })
+    .eq("event_id", event.id)
+    .eq("challenge_id", id);
+  if (count || extraCount) throw new Error(await adminMessage("challengeHasTeams"));
 
   await supabase.from("challenges").delete().eq("id", id).eq("event_id", event.id);
   await logAudit(supabase, event.id, user.id, "borrar_reto", "challenges", id);
